@@ -1,6 +1,4 @@
 __author__ = 'maximmillen'
-
-from sfsi_models import functions
 import openpyxl
 
 
