@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-setup(name='sfsi_models',
+setup(name='sfsimodels',
       version='0.1.1',
       description='A set of standard models for assessing structural and geotechnical problems',
       url='',
