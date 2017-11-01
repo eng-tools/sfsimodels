@@ -161,7 +161,7 @@ def load_soil_sample_data(sp):
     :return:
     """
     # soil
-    sp.G_mod = 60.0  # MPa
+    sp.g_mod = 60.0  # MPa
     sp.phi = 30  # degrees
     sp.relative_density = .40  # decimal
     sp.height_crust = 2.  # m
@@ -171,7 +171,7 @@ def load_soil_sample_data(sp):
     sp.unit_sat_weight_liq = 18  # kN/m3
     sp.unit_weight_water = 9.8  # kN/m3
     sp.cohesion = 10.0  # kPa
-    sp.piossons_ratio = 0.22
+    sp.poissons_ratio = 0.22
     sp.e_min = 0.55
     sp.e_max = 0.95
     sp.e_cr0 = 0.79  # Jin et al. 2015

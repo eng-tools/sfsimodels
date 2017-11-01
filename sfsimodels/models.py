@@ -10,7 +10,7 @@ __author__ = 'maximmillen'
 
 
 class Soil(object):
-    G_mod = None
+    g_mod = None
     phi = None
     relative_density = None
     height_crust = None
@@ -30,7 +30,7 @@ class Soil(object):
     clay_crust = True  # deprecated
 
     inputs = [
-        "G_mod",
+        "g_mod",
         "phi",
         "relative_density",
         "height_crust",
@@ -117,12 +117,12 @@ class Soil(object):
 
 
 class Hazard(object):
-    z_factor = None
+    z_factor = 0.0
     r_factor = 1.0
     n_factor = 1.0
-    magnitude = None
-    corner_period = None
-    corner_acc_factor = None
+    magnitude = 0.0
+    corner_period = 0.0
+    corner_acc_factor = 0.0
 
     inputs = [
         "z_factor",
@@ -161,15 +161,22 @@ class Hazard(object):
 
 
 class Foundation(object):
-    width = None
-    length = None
-    depth = None
+    width = 0.0  # m, The length of the foundation in the direction of shaking
+    length = 0.0  # m, The length of the foundation perpendicular to the shaking
+    depth = 0.0  # m, The depth of the foundation from the surface
+    height = 0.0  # m, The height of the foundation from base of foundation to ground floor
+    density = 0.0  # kg/m3
+    ftype = None
 
     inputs = [
         "width",
         "length",
         "depth"
     ]
+
+
+class RaftFoundation(Foundation):
+    ftype = "raft"
 
     @property
     def i_ww(self):
@@ -178,6 +185,14 @@ class Foundation(object):
     @property
     def i_ll(self):
         return self.length ** 3 * self.width / 12
+
+    @property
+    def mass(self):
+        return self.width * self.depth * self.height * self.density
+
+    @property
+    def weight(self):
+        return self.mass * 9.8
 
 
 class Structure(object):
@@ -216,7 +231,7 @@ class Building(object):
     floor_length = 10.0  # m
     floor_width = 10.0  # m
     concrete = Concrete()
-    _storey_heights = np.array([3.4])  # m
+    _interstorey_heights = np.array([3.4])  # m
     _storey_masses = np.array([40.0e3])  # kg
     g = 9.81  # m/s2  # gravity
 
@@ -226,23 +241,23 @@ class Building(object):
 
     @property
     def heights(self):
-        return np.cumsum(self.storey_heights)
+        return np.cumsum(self._interstorey_heights)
 
     @property
     def max_height(self):
-        return np.max(self.storey_heights)
+        return np.sum(self._interstorey_heights)
 
     @property
     def n_storeys(self):
-        return len(self._storey_heights)
+        return len(self._interstorey_heights)
 
     @property
-    def storey_heights(self):
-        return self._storey_heights
+    def interstorey_heights(self):
+        return self._interstorey_heights
 
-    @storey_heights.setter
+    @interstorey_heights.setter
     def storey_heights(self, heights):
-        self._storey_heights = np.array(heights)
+        self._interstorey_heights = np.array(heights)
 
     @property
     def storey_masses(self):
