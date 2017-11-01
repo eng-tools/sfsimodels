@@ -150,3 +150,67 @@ def load_sample_data(sss):
     sss.hz.corner_period = 4.0  # s
     sss.hz.corner_acc_factor = 0.55
 
+
+def load_soil_sample_data(sp):
+    """
+    Sample data for the Soil object
+    :param sss:
+    :return:
+    """
+    # soil
+    sp.G_mod = 60.0  # MPa
+    sp.phi = 30  # degrees
+    sp.relative_density = .40  # decimal
+    sp.height_crust = 2.  # m
+    sp.height_liq = 5.  # m
+    sp.gwl = 2.  # m # ground water level
+    sp.unit_weight_crust = 17  # kN/m3
+    sp.unit_sat_weight_liq = 18  # kN/m3
+    sp.unit_weight_water = 9.8  # kN/m3
+    sp.cohesion = 10.0  # kPa
+    sp.piossons_ratio = 0.22
+    sp.e_min = 0.55
+    sp.e_max = 0.95
+    sp.e_cr0 = 0.79  # Jin et al. 2015
+    sp.p_cr0 = 0.7  # Jin et al. 2015
+    sp.lamb_crl = 0.015  # Jin et al. 2015
+
+
+def load_foundation_sample_data(fd):
+    """
+    Sample data for the Foundation object
+    :param sss:
+    :return:
+    """
+    # foundation
+    fd.width = 4.0  # m
+    fd.length = 4.0  # m
+    fd.depth = 0.0  # m
+
+
+def load_structure_sample_data(bd):
+    """
+    Sample data for the Structure object
+    :param sss:
+    :return:
+    """
+    # structure
+    bd.h_eff = 9.0  # m
+    bd.mass_eff = 120  # T
+    bd.t_eff = 1.0  # s
+    bd.mass_ratio = 1.0  # ratio of mass acting horizontal to vertically
+
+
+def load_hazard_sample_data(hz):
+    """
+    Sample data for the Hazard object
+    :param sss:
+    :return:
+    """
+    # hazard
+    hz.z_factor = 0.3  # Hazard factor
+    hz.r_factor = 1.0  # Return period factor
+    hz.n_factor = 1.0  # Near-fault factor
+    hz.magnitude = 7.5  # Magnitude of earthquake
+    hz.corner_period = 4.0  # s
+    hz.corner_acc_factor = 0.55
