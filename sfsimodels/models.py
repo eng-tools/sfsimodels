@@ -2,6 +2,10 @@ import math
 import numbers
 import numpy as np
 
+from collections import OrderedDict
+
+from sfsimodels.loader import add_inputs_to_object
+
 __author__ = 'maximmillen'
 
 
@@ -200,6 +204,73 @@ class Structure(object):
     @property
     def weight(self):
         return self.mass_eff / self.mass_ratio * 9.8
+
+
+class Concrete(OrderedDict):
+    fy = 300.0e6  #Pa
+    youngs_steel = 200e9  # Pa
+
+
+class Building(object):
+
+    floor_length = 10.0  # m
+    floor_width = 10.0  # m
+    concrete = Concrete()
+    _storey_heights = np.array([3.4])  # m
+    _storey_masses = np.array([40.0e3])  # kg
+    g = 9.81  # m/s2  # gravity
+
+    @property
+    def floor_area(self):
+        return self.floor_length * self.floor_width
+
+    @property
+    def heights(self):
+        return np.cumsum(self.storey_heights)
+
+    @property
+    def max_height(self):
+        return np.max(self.storey_heights)
+
+    @property
+    def n_storeys(self):
+        return len(self._storey_heights)
+
+    @property
+    def storey_heights(self):
+        return self._storey_heights
+
+    @storey_heights.setter
+    def storey_heights(self, heights):
+        self._storey_heights = np.array(heights)
+
+    @property
+    def storey_masses(self):
+        return self._storey_masses
+
+    @storey_masses.setter
+    def storey_masses(self, masses):
+        self._storey_masses = np.array(masses)
+
+    def set_storey_masses_by_stresses(self, stresses):
+        self._storey_masses = stresses * self.floor_area
+
+
+class FrameBuilding(Building):
+    bay_lengths = np.array([6])
+    beam_depths = np.array([.5])
+    n_seismic_frames = 2
+    n_gravity_frames = 0
+
+    def set(self, values):
+        """""
+        Set the frame object parameters using a dictionary
+        """""
+        add_inputs_to_object(self, values)
+
+
+class WallBuilding(Building):
+    n_walls = 1
 
 
 class SoilStructureSystem(object):

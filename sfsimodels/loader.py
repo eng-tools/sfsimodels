@@ -1,4 +1,7 @@
 __author__ = 'maximmillen'
+
+import numpy as np
+
 import openpyxl
 
 
@@ -214,3 +217,35 @@ def load_hazard_sample_data(hz):
     hz.magnitude = 7.5  # Magnitude of earthquake
     hz.corner_period = 4.0  # s
     hz.corner_acc_factor = 0.55
+
+
+def load_building_sample_data(bd):
+    """
+    Sample data for the Building object
+    :param bd:
+    :return:
+    """
+    number_of_storeys = 6
+    interstorey_height = 3.4  # m
+    masses = 40.0e3  # kg
+
+    bd.storey_heights = interstorey_height * np.ones(number_of_storeys)
+    bd.floor_length = 18.0  # m
+    bd.floor_width = 16.0  # m
+    bd.storey_masses = np.array([masses])  # kg
+
+
+def load_frame_building_sample_data(fb):
+    """
+    Sample data for the FrameBuilding object
+    :param fb:
+    :return:
+    """
+    load_building_sample_data(fb)
+
+    fb.bay_lengths = [6., 6.0, 6.0]
+    fb.beam_depths = [.5]
+    fb.n_seismic_frames = 3
+    fb.n_gravity_frames = 0
+
+
