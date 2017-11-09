@@ -299,7 +299,7 @@ class Building(OrderedDict):
         return self._interstorey_heights
 
     @interstorey_heights.setter
-    def storey_heights(self, heights):
+    def interstorey_heights(self, heights):
         self._interstorey_heights = np.array(heights)
 
     @property
@@ -311,7 +311,7 @@ class Building(OrderedDict):
         self._storey_masses = np.array(masses)
 
     def set_storey_masses_by_stresses(self, stresses):
-        self._storey_masses = stresses * self.floor_area
+        self.storey_masses = stresses * self.floor_area / 9.8
 
 
 class FrameBuilding(Building):
