@@ -1,7 +1,6 @@
 __author__ = 'maximmillen'
 
 import numpy as np
-
 import openpyxl
 
 
@@ -182,7 +181,7 @@ def load_soil_sample_data(sp):
 def load_foundation_sample_data(fd):
     """
     Sample data for the Foundation object
-    :param sss:
+    :param fd: Foundation Object
     :return:
     """
     # foundation
@@ -191,23 +190,23 @@ def load_foundation_sample_data(fd):
     fd.depth = 0.0  # m
 
 
-def load_structure_sample_data(bd):
+def load_structure_sample_data(st):
     """
     Sample data for the Structure object
-    :param sss:
+    :param st: Structure Object
     :return:
     """
     # structure
-    bd.h_eff = 9.0  # m
-    bd.mass_eff = 120  # T
-    bd.t_eff = 1.0  # s
-    bd.mass_ratio = 1.0  # ratio of mass acting horizontal to vertically
+    st.h_eff = 9.0  # m
+    st.mass_eff = 120  # T
+    st.t_eff = 1.0  # s
+    st.mass_ratio = 1.0  # ratio of mass acting horizontal to vertically
 
 
 def load_hazard_sample_data(hz):
     """
     Sample data for the Hazard object
-    :param sss:
+    :param hz: Hazard Object
     :return:
     """
     # hazard
@@ -217,6 +216,7 @@ def load_hazard_sample_data(hz):
     hz.magnitude = 7.5  # Magnitude of earthquake
     hz.corner_period = 4.0  # s
     hz.corner_acc_factor = 0.55
+    return hz
 
 
 def load_building_sample_data(bd):
