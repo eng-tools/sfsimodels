@@ -10,6 +10,9 @@ __author__ = 'maximmillen'
 
 
 class Soil(OrderedDict):
+    """
+    An object to describe a soil profile
+    """
     g_mod = 0.0  # Shear modulus [Pa]
     phi = 0.0  # Critical friction angle [degrees]
     relative_density = 0.0  # [decimal]
@@ -115,6 +118,9 @@ class Soil(OrderedDict):
 
 
 class Hazard(OrderedDict):
+    """
+    An object to describe seismic hazard.
+    """
     z_factor = 0.0
     r_factor = 1.0
     n_factor = 1.0
@@ -132,9 +138,11 @@ class Hazard(OrderedDict):
     ]
 
     # Calculated values
-    pga = None
-    corner_acc = None
-    corner_disp = None
+    outputs = [
+        "pga",
+        "corner_acc",
+        "corner_disp",
+    ]
 
     @property
     def pga(self):
@@ -167,12 +175,15 @@ class Foundation(OrderedDict):
     depth = 0.0  # [m], The depth of the foundation from the surface
     height = 0.0  # [m], The height of the foundation from base of foundation to ground floor
     density = 0.0  # [kg/m3], Density of foundation
+    weight = 0.0  # [kN]
     ftype = None  # [], Foundation type
 
     inputs = [
         "width",
         "length",
-        "depth"
+        "depth",
+        "height",
+        "density"
     ]
 
 
@@ -198,8 +209,19 @@ class RaftFoundation(Foundation):
     def weight(self):
         return self.mass * 9.8
 
+    @property
+    def inputs(self):
+        input_list = super(RaftFoundation, self).inputs
+        new_inputs = [
+            "i_ww",
+        ]
+        return input_list + new_inputs
+
 
 class Structure(OrderedDict):
+    """
+    An object to describe structures.
+    """
     h_eff = None
     mass_eff = None
     t_fixed = None
@@ -226,18 +248,35 @@ class Structure(OrderedDict):
 
 
 class Concrete(OrderedDict):
+    """
+    An object to describe reinforced concrete
+    """
     fy = 300.0e6  #Pa
     youngs_steel = 200e9  # Pa
 
+    inputs = [
+            'fy',
+            'youngs_steel'
+    ]
+
 
 class Building(OrderedDict):
-
+    """
+    An object to define Buildings
+    """
     floor_length = 10.0  # m
     floor_width = 10.0  # m
     concrete = Concrete()
     _interstorey_heights = np.array([3.4])  # m
     _storey_masses = np.array([40.0e3])  # kg
     g = 9.81  # m/s2  # gravity
+
+    inputs = [
+        'floor_length',
+        'floor_width',
+        'interstorey_heights',
+        'n_storeys'
+    ]
 
     @property
     def floor_area(self):
@@ -281,6 +320,17 @@ class FrameBuilding(Building):
     n_seismic_frames = 2
     n_gravity_frames = 0
 
+    @property
+    def inputs(self):
+        input_list = super(FrameBuilding, self).inputs
+        new_inputs = [
+        "bay_lengths",
+        "beam_depths",
+        "n_seismic_frames",
+        "n_gravity_frames"
+    ]
+        return input_list + new_inputs
+
     def set(self, values):
         """""
         Set the frame object parameters using a dictionary
@@ -290,6 +340,17 @@ class FrameBuilding(Building):
 
 class WallBuilding(Building):
     n_walls = 1
+
+    @property
+    def inputs(self):
+        input_list = super(WallBuilding, self).inputs
+        new_inputs = [
+        "bay_lengths",
+        "beam_depths",
+        "n_seismic_frames",
+        "n_gravity_frames"
+    ]
+        return input_list + new_inputs
 
 
 class SoilStructureSystem(OrderedDict):
@@ -301,4 +362,4 @@ class SoilStructureSystem(OrderedDict):
 
     inputs = [
         "name"
-    ]
+    ] + bd.inputs + fd.inputs + sp.inputs + hz.inputs
