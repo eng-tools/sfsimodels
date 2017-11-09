@@ -115,42 +115,11 @@ def load_sample_data(sss):
     :param sss:
     :return:
     """
-    # soil
-    sss.sp.G_mod = 60.0e6  # Pa
-    sss.sp.phi = 30  # degrees
-    sss.sp.relative_density = .40  # decimal
-    sss.sp.height_crust = 2.  # m
-    sss.sp.height_liq = 5.  # m
-    sss.sp.gwl = 2.  # m # ground water level
-    sss.sp.unit_weight_crust = 17  # kN/m3
-    sss.sp.unit_sat_weight_liq = 18  # kN/m3
-    sss.sp.unit_weight_water = 9.8  # kN/m3
-    sss.sp.cohesion = 10.0  # kPa
-    sss.sp.piossons_ratio = 0.22
-    sss.sp.e_min = 0.55
-    sss.sp.e_max = 0.95
-    sss.sp.e_cr0 = 0.79  # Jin et al. 2015
-    sss.sp.p_cr0 = 0.7  # Jin et al. 2015
-    sss.sp.lamb_crl = 0.015  # Jin et al. 2015
 
-    # foundation
-    sss.fd.width = 4.0  # m
-    sss.fd.length = 4.0  # m
-    sss.fd.depth = 0.0  # m
-
-    # structure
-    sss.bd.h_eff = 9.0  # m
-    sss.bd.mass_eff = 120  # T
-    sss.bd.t_eff = 1.0  # s
-    sss.bd.mass_ratio = 1.0  # ratio of mass acting horizontal to vertically
-
-    # hazard
-    sss.hz.z_factor = 0.3  # Hazard factor
-    sss.hz.r_factor = 1.0  # Return period factor
-    sss.hz.n_factor = 1.0  # Near-fault factor
-    sss.hz.magnitude = 7.5  # Magnitude of earthquake
-    sss.hz.corner_period = 4.0  # s
-    sss.hz.corner_acc_factor = 0.55
+    load_soil_sample_data(sss.sp)  # soil
+    load_foundation_sample_data(sss.fd)  # foundation
+    load_structure_sample_data(sss.bd)  # structure
+    load_hazard_sample_data(sss.hz)  # hazard
 
 
 def load_soil_sample_data(sp):
@@ -185,8 +154,8 @@ def load_foundation_sample_data(fd):
     :return:
     """
     # foundation
-    fd.width = 4.0  # m
-    fd.length = 4.0  # m
+    fd.width = 16.0  # m
+    fd.length = 18.0  # m
     fd.depth = 0.0  # m
 
 

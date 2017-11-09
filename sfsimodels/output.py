@@ -1,13 +1,20 @@
 
 
-def output_to_table(obj, oformat='latex', table_ends=False):
+def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False):
     """
     Compile the properties to a table.
     :param format:
     :return: para, str, table as a string
     """
     para = ""
-    for item in obj.inputs:
+    property_list = []
+    if olist == 'inputs':
+        property_list = obj.inputs
+    elif olist == 'all':
+        for item in obj.__dict__:
+            if "_" != item[0]:
+                property_list.append(item)
+    for item in property_list:
         if hasattr(obj, item):
             if oformat == "latex":
                 para += "{0} & {1}\\\\\n".format(item, getattr(obj, item))
