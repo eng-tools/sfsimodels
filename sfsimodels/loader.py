@@ -116,7 +116,7 @@ def load_sample_data(sss):
     :return:
     """
     # soil
-    sss.sp.G_mod = 60.0  # MPa
+    sss.sp.G_mod = 60.0e6  # Pa
     sss.sp.phi = 30  # degrees
     sss.sp.relative_density = .40  # decimal
     sss.sp.height_crust = 2.  # m
@@ -156,20 +156,20 @@ def load_sample_data(sss):
 def load_soil_sample_data(sp):
     """
     Sample data for the Soil object
-    :param sss:
+    :param sp: Soil Object
     :return:
     """
     # soil
-    sp.g_mod = 60.0  # MPa
-    sp.phi = 30  # degrees
-    sp.relative_density = .40  # decimal
-    sp.height_crust = 2.  # m
-    sp.height_liq = 5.  # m
-    sp.gwl = 2.  # m # ground water level
-    sp.unit_weight_crust = 17  # kN/m3
-    sp.unit_sat_weight_liq = 18  # kN/m3
-    sp.unit_weight_water = 9.8  # kN/m3
-    sp.cohesion = 10.0  # kPa
+    sp.g_mod = 60.0e6  # [Pa]
+    sp.phi = 30  # [degrees]
+    sp.relative_density = .40  # [decimal]
+    sp.height_crust = 2.  # [m]
+    sp.height_liq = 5.  # [m]
+    sp.gwl = 2.  # [m], ground water level
+    sp.unit_weight_crust = 17000  # [N/m3]
+    sp.unit_sat_weight_liq = 18000  # [N/m3]
+    sp.unit_weight_water = 9800  # [N/m3]
+    sp.cohesion = 10.0  # [Pa]
     sp.poissons_ratio = 0.22
     sp.e_min = 0.55
     sp.e_max = 0.95
@@ -198,7 +198,7 @@ def load_structure_sample_data(st):
     """
     # structure
     st.h_eff = 9.0  # m
-    st.mass_eff = 120  # T
+    st.mass_eff = 120e3  # kg
     st.t_eff = 1.0  # s
     st.mass_ratio = 1.0  # ratio of mass acting horizontal to vertically
 
@@ -232,7 +232,7 @@ def load_building_sample_data(bd):
     bd.storey_heights = interstorey_height * np.ones(number_of_storeys)
     bd.floor_length = 18.0  # m
     bd.floor_width = 16.0  # m
-    bd.storey_masses = np.array([masses])  # kg
+    bd.storey_masses = masses * np.ones(number_of_storeys)  # kg
 
 
 def load_frame_building_sample_data(fb):

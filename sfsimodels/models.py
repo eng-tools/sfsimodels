@@ -9,24 +9,24 @@ from sfsimodels.loader import add_inputs_to_object
 __author__ = 'maximmillen'
 
 
-class Soil(object):
-    g_mod = None
-    phi = None
-    relative_density = None
-    height_crust = None
-    height_liq = None
-    gwl = None
-    unit_weight_crust = None
+class Soil(OrderedDict):
+    g_mod = 0.0  # Shear modulus [Pa]
+    phi = 0.0  # Critical friction angle [degrees]
+    relative_density = 0.0  # [decimal]
+    height_crust = None  # [m]
+    height_liq = None  # Height of liquefiable layer [m]
+    gwl = None  # Ground water level [m]
+    unit_weight_crust = None  # N/m3
     unit_sat_weight_liq = None  # TODO: use specific gravity and void ratio
-    unit_weight_water = 9.8
-    crust_cohesion = None
-    crust_phi = None
-    poissons_ratio = None
-    e_min = None
-    e_max = None
-    e_cr0 = None
-    p_cr0 = None
-    lamb_crl = None
+    unit_weight_water = 9800.  # [N/m3]
+    crust_cohesion = 0.0  # [Pa]
+    crust_phi = 0.0  # [degrees]
+    poissons_ratio = 0.0
+    e_min = 0.0
+    e_max = 0.0
+    e_cr0 = 0.0
+    p_cr0 = 0.0
+    lamb_crl = 0.0
     clay_crust = True  # deprecated
 
     inputs = [
@@ -75,9 +75,7 @@ class Soil(object):
     def equivalent_crust_cohesion(self):
         """
         Calculate the equivalent crust cohesion strength according to Karamitros et al. 2013 sett, pg 8 eq. 14
-        :param sp:
-        :param crust_phi:
-        :return:
+        :return: equivalent cohesion [Pa]
         """
         crust_phi_r = math.radians(self.crust_phi)
         equivalent_cohesion = self.crust_cohesion + self.k_0 * self.crust_effective_unit_weight * \
@@ -116,7 +114,7 @@ class Soil(object):
         return sigma_veff_c
 
 
-class Hazard(object):
+class Hazard(OrderedDict):
     z_factor = 0.0
     r_factor = 1.0
     n_factor = 1.0
@@ -160,13 +158,16 @@ class Hazard(object):
         return msf
 
 
-class Foundation(object):
-    width = 0.0  # m, The length of the foundation in the direction of shaking
-    length = 0.0  # m, The length of the foundation perpendicular to the shaking
-    depth = 0.0  # m, The depth of the foundation from the surface
-    height = 0.0  # m, The height of the foundation from base of foundation to ground floor
-    density = 0.0  # kg/m3
-    ftype = None
+class Foundation(OrderedDict):
+    """
+    An object to describe building foundations
+    """
+    width = 0.0  # [m], The length of the foundation in the direction of shaking
+    length = 0.0  # [m], The length of the foundation perpendicular to the shaking
+    depth = 0.0  # [m], The depth of the foundation from the surface
+    height = 0.0  # [m], The height of the foundation from base of foundation to ground floor
+    density = 0.0  # [kg/m3], Density of foundation
+    ftype = None  # [], Foundation type
 
     inputs = [
         "width",
@@ -176,6 +177,9 @@ class Foundation(object):
 
 
 class RaftFoundation(Foundation):
+    """
+    An extension to the Foundation Object to describe Raft foundations
+    """
     ftype = "raft"
 
     @property
@@ -195,7 +199,7 @@ class RaftFoundation(Foundation):
         return self.mass * 9.8
 
 
-class Structure(object):
+class Structure(OrderedDict):
     h_eff = None
     mass_eff = None
     t_fixed = None
@@ -226,7 +230,7 @@ class Concrete(OrderedDict):
     youngs_steel = 200e9  # Pa
 
 
-class Building(object):
+class Building(OrderedDict):
 
     floor_length = 10.0  # m
     floor_width = 10.0  # m
@@ -288,7 +292,7 @@ class WallBuilding(Building):
     n_walls = 1
 
 
-class SoilStructureSystem(object):
+class SoilStructureSystem(OrderedDict):
     bd = Structure()
     fd = Foundation()
     sp = Soil()
