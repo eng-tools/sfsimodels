@@ -251,7 +251,7 @@ class Concrete(OrderedDict):
     """
     An object to describe reinforced concrete
     """
-    fy = 300.0e6  #Pa
+    fy = 300.0e6  # Pa
     youngs_steel = 200e9  # Pa
 
     inputs = [

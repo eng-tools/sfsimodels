@@ -198,7 +198,7 @@ def load_building_sample_data(bd):
     interstorey_height = 3.4  # m
     masses = 40.0e3  # kg
 
-    bd.storey_heights = interstorey_height * np.ones(number_of_storeys)
+    bd.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     bd.floor_length = 18.0  # m
     bd.floor_width = 16.0  # m
     bd.storey_masses = masses * np.ones(number_of_storeys)  # kg
