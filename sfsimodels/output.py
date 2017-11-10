@@ -54,7 +54,7 @@ def format_value(value):
 def add_table_ends(para, oformat='latex', caption="caption-text", label="table"):
     fpara = ""
     if oformat == 'latex':
-        fpara += "\\begin{table}\n"
+        fpara += "\\begin{table}[H]\n"
         fpara += "\\centering\n"
         fpara += "\\begin{tabular}{cc}\n"
         fpara += "\\toprule\n"
