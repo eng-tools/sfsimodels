@@ -315,8 +315,8 @@ class Building(OrderedDict):
 
 
 class FrameBuilding(Building):
-    bay_lengths = np.array([6])
-    beam_depths = np.array([.5])
+    _bay_lengths = np.array([6])  # protected
+    _beam_depths = np.array([.5])  # protected
     n_seismic_frames = 2
     n_gravity_frames = 0
 
@@ -336,6 +336,23 @@ class FrameBuilding(Building):
         Set the frame object parameters using a dictionary
         """""
         add_inputs_to_object(self, values)
+
+
+    @property
+    def beam_depths(self):
+        return self._beam_depths
+
+    @beam_depths.setter
+    def beam_depths(self, beam_depths):
+        self._beam_depths = np.array(beam_depths)
+
+    @property
+    def bay_lengths(self):
+        return self._bay_lengths
+
+    @bay_lengths.setter
+    def bay_lengths(self, bay_lengths):
+        self._bay_lengths = np.array(bay_lengths)
 
 
 class WallBuilding(Building):
