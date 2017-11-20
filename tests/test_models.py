@@ -19,9 +19,26 @@ def test_add_layer_to_soil_profile():
 
 def test_vertical_stress_soil_profile():
     soil_profile = models.SoilProfile()
-    soil1 = models.Soil()
-    soil2 = models.Soil()
+    soil_profile.add_layer(2, models.Soil())
+    soil_profile.add_layer(5, models.Soil())
+    unit_weights = [15000.0, 20000.0, 15000.0]
+    counter = 0
+    for depth in soil_profile.layers:
+        soil_profile.layers[depth].unit_weight = unit_weights[counter]
+        counter += 1
+
+    assert soil_profile.vertical_total_stress(1) == 15000.0
+    assert soil_profile.vertical_total_stress(2) == 30000.0
+    assert soil_profile.vertical_total_stress(3) == 50000.0
+    assert soil_profile.vertical_total_stress(5) == 90000.0
+    assert soil_profile.vertical_total_stress(6) == 105000.0
+
+    soil_profile.gwl = 3.0
+    assert soil_profile.vertical_effective_stress(2) == 30000.0
+    assert soil_profile.vertical_effective_stress(4) == 60200.0
+
+
 
 
 if __name__ == '__main__':
-    test_add_layer_to_soil_profile()
+    test_vertical_stress_soil_profile()

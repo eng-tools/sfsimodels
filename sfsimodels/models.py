@@ -180,7 +180,7 @@ class SoilProfile(OrderedDict):
         Determine the vertical effective stress at a single depth z_c.
         """
         sigma_v_c = self.vertical_total_stress(z_c)
-        sigma_veff_c = sigma_v_c - (z_c - self.gwl) * self.unit_weight_water
+        sigma_veff_c = sigma_v_c - max(z_c - self.gwl, 0.0) * self.unit_weight_water
         return sigma_veff_c
 
 
