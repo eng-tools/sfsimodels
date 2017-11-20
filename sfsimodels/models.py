@@ -10,40 +10,31 @@ __author__ = 'maximmillen'
 
 
 class Soil(OrderedDict):
-    """
-    An object to describe a soil profile
-    """
     g_mod = 0.0  # Shear modulus [Pa]
     phi = 0.0  # Critical friction angle [degrees]
     relative_density = 0.0  # [decimal]
-    height_crust = None  # [m]
-    height_liq = None  # Height of liquefiable layer [m]
-    gwl = None  # Ground water level [m]
-    unit_weight_crust = None  # N/m3
-    unit_sat_weight_liq = None  # TODO: use specific gravity and void ratio
-    unit_weight_water = 9800.  # [N/m3]
-    crust_cohesion = 0.0  # [Pa]
-    crust_phi = 0.0  # [degrees]
+    unit_weight = None  # N/m3
+    unit_sat_weight = None  # TODO: use specific gravity and void ratio
+    cohesion = 0.0  # [Pa]
     poissons_ratio = 0.0
     e_min = 0.0
     e_max = 0.0
     e_cr0 = 0.0
     p_cr0 = 0.0
     lamb_crl = 0.0
-    clay_crust = True  # deprecated
+
+    # Calculated values
+    phi_r = None
+    e_initial = None
+    k_0 = None
 
     inputs = [
         "g_mod",
         "phi",
         "relative_density",
-        "height_crust",
-        "height_liq",
-        "gwl",
-        "unit_weight_crust",
-        "unit_sat_weight_liq",
-        "unit_weight_water",
-        "crust_cohesion",
-        "crust_phi",
+        "unit_weight",
+        "unit_sat_weight",
+        "cohesion",
         "poissons_ratio",
         "e_min",
         "e_max",
@@ -51,11 +42,6 @@ class Soil(OrderedDict):
         "p_cr0",
         "lamb_crl"
     ]
-
-    # Calculated values
-    phi_r = None
-    e_initial = None
-    k_0 = None
 
     @property
     def e_initial(self):
@@ -75,28 +61,95 @@ class Soil(OrderedDict):
         return self.e_cr0 - self.lamb_crl * math.log(p / self.p_cr0)
 
     @property
+    def n1_60(self):
+        return (self.relative_density * 100. / 15) ** 2
+
+
+class SoilProfile(OrderedDict):
+    """
+    An object to describe a soil profile
+    """
+
+    gwl = None  # Ground water level [m]
+    unit_weight_water = 9800.  # [N/m3]
+    _layers = OrderedDict([(0, Soil())])  # [depth to top of layer, Soil object]
+
+    inputs = [
+        "gwl",
+        "unit_weight_water",
+        "layers"
+    ]
+
+    def add_layer(self, depth, soil):
+        self._layers[depth] = soil
+        self._sort_layers()
+
+    def _sort_layers(self):
+        """
+        Sort the layers by depth.
+        :return:
+        """
+        self._layers = OrderedDict(sorted(self._layers.items(), key=lambda t: t[0]))
+
+    @property
+    def layers(self):
+        return self._layers
+
+    def remove_layer(self, depth):
+        del self._layers[depth]
+
+    def layer(self, index):
+        return list(self._layers.values())[index]
+
+    def layer_depth(self, index):
+        return self.depths[index]
+
+    def n_layers(self):
+        """
+        Number of soil layers
+        :return:
+        """
+        return len(self._layers)
+
+    @property
+    def depths(self):
+        """
+        An ordered list of depths.
+        :return:
+        """
+        return list(self._layers.keys())
+
+
+
+    @property
     def equivalent_crust_cohesion(self):
         """
         Calculate the equivalent crust cohesion strength according to Karamitros et al. 2013 sett, pg 8 eq. 14
         :return: equivalent cohesion [Pa]
         """
-        crust_phi_r = math.radians(self.crust_phi)
-        equivalent_cohesion = self.crust_cohesion + self.k_0 * self.crust_effective_unit_weight * \
-                                                    self.height_crust / 2 * math.tan(crust_phi_r)
-        return equivalent_cohesion
+        if len(self.layers) > 1:
+            crust = self.layer(0)
+            crust_phi_r = math.radians(crust.phi)
+            equivalent_cohesion = crust.cohesion + crust.k_0 * self.crust_effective_unit_weight * \
+                                                    self.layer_depth(1) / 2 * math.tan(crust_phi_r)
+            return equivalent_cohesion
 
     @property
     def crust_effective_unit_weight(self):
-        total_stress_base = self.height_crust * self.unit_weight_crust
-        pore_pressure_base = (self.height_crust - self.gwl) * self.unit_weight_water
-        unit_weight_eff = (total_stress_base - pore_pressure_base) / self.height_crust
-        return unit_weight_eff
+        if len(self.layers) > 1:
+            crust = self.layer(0)
+            crust_height = self.layer_depth(1)
+            total_stress_base = crust_height * crust.unit_weight
+            pore_pressure_base = (crust_height - self.gwl) * self.unit_weight_water
+            unit_weight_eff = (total_stress_base - pore_pressure_base) / crust_height
+            return unit_weight_eff
 
-    @property
-    def n1_60(self):
-        return (self.relative_density * 100. / 15) ** 2
 
     def vertical_total_stress(self, z):
+        """
+        Determine the vertical total stress at depth z, where z can be a number or an array of numbers.
+        """
+
         if isinstance(z, numbers.Real):
             return self.one_vertical_total_stress(z)
         else:
@@ -106,12 +159,26 @@ class Soil(OrderedDict):
             return np.array(sigma_v_effs)
 
     def one_vertical_total_stress(self, z_c):
-        if z_c <= self.height_crust:
-            return z_c * self.unit_weight_crust
-        else:
-            return self.height_crust * self.unit_weight_crust + (z_c - self.height_crust) * self.unit_sat_weight_liq
+        """
+        Determine the vertical total stress at a single depth z_c.
+        """
+        total_stress = 0.0
+        depths = self.depths
+        for i in range(len(depths)):
+            if z_c > depths[i]:
+                if i < len(depths) - 1 and z_c > depths[i + 1]:
+                    height = depths[i + 1] - depths[i]
+                    total_stress += height * self.layer(i).unit_weight
+                else:
+                    height = z_c - depths[i]
+                    total_stress += height * self.layer(i).unit_weight
+                    break
+        return total_stress
 
     def vertical_effective_stress(self, z_c):
+        """
+        Determine the vertical effective stress at a single depth z_c.
+        """
         sigma_v_c = self.vertical_total_stress(z_c)
         sigma_veff_c = sigma_v_c - (z_c - self.gwl) * self.unit_weight_water
         return sigma_veff_c
@@ -125,14 +192,16 @@ class Hazard(OrderedDict):
     r_factor = 1.0
     n_factor = 1.0
     magnitude = 0.0
-    corner_period = 0.0
+    corner_period = -1.0
     corner_acc_factor = 0.0
+    site_class = None
 
     inputs = [
         "z_factor",
         "r_factor",
         "n_factor",
         "magnitude",
+        "site_class",
         "corner_period",
         "corner_acc_factor"
     ]
@@ -164,6 +233,9 @@ class Hazard(OrderedDict):
         """
         msf = 10. ** 2.24 / self.magnitude ** 2.56
         return msf
+
+    # def define_hazard_by_code(self, z_factor, r_factor, n_factor, site_class="C", code="NZS"):
+    #     pass
 
 
 class Foundation(OrderedDict):
@@ -251,13 +323,19 @@ class Concrete(OrderedDict):
     """
     An object to describe reinforced concrete
     """
+    fc = 30.0e6  # Pa
     fy = 300.0e6  # Pa
     youngs_steel = 200e9  # Pa
+    poissons_ratio = 0.18
 
     inputs = [
             'fy',
             'youngs_steel'
     ]
+
+    @property
+    def youngs_concrete(self):
+        return (3320 * np.sqrt(self.fc / 1e6) + 6900.0) * 1e6
 
 
 class Building(OrderedDict):
@@ -362,10 +440,7 @@ class WallBuilding(Building):
     def inputs(self):
         input_list = super(WallBuilding, self).inputs
         new_inputs = [
-        "bay_lengths",
-        "beam_depths",
-        "n_seismic_frames",
-        "n_gravity_frames"
+        "n_walls",
     ]
         return input_list + new_inputs
 
