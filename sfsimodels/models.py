@@ -435,12 +435,16 @@ class FrameBuilding(Building):
 
 class WallBuilding(Building):
     n_walls = 1
+    wall_depth = 0.0  # m
+    wall_width = 0.0  # m
 
     @property
     def inputs(self):
         input_list = super(WallBuilding, self).inputs
         new_inputs = [
         "n_walls",
+        "wall_depth",
+        "wall_width"
     ]
         return input_list + new_inputs
 

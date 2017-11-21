@@ -47,7 +47,11 @@ def format_value(value):
             value[i] = vv
         return "[" + ", ".join(value) + "]"
 
+    elif value is None:
+        return "N/A"
+
     else:
+
         return "{0:.3g}".format(value)
 
 
