@@ -24,7 +24,7 @@ def test_vertical_stress_soil_profile():
     unit_weights = [15000.0, 20000.0, 15000.0]
     counter = 0
     for depth in soil_profile.layers:
-        soil_profile.layers[depth].unit_weight = unit_weights[counter]
+        soil_profile.layers[depth].unit_dry_weight = unit_weights[counter]
         counter += 1
 
     assert soil_profile.vertical_total_stress(1) == 15000.0

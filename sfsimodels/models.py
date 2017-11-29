@@ -13,7 +13,7 @@ class Soil(OrderedDict):
     g_mod = 0.0  # Shear modulus [Pa]
     phi = 0.0  # Critical friction angle [degrees]
     relative_density = 0.0  # [decimal]
-    unit_weight = None  # N/m3
+    unit_dry_weight = None  # N/m3
     unit_sat_weight = None  # TODO: use specific gravity and void ratio
     cohesion = 0.0  # [Pa]
     poissons_ratio = 0.0
@@ -22,6 +22,7 @@ class Soil(OrderedDict):
     e_cr0 = 0.0
     p_cr0 = 0.0
     lamb_crl = 0.0
+    saturation = 0.0
 
     # Calculated values
     phi_r = None
@@ -32,7 +33,7 @@ class Soil(OrderedDict):
         "g_mod",
         "phi",
         "relative_density",
-        "unit_weight",
+        "unit_dry_weight",
         "unit_sat_weight",
         "cohesion",
         "poissons_ratio",
@@ -42,6 +43,13 @@ class Soil(OrderedDict):
         "p_cr0",
         "lamb_crl"
     ]
+
+    @property
+    def unit_weight(self):
+        if self.saturation:
+            return self.unit_sat_weight
+        else:
+            return self.unit_dry_weight
 
     @property
     def e_initial(self):
