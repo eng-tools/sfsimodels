@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='sfsimodels',
-      version='0.4.0',
+      version='0.4.1',
       description='A set of standard models for assessing structural and geotechnical problems',
       url='',
       author='Maxim Millen',
