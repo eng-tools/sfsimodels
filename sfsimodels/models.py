@@ -288,7 +288,7 @@ class RaftFoundation(Foundation):
 
     @property
     def i_ll(self):
-        return self.length ** 3 * self.width / 12
+        return self.length * self.width ** 3 / 12
 
     @property
     def mass(self):

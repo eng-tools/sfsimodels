@@ -45,6 +45,10 @@ def test_raft_foundation():
     fd.density = 3
     fd.height = 0.1
     assert isclose(fd.mass, 7.2, rel_tol=0.0001)
+    i_ll = fd.width ** 3 * fd.length / 12
+    i_ww = fd.length ** 3 * fd.width / 12
+    assert isclose(fd.i_ll, i_ll, rel_tol=0.001)
+    assert isclose(fd.i_ww, i_ww, rel_tol=0.001)
 
 
 def test_pad_foundation():
