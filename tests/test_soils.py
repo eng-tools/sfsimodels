@@ -37,12 +37,40 @@ def test_vertical_stress_soil_profile():
     assert soil_profile.vertical_effective_stress(4) == 60200.0
 
 
-def test_soil():
+def test_void_ratio_setter():
     sl = models.Soil()
     sl.unit_dry_weight = 17000
     assert sl.specific_gravity is None
     sl.e_curr = 0.7
     assert isclose(sl.specific_gravity, 2.949, rel_tol=0.01)
+    # check that unit_dry_weight is still consistent
+    sl.unit_dry_weight = 17000
+
+
+def test_specific_gravity_setter():
+    sl = models.Soil()
+    sl.e_curr = 0.7
+    assert sl.unit_dry_weight is None
+    sl.specific_gravity = 2.95
+    assert isclose(sl.unit_dry_weight, 17000, rel_tol=0.01)
+    # check that void ratio is still consistent
+    sl.e_curr = 0.7
+
+
+def test_dry_unit_weight_setter():
+    sl = models.Soil()
+    sl.e_curr = 0.7
+    assert sl.specific_gravity is None
+    sl.unit_dry_weight = 17000
+    assert isclose(sl.specific_gravity, 2.949, rel_tol=0.01)
+    # check that void ratio is still consistent
+    sl.e_curr = 0.7
+
+
+def test_sat_weight_setter():
+    sl = models.Soil()
+    sl.unit_dry_weight = 17000
+    sl.e_curr = 0.7
     assert sl.saturation is None
     sl.unit_sat_weight = 18000
     assert isclose(sl.saturation, 0.248, 0.01)
@@ -56,7 +84,7 @@ def test_saturation_setter_on_soil():
     assert sl.saturation is None
     assert sl.unit_sat_weight is None
     sl.saturation = 1.0
-    print(sl.unit_sat_weight)
+    assert isclose(sl.unit_sat_weight, 21035.3, rel_tol=0.01)
 
 
 
