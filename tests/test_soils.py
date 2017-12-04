@@ -1,5 +1,5 @@
 from sfsimodels import models
-from tests.checking_tools import isclose
+from sfsimodels.checking_tools import isclose
 
 
 def test_add_layer_to_soil_profile():

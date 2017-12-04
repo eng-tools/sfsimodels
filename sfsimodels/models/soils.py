@@ -1,12 +1,12 @@
-import math
 import numbers
 from collections import OrderedDict
 
 import numpy as np
 
+import math
 from sfsimodels.exceptions import ModelError
 from sfsimodels.models.abstract_models import PhysicalObject
-from tests import checking_tools as ct
+from sfsimodels import checking_tools as ct
 
 
 class Soil(PhysicalObject):

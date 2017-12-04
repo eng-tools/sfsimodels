@@ -1,12 +1,12 @@
 import math
 import numbers
 
-
 import numpy as np
 
 from sfsimodels.exceptions import ModelError
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models import Hazard, Foundation, Soil
+
 
 
 class Concrete(PhysicalObject):
@@ -22,8 +22,8 @@ class Concrete(PhysicalObject):
         self.poissons_ratio = piossons_ratio
 
     inputs = [
-            'fy',
-            'youngs_steel'
+        'fy',
+        'youngs_steel'
     ]
 
     @property
@@ -38,6 +38,9 @@ class Building(PhysicalObject):
     physical_type = "building"
     _floor_length = None
     _floor_width = None
+    _interstorey_heights = np.array([0.0])  # m
+    _storey_masses = np.array([0.0])  # kg
+    _concrete = Concrete()
     g = 9.81  # m/s2  # gravity
 
     inputs = [
@@ -46,11 +49,6 @@ class Building(PhysicalObject):
         'interstorey_heights',
         'n_storeys'
     ]
-
-    def __init__(self, interstorey_height=3.4, storey_mass=40.e3):
-        self.concrete = Concrete()
-        self._interstorey_heights = np.array([interstorey_height])  # m
-        self._storey_masses = np.array([storey_mass])  # kg
 
     @property
     def floor_length(self):
@@ -67,6 +65,14 @@ class Building(PhysicalObject):
     @floor_width.setter
     def floor_width(self, value):
         self._floor_width = value
+
+    @property
+    def concrete(self):
+        return self._concrete
+
+    @concrete.setter
+    def concrete(self, conc_inst):
+        self._concrete = conc_inst
 
     @property
     def floor_area(self):
@@ -111,25 +117,15 @@ class FrameBuilding(Building):
     _bay_lengths = np.array([])  # protected
     _beam_depths = np.array([])  # protected
 
-    def __init__(self, bay_length=6, beam_depth=0.5, n_seismic_frames=0, n_gravity_frames=0,
-                 floor_length=10, floor_width=10, interstorey_height=3.4, storey_mass=40.e3):
-        # run parent class initialiser function
-        super(Building, self).__init__(floor_length=floor_length, floor_width=floor_width,
-                                       interstorey_height=interstorey_height, storey_mass=storey_mass)
-        self.n_seismic_frames = n_seismic_frames
-        self.n_gravity_frames = n_gravity_frames
-        self._bay_lengths = np.array([bay_length])
-        self._beam_depths = np.array([beam_depth])
-
     @property
     def inputs(self):
         input_list = super(FrameBuilding, self).inputs
         new_inputs = [
-        "bay_lengths",
-        "beam_depths",
-        "n_seismic_frames",
-        "n_gravity_frames"
-    ]
+            "bay_lengths",
+            "beam_depths",
+            "n_seismic_frames",
+            "n_gravity_frames"
+        ]
         return input_list + new_inputs
 
 
@@ -159,22 +155,21 @@ class WallBuilding(Building):
     def inputs(self):
         input_list = super(WallBuilding, self).inputs
         new_inputs = [
-        "n_walls",
-        "wall_depth",
-        "wall_width"
-    ]
+            "n_walls",
+            "wall_depth",
+            "wall_width"
+        ]
         return input_list + new_inputs
-
 
 
 class Structure(PhysicalObject):
     """
     An object to describe structures.
     """
-    h_eff = None
-    mass_eff = None
-    t_fixed = None
-    mass_ratio = None
+    _h_eff = None
+    _mass_eff = None
+    _t_fixed = None
+    _mass_ratio = None
 
     inputs = [
         "h_eff",
@@ -183,9 +178,37 @@ class Structure(PhysicalObject):
         "mass_ratio"
     ]
 
-    # calculated values
-    k_eff = None
-    weight = None
+    @property
+    def h_eff(self):
+        return self._h_eff
+
+    @h_eff.setter
+    def h_eff(self, value):
+        self._h_eff = value
+
+    @property
+    def mass_eff(self):
+        return self._mass_eff
+
+    @mass_eff.setter
+    def mass_eff(self, value):
+        self._mass_eff = value
+
+    @property
+    def t_fixed(self):
+        return self._t_fixed
+
+    @t_fixed.setter
+    def t_fixed(self, value):
+        self._t_fixed = value
+
+    @property
+    def mass_ratio(self):
+        return self._mass_ratio
+
+    @mass_ratio.setter
+    def mass_ratio(self, value):
+        self._mass_ratio = value
 
     @property
     def k_eff(self):
@@ -203,7 +226,4 @@ class SoilStructureSystem(PhysicalObject):
     hz = Hazard()
     name = "Nameless"
 
-    inputs = [
-        "name"
-    ] + bd.inputs + fd.inputs + sp.inputs + hz.inputs
-
+    inputs = ["name"] + bd.inputs + fd.inputs + sp.inputs + hz.inputs

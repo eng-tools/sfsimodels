@@ -2,18 +2,19 @@ import numpy as np
 
 from sfsimodels.exceptions import ModelError
 from sfsimodels.models.abstract_models import PhysicalObject
+from sfsimodels import checking_tools as ct
 
 
 class Foundation(PhysicalObject):
     """
     An object to describe building foundations
     """
-    width = 0.0  # [m], The length of the foundation in the direction of shaking
-    length = 0.0  # [m], The length of the foundation perpendicular to the shaking
-    depth = 0.0  # [m], The depth of the foundation from the surface
-    height = 0.0  # [m], The height of the foundation from base of foundation to ground floor
-    density = 0.0  # [kg/m3], Density of foundation
-    weight = 0.0  # [kN]
+    _width = None  # [m], The length of the foundation in the direction of shaking
+    _length = None  # [m], The length of the foundation perpendicular to the shaking
+    _depth = None  # [m], The depth of the foundation from the surface
+    _height = None  # [m], The height of the foundation from base of foundation to ground floor
+    _density = None  # [kg/m3], Density of foundation
+    _mass = None  # kg
     ftype = None  # [], Foundation type
 
     inputs = [
@@ -26,11 +27,80 @@ class Foundation(PhysicalObject):
 
     @property
     def area(self):
-        return self.length * self.width
+        try:
+            return self.length * self.width
+        except TypeError:
+            return None
+
+    @property
+    def length(self):
+        return self._length
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
 
     @property
     def mass(self):
-        return self.area * self.height * self.density
+        return self._mass
+
+    @property
+    def density(self):
+        return self._density
+
+    @property
+    def weight(self):
+        return self.mass * 9.8
+
+    @length.setter
+    def length(self, value):
+        self._length = value
+
+    @width.setter
+    def width(self, value):
+        self._width = value
+
+    @height.setter
+    def height(self, value):
+        self._height = value
+
+    @density.setter
+    def density(self, value, override=False):
+        density = self._calc_density()
+        if density is not None and not ct.isclose(density, value) and not override:
+            raise ModelError("Density inconsistent with set mass")
+        self._density = value
+        mass = self._calc_mass()
+        if mass is not None and not ct.isclose(mass, self.mass):
+            self.mass = mass
+
+    @mass.setter
+    def mass(self, value, override=False):
+        mass = self._calc_mass()
+        if mass is not None and not ct.isclose(mass, value) and not override:
+            raise ModelError("Mass inconsistent with set density")
+        self._mass = value
+        density = self._calc_density()
+        if density is not None and not ct.isclose(density, self.density):
+            self.density = density
+
+    def _calc_mass(self):
+        try:
+            return self.area * self.height * self.density
+        except TypeError:
+            return None
+
+    def _calc_density(self):
+        try:
+            return self.mass / (self.area * self.height)
+        except TypeError:
+            return None
+        except ZeroDivisionError:
+            return None
 
 
 class RaftFoundation(Foundation):
@@ -46,14 +116,6 @@ class RaftFoundation(Foundation):
     @property
     def i_ll(self):
         return self.length * self.width ** 3 / 12
-
-    @property
-    def mass(self):
-        return self.area * self.height * self.density
-
-    @property
-    def weight(self):
-        return self.mass * 9.8
 
     @property
     def inputs(self):
