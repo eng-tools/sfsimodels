@@ -7,7 +7,7 @@
    :alt: PyPi version
    
 .. image:: https://coveralls.io/repos/github/eng-tools/sfsimodels/badge.svg
-:target: https://coveralls.io/github/eng-tools/sfsimodels
+   :target: https://coveralls.io/github/eng-tools/sfsimodels
 
 
 **********
