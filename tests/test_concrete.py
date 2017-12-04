@@ -1,11 +1,12 @@
 __author__ = 'maximmillen'
 
-from sfsimodels.models import Concrete
+from tests.checking_tools import isclose
+from sfsimodels.models.models import Concrete
 
 
 def test_youngs():
     concrete = Concrete()
-    assert concrete.youngs_concrete == 25084388909.2
+    assert isclose(concrete.youngs_concrete, 25084388909.2, 0.0001)
 
 
 def can_iterate():
