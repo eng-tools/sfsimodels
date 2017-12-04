@@ -1,3 +1,4 @@
 .idea/
 sfsimodels.egg-info/
 sfsimodels/__pycache__/
+dist/

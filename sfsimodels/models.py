@@ -428,14 +428,39 @@ class Structure(OrderedDict):
         return self.mass_eff / self.mass_ratio * 9.8
 
 
-class Concrete(OrderedDict):
+class PhysicalObject(object):
+    _counter = 0
+
+    def __iter__(self):  # real signature unknown
+        return self
+
+    @property
+    def attributes(self):
+        all_attributes = []
+        for item in self.__dir__():
+            if "_" != item[0]:
+                all_attributes.append(item)
+        all_attributes.sort()
+        return all_attributes
+
+    def __next__(self):
+        self._counter += 1
+        all_attributes = self.attributes
+        if self._counter == len(all_attributes):
+            raise StopIteration
+        return all_attributes[self._counter]
+
+
+class Concrete(PhysicalObject):
     """
     An object to describe reinforced concrete
     """
-    fc = 30.0e6  # Pa
-    fy = 300.0e6  # Pa
-    youngs_steel = 200e9  # Pa
-    poissons_ratio = 0.18
+
+    def __init__(self, fc=30.0e6, fy=300.0e6, youngs_steel=200e9, piossons_ratio=0.18):
+        self.fc = fc  # Pa
+        self.fy = fy  # Pa
+        self.youngs_steel = youngs_steel  # Pa
+        self.poissons_ratio = piossons_ratio
 
     inputs = [
             'fy',
