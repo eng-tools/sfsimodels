@@ -54,5 +54,20 @@ def test_pad_density_setter():
     assert isclose(fd.mass, expected_mass, rel_tol=0.0001)
 
 
+def test_zero_height_raft():
+    fd = models.RaftFoundation()
+    fd.length = 4
+    fd.width = 6
+    fd.height = 0.0
+    fd.density = 3
+    assert isclose(fd.mass, 0.0, rel_tol=0.0001)
+    fd2 = models.RaftFoundation()
+    fd2.length = 4
+    fd2.width = 6
+    fd2.height = 0.0
+    fd2.mass = 3
+    assert fd2.density is None
+
+
 if __name__ == '__main__':
-    test_pad_density_setter()
+    test_zero_height_raft()
