@@ -9,24 +9,26 @@ from sfsimodels.models.abstract_models import PhysicalObject
 
 
 class Soil(PhysicalObject):
-    g_mod = 0.0  # Shear modulus [Pa]
-    phi = 0.0  # Critical friction angle [degrees]
-    relative_density = 0.0  # [decimal]
-    unit_dry_weight = None  # N/m3
-    unit_sat_weight = None  # TODO: use specific gravity and void ratio
-    cohesion = 0.0  # [Pa]
-    poissons_ratio = 0.0
-    e_min = 0.0
-    e_max = 0.0
+    # strength parameters
+    _phi = None
+    _cohesion = None
+    # volume and weight
+    _unit_dry_weight = None
+    _e_min = None
+    _e_max = None
+    _e_curr = None
+    _relative_density = None  # [decimal]
+    _specific_gravity = None
+    _unit_sat_weight = None
+    _saturation = None
+    _pw = 1000  # kg/m3  # specific weight of water
+    # deformation parameters
+    _g_mod = None  # Shear modulus [Pa]
+    _poissons_ratio = None
+    # critical state parameters
     e_cr0 = 0.0
     p_cr0 = 0.0
     lamb_crl = 0.0
-    saturation = 0.0
-
-    # Calculated values
-    phi_r = None
-    e_initial = None
-    k_0 = None
 
     inputs = [
         "g_mod",
@@ -45,14 +47,161 @@ class Soil(PhysicalObject):
 
     @property
     def unit_weight(self):
-        if self.saturation:
-            return self.unit_sat_weight
-        else:
-            return self.unit_dry_weight
+        if hasattr(self, 'saturation'):
+            if self.saturation:
+                return self.unit_sat_weight
+        return self.unit_dry_weight
 
     @property
-    def e_initial(self):
-        return self.e_max - self.relative_density * (self.e_max - self.e_min)
+    def phi(self):
+        return self._phi
+
+    @phi.setter
+    def phi(self, value):
+        self._phi = value
+
+    @property
+    def cohesion(self):
+        return self._cohesion
+
+    @cohesion.setter
+    def cohesion(self, value):
+        self._cohesion = value
+
+    @property
+    def unit_dry_weight(self):
+        return self._unit_dry_weight
+
+    @unit_dry_weight.setter
+    def unit_dry_weight(self, value, override=False):
+        self._unit_dry_weight = value
+        if self.e_curr is not None:
+            specific_gravity = (1 + self.e_curr) * self.unit_dry_weight / self._pw
+            if self.specific_gravity is not None and not override:
+                if self._specific_gravity != specific_gravity:
+                    raise ModelError("New unit dry weight is inconsistent with specific gravity and void ratio")
+            else:
+                self._specific_gravity = specific_gravity
+        elif self._specific_gravity is not None:
+            self.e_curr = (self._specific_gravity * self._pw) / self._unit_dry_weight - 1
+
+    @property
+    def e_curr(self):
+        return self._e_curr
+
+    @e_curr.setter
+    def e_curr(self, value):
+        try:
+            void_ratio = self.e_max - self.relative_density * (self.e_max - self.e_min)
+            if void_ratio != value:
+                raise ModelError("New void ratio inconsistent with relative_density")
+        except TypeError:
+            # TODO: add check for specific gravity
+            self._e_curr = value
+
+    @property
+    def specific_gravity(self):
+        return self._specific_gravity
+
+    @specific_gravity.setter
+    def specific_gravity(self, value, override=False):
+        self._specific_gravity = value
+        if self.e_curr is not None:
+            unit_dry_weight = (self._specific_gravity * self._pw) / (1 + self._e_curr)
+            if self._unit_dry_weight is not None and not override:
+                if self._unit_dry_weight != unit_dry_weight:
+                    raise ModelError("specific gravity is inconsistent with set unit_dry_weight and void_ratio")
+            else:
+                self.unit_dry_weight = unit_dry_weight  # use setter method
+
+    @property
+    def saturation(self):
+        return self._saturation
+
+    @saturation.setter
+    def saturation(self, value):
+        """Volume of water to volume of voids"""
+        self._saturation = value
+
+    @property
+    def porosity(self):
+        return self.e_curr / (1 + self.e_curr)
+
+    @property
+    def _unit_void_volume(self):
+        """Return the volume of the voids for total volume equal to a unit"""
+        return self.e_curr / (1 + self.e_curr)
+
+    @property
+    def _unit_solid_volume(self):
+        """Return the volume of the solids for total volume equal to a unit"""
+        return 1.0 - self._unit_solid_volume
+
+    @property
+    def _unit_moisture_weight(self):
+        """Return the weight of the voids for total volume equal to a unit"""
+        return self.saturation * self._unit_void_volume * self._pw
+
+    @property
+    def moisture_content(self):
+        return self._unit_moisture_weight / self.unit_dry_weight
+
+    @property
+    def unit_sat_weight(self):
+        return self._unit_sat_weight
+
+    @unit_sat_weight.setter
+    def unit_sat_weight(self, value):
+        try:
+            unit_sat_weight = self._unit_moisture_weight + self.unit_dry_weight
+            if unit_sat_weight != value:
+                raise ModelError("new unit_sat_weight is inconsistent with other soil parameters")
+        except TypeError:
+            self._unit_sat_weight = value
+            # try to set other parameters
+            if None not in [self.unit_dry_weight]:
+                unit_moisture_weight = self.unit_sat_weight - self.unit_dry_weight
+                unit_moisture_volume = unit_moisture_weight / self._pw
+                if self.e_curr is not None:  # can set saturation
+                    self.saturation = unit_moisture_volume / self._unit_void_volume
+                if self.saturation is not None:
+                    unit_void_volume = unit_moisture_volume / self.saturation
+                    if self.specific_gravity is not None:
+                        # set the dry weight and automatically sets the current void ratio
+                        self.unit_dry_weight = (1 - unit_void_volume) * self.specific_gravity * self._pw
+                    elif self.e_curr is not None:
+                        self.unit_dry_weight = self.unit_sat_weight - unit_moisture_weight
+
+    @property
+    def e_min(self):
+        return self._e_min
+
+    @e_min.setter
+    def e_min(self, value):
+        self._e_min = value
+
+    @property
+    def e_max(self):
+        return self._e_max
+
+    @e_max.setter
+    def e_max(self, value):
+        self._e_max = value
+
+    @property
+    def relative_density(self):
+        return self._relative_density
+
+    @relative_density.setter
+    def relative_density(self, value, override=False):
+        try:
+            relative_density = (self.e_max - self.e_curr) / (self.e_max - self.e_min)
+            if relative_density is not None and relative_density != value and not override:
+                    raise ModelError("New relative_density is inconsistent with e_curr")
+            self._relative_density = value
+        except TypeError:
+            self._relative_density = value
+            # TODO: set parameters
 
     @property
     def phi_r(self):
@@ -63,7 +212,7 @@ class Soil(PhysicalObject):
         k_0 = 1 - math.sin(self.phi_r)  # Jaky 1944
         return k_0
 
-    def e_cr(self, p):
+    def e_critical(self, p):
         p = float(p)
         return self.e_cr0 - self.lamb_crl * math.log(p / self.p_cr0)
 

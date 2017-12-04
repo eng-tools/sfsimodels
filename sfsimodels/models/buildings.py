@@ -13,6 +13,7 @@ class Concrete(PhysicalObject):
     """
     An object to describe reinforced concrete
     """
+    physical_type = "concrete"
 
     def __init__(self, fc=30.0e6, fy=300.0e6, youngs_steel=200e9, piossons_ratio=0.18):
         self.fc = fc  # Pa
@@ -34,11 +35,7 @@ class Building(PhysicalObject):
     """
     An object to define Buildings
     """
-    floor_length = 10.0  # m
-    floor_width = 10.0  # m
-    concrete = Concrete()
-    _interstorey_heights = np.array([3.4])  # m
-    _storey_masses = np.array([40.0e3])  # kg
+    physical_type = "building"
     g = 9.81  # m/s2  # gravity
 
     inputs = [
@@ -47,6 +44,13 @@ class Building(PhysicalObject):
         'interstorey_heights',
         'n_storeys'
     ]
+
+    def __init__(self, floor_length=10, floor_width=10, interstorey_height=3.4, storey_mass=40.e3):
+        self.floor_length = floor_length  # m
+        self.floor_width = floor_width  # m
+        self.concrete = Concrete()
+        self._interstorey_heights = np.array([interstorey_height])  # m
+        self._storey_masses = np.array([storey_mass])  # kg
 
     @property
     def floor_area(self):
@@ -85,10 +89,18 @@ class Building(PhysicalObject):
 
 
 class FrameBuilding(Building):
-    _bay_lengths = np.array([6])  # protected
-    _beam_depths = np.array([.5])  # protected
-    n_seismic_frames = 2
-    n_gravity_frames = 0
+    _bay_lengths = np.array([])  # protected
+    _beam_depths = np.array([])  # protected
+
+    def __init__(self, bay_length=6, beam_depth=0.5, n_seismic_frames=0, n_gravity_frames=0,
+                 floor_length=10, floor_width=10, interstorey_height=3.4, storey_mass=40.e3):
+        # run parent class initialiser function
+        super(Building, self).__init__(floor_length=floor_length, floor_width=floor_width,
+                                       interstorey_height=interstorey_height, storey_mass=storey_mass)
+        self.n_seismic_frames = n_seismic_frames
+        self.n_gravity_frames = n_gravity_frames
+        self._bay_lengths = np.array([bay_length])
+        self._beam_depths = np.array([beam_depth])
 
     @property
     def inputs(self):
