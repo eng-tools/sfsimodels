@@ -36,6 +36,8 @@ class Building(PhysicalObject):
     An object to define Buildings
     """
     physical_type = "building"
+    _floor_length = None
+    _floor_width = None
     g = 9.81  # m/s2  # gravity
 
     inputs = [
@@ -45,16 +47,33 @@ class Building(PhysicalObject):
         'n_storeys'
     ]
 
-    def __init__(self, floor_length=10, floor_width=10, interstorey_height=3.4, storey_mass=40.e3):
-        self.floor_length = floor_length  # m
-        self.floor_width = floor_width  # m
+    def __init__(self, interstorey_height=3.4, storey_mass=40.e3):
         self.concrete = Concrete()
         self._interstorey_heights = np.array([interstorey_height])  # m
         self._storey_masses = np.array([storey_mass])  # kg
 
     @property
+    def floor_length(self):
+        return self._floor_length
+
+    @floor_length.setter
+    def floor_length(self, value):
+        self._floor_length = value
+
+    @property
+    def floor_width(self):
+        return self._floor_width
+
+    @floor_width.setter
+    def floor_width(self, value):
+        self._floor_width = value
+
+    @property
     def floor_area(self):
-        return self.floor_length * self.floor_width
+        try:
+            return self.floor_length * self.floor_width
+        except TypeError:
+            return None
 
     @property
     def heights(self):

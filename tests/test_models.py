@@ -35,5 +35,12 @@ def test_pad_foundation():
     assert fd.area == 4 * 4 * 2 * 3
 
 
+def test_floor_area():
+    building = models.Building()
+    building.floor_length = 10.0
+    assert building.floor_area is None
+    building.floor_width = 12.0
+    assert building.floor_area == 120
+
 if __name__ == '__main__':
-    test_pad_foundation()
+    test_floor_area()
