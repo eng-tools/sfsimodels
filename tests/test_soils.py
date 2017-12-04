@@ -1,4 +1,5 @@
 from sfsimodels import models
+from tests.checking_tools import isclose
 
 
 def test_add_layer_to_soil_profile():
@@ -38,14 +39,26 @@ def test_vertical_stress_soil_profile():
 
 def test_soil():
     sl = models.Soil()
-
     sl.unit_dry_weight = 17000
-    sl.unit_sat_weight = 18000
-    print(sl.e_curr)
     assert sl.specific_gravity is None
     sl.e_curr = 0.7
-    print(sl.specific_gravity)
+    assert isclose(sl.specific_gravity, 2.949, rel_tol=0.01)
+    assert sl.saturation is None
+    sl.unit_sat_weight = 18000
+    assert isclose(sl.saturation, 0.248, 0.01)
+    print(sl.saturation)
+
+
+def test_saturation_setter_on_soil():
+    sl = models.Soil()
+    sl.unit_dry_weight = 17000
+    sl.e_curr = 0.7
+    assert sl.saturation is None
+    assert sl.unit_sat_weight is None
+    sl.saturation = 1.0
+    print(sl.unit_sat_weight)
+
 
 
 if __name__ == '__main__':
-    test_soil()
+    test_saturation_setter_on_soil()
