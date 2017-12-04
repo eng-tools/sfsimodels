@@ -1,7 +1,7 @@
 __author__ = 'maximmillen'
 
 from tests.checking_tools import isclose
-from sfsimodels.models.models import Concrete
+from sfsimodels.models.buildings import Concrete
 
 
 def test_youngs():

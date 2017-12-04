@@ -1,4 +1,4 @@
-from sfsimodels.models import models
+from sfsimodels import models
 from tests.checking_tools import isclose
 
 
