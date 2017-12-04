@@ -47,9 +47,9 @@ class Soil(PhysicalObject):
 
     @property
     def unit_weight(self):
-        if hasattr(self, 'saturation'):
-            if self.saturation:
-                return self.unit_sat_weight
+
+        if self.saturation is not None:
+            return self._unit_moisture_weight + self.unit_dry_weight
         return self.unit_dry_weight
 
     @property
@@ -90,14 +90,32 @@ class Soil(PhysicalObject):
         return self._e_curr
 
     @e_curr.setter
-    def e_curr(self, value):
+    def e_curr(self, value, override=False):
         try:
             void_ratio = self.e_max - self.relative_density * (self.e_max - self.e_min)
-            if void_ratio != value:
+            if void_ratio is not None and void_ratio != value and not override:
                 raise ModelError("New void ratio inconsistent with relative_density")
         except TypeError:
-            # TODO: add check for specific gravity
-            self._e_curr = value
+            pass
+        try:
+            void_ratio = self.specific_gravity * self._pw / self.unit_dry_weight - 1
+            if void_ratio is not None and void_ratio != value and not override:
+                raise ModelError("New void ratio inconsistent with specific_gravity")
+        except TypeError:
+            pass
+
+        self._e_curr = value
+        try:
+            self.unit_dry_weight = (self._specific_gravity * self._pw) / (1 + self._e_curr)
+        except TypeError:
+            pass
+        try:
+            self.specific_gravity = (self.unit_dry_weight * self._pw) / (1 + self._e_curr)
+        except TypeError:
+            pass
+
+
+
 
     @property
     def specific_gravity(self):
@@ -107,25 +125,35 @@ class Soil(PhysicalObject):
     def specific_gravity(self, value, override=False):
         self._specific_gravity = value
         if self.e_curr is not None:
-            unit_dry_weight = (self._specific_gravity * self._pw) / (1 + self._e_curr)
+            unit_dry_weight = (self._specific_gravity * self._pw) / (1 + self._e_curr)  # TODO: should calc spec gravity then consistency
             if self._unit_dry_weight is not None and not override:
                 if self._unit_dry_weight != unit_dry_weight:
                     raise ModelError("specific gravity is inconsistent with set unit_dry_weight and void_ratio")
             else:
-                self.unit_dry_weight = unit_dry_weight  # use setter method
+                self.unit_dry_weight = unit_dry_weight  # makes use of setter method
 
     @property
     def saturation(self):
         return self._saturation
 
     @saturation.setter
-    def saturation(self, value):
+    def saturation(self, value, override=False):
         """Volume of water to volume of voids"""
-        self._saturation = value
+        try:
+            unit_moisture_weight = self.unit_sat_weight - self.unit_dry_weight
+            unit_moisture_volume = unit_moisture_weight / self._pw
+            saturation = unit_moisture_volume / self._unit_void_volume
+            if saturation is not None and saturation != value and override:
+                raise ModelError("new saturation is inconsistent with unit weights")
+        except TypeError:
+            self._saturation = value  # TODO: set parameters
 
     @property
     def porosity(self):
-        return self.e_curr / (1 + self.e_curr)
+        try:
+            return self.e_curr / (1 + self.e_curr)
+        except TypeError:
+            return None
 
     @property
     def _unit_void_volume(self):
@@ -144,7 +172,10 @@ class Soil(PhysicalObject):
 
     @property
     def moisture_content(self):
-        return self._unit_moisture_weight / self.unit_dry_weight
+        try:
+            return self._unit_moisture_weight / self.unit_dry_weight
+        except TypeError:
+            return None
 
     @property
     def unit_sat_weight(self):
@@ -201,6 +232,8 @@ class Soil(PhysicalObject):
             self._relative_density = value
         except TypeError:
             self._relative_density = value
+            if self.e_curr:
+                pass
             # TODO: set parameters
 
     @property

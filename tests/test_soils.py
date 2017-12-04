@@ -38,7 +38,13 @@ def test_vertical_stress_soil_profile():
 
 def test_soil():
     sl = models.Soil()
-    sl.unit_sat_weight = 17000
+
+    sl.unit_dry_weight = 17000
+    sl.unit_sat_weight = 18000
+    print(sl.e_curr)
+    assert sl.specific_gravity is None
+    sl.e_curr = 0.7
+    print(sl.specific_gravity)
 
 
 if __name__ == '__main__':
