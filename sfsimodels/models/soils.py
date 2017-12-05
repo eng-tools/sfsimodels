@@ -23,6 +23,7 @@ class Soil(PhysicalObject):
     _unit_sat_weight = None
     _saturation = None
     _pw = 9800  # N/m3  # specific weight of water
+    _permeability = None
     # deformation parameters
     _g_mod = None  # Shear modulus [Pa]
     _poissons_ratio = None
@@ -93,6 +94,10 @@ class Soil(PhysicalObject):
     @property
     def unit_sat_weight(self):
         return self._unit_sat_weight
+
+    @property
+    def permeability(self):
+        return self._permeability
 
     @property
     def phi_r(self):
@@ -235,6 +240,10 @@ class Soil(PhysicalObject):
     def cohesion(self, value):
         self._cohesion = value
 
+    @permeability.setter
+    def permeability(self, value):
+        self._permeability = value
+
     def e_critical(self, p):
         p = float(p)
         return self.e_cr0 - self.lamb_crl * math.log(p / self.p_cr0)
@@ -286,6 +295,15 @@ class Soil(PhysicalObject):
     def _unit_moisture_weight(self):
         """Return the weight of the voids for total volume equal to a unit"""
         return self.saturation * self._unit_void_volume * self._pw
+
+
+class SoilLayer(Soil):
+
+    def __init__(self, depth=0.0, height=1000, top_total_stress=0.0, top_pore_pressure=0.0):
+        self.height = height  # m  from top of layer to bottom of layer
+        self.depth = depth  # m from ground surface to top of layer
+        self.top_total_stress = top_total_stress  # m total vertical stress at the top
+        self.top_pore_pressure = top_pore_pressure  # m pore pressure at the top
 
 
 class SoilProfile(PhysicalObject):
@@ -406,3 +424,4 @@ class SoilProfile(PhysicalObject):
         sigma_veff_c = sigma_v_c - max(z_c - self.gwl, 0.0) * self.unit_weight_water
         return sigma_veff_c
 
+# TODO: extend to have LiquefiableSoil
