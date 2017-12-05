@@ -39,18 +39,16 @@ def load_soil_sample_data(sp):
     sp.g_mod = 60.0e6  # [Pa]
     sp.phi = 30  # [degrees]
     sp.relative_density = .40  # [decimal]
-    sp.height_crust = 2.  # [m]
-    sp.height_liq = 5.  # [m]
     sp.gwl = 2.  # [m], ground water level
-    sp.unit_weight_crust = 17000  # [N/m3]
-    sp.unit_sat_weight_liq = 18000  # [N/m3]
+    sp.unit_dry_weight = 17000  # [N/m3]
+    sp.unit_sat_weight = 18000  # [N/m3]
     sp.unit_weight_water = 9800  # [N/m3]
     sp.cohesion = 10.0  # [Pa]
     sp.poissons_ratio = 0.22
     sp.e_min = 0.55
     sp.e_max = 0.95
-    sp.e_cr0 = 0.79  # Jin et al. 2015
-    sp.p_cr0 = 0.7  # Jin et al. 2015
+    sp.e_critical0 = 0.79  # Jin et al. 2015
+    sp.p_critical0 = 0.7  # Jin et al. 2015
     sp.lamb_crl = 0.015  # Jin et al. 2015
 
 
@@ -64,6 +62,7 @@ def load_foundation_sample_data(fd):
     fd.width = 16.0  # m
     fd.length = 18.0  # m
     fd.depth = 0.0  # m
+    fd.mass = 0.0
 
 
 def load_structure_sample_data(st):
