@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False):
+def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, prefix=""):
     """
     Compile the properties to a table.
     :param format:
@@ -18,9 +18,10 @@ def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False):
     for item in property_list:
         if hasattr(obj, item):
             value = getattr(obj, item)
+            print(item, value)
             value_str = format_value(value)
             if oformat == "latex":
-                para += "{0} & {1}\\\\\n".format(format_name(item), value_str)
+                para += "{0} & {1}\\\\\n".format(prefix + format_name(item), value_str)
     if table_ends:
         para = add_table_ends(para, oformat)
     return para

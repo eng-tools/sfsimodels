@@ -4,6 +4,7 @@ import math
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models import Hazard, Foundation, Soil
 from sfsimodels.models.material import Concrete
+from sfsimodels.exceptions import ModelError
 
 
 class Building(PhysicalObject):
@@ -16,7 +17,7 @@ class Building(PhysicalObject):
     _interstorey_heights = np.array([0.0])  # m
     _storey_masses = np.array([0.0])  # kg
     _concrete = Concrete()
-    g = 9.81  # m/s2  # gravity
+    _g = 9.81  # m/s2  # gravity
 
     inputs = [
         'floor_length',
@@ -40,6 +41,10 @@ class Building(PhysicalObject):
     @floor_width.setter
     def floor_width(self, value):
         self._floor_width = value
+
+    @property
+    def g(self):
+        return self._g
 
     @property
     def concrete(self):
@@ -84,8 +89,14 @@ class Building(PhysicalObject):
     def storey_masses(self, masses):
         self._storey_masses = np.array(masses)
 
-    def set_storey_masses_by_stresses(self, stresses):
-        self.storey_masses = stresses * self.floor_area / 9.8
+    def set_storey_masses_by_pressure(self, stresses):
+        if hasattr(stresses, "length"):
+            if len(stresses) != self.n_storeys:
+                raise ModelError("Length of defined storey pressures: {0}, "
+                                 "must equal number of stories: {1}".format(len(stresses), self.n_storeys))
+            self.storey_masses = stresses * self.floor_area / self._g
+        else:
+            self.storey_masses = stresses * np.ones(self.n_storeys) * self.floor_area / self._g
 
 
 class FrameBuilding(Building):
@@ -209,7 +220,7 @@ class Structure(PhysicalObject):
 
     @property
     def weight(self):
-        return self.mass_eff / self.mass_ratio * 9.8
+        return self.mass_eff / self.mass_ratio * self._g
 
 
 class SoilStructureSystem(PhysicalObject):

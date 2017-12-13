@@ -25,6 +25,9 @@ class Foundation(PhysicalObject):
         "density"
     ]
 
+    def __format__(self, format_spec):
+        return "Foundation"
+
     @property
     def area(self):
         try:
@@ -134,7 +137,7 @@ class PadFoundation(Foundation):
     ftype = "pad"
     n_pads_l = 4  # Number of pads in length direction
     n_pads_w = 3  # Number of pads in width direction
-    pad_length = 1.0  # m
+    pad_length = 1.0  # m  # TODO: make parameters protected
     pad_width = 1.0  # m
 
     @property
