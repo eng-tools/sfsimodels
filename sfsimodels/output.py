@@ -18,7 +18,6 @@ def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, pref
     for item in property_list:
         if hasattr(obj, item):
             value = getattr(obj, item)
-            print(item, value)
             value_str = format_value(value)
             if oformat == "latex":
                 para += "{0} & {1}\\\\\n".format(prefix + format_name(item), value_str)
@@ -69,7 +68,7 @@ def add_table_ends(para, oformat='latex', caption="caption-text", label="table")
         fpara += "\\bottomrule\n"
         fpara += "\\end{tabular}\n"
         fpara += "\\caption{%s \label{tab:%s}}\n" % (caption, label)
-        fpara += "\\end{table}\n"
+        fpara += "\\end{table}\n\n"
     return fpara
 
 
