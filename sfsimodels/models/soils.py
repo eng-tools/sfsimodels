@@ -109,6 +109,14 @@ class Soil(PhysicalObject):
         return k_0
 
     @property
+    def g_mod(self):
+        return self._g_mod
+
+    @property
+    def poissons_ratio(self):
+        return self._poissons_ratio
+
+    @property
     def e_min(self):
         return self._e_min
 
@@ -243,6 +251,14 @@ class Soil(PhysicalObject):
     @permeability.setter
     def permeability(self, value):
         self._permeability = value
+
+    @g_mod.setter
+    def g_mod(self, value):
+        self._g_mod = value
+
+    @poissons_ratio.setter
+    def poissons_ratio(self, value):
+        self._poissons_ratio = value
 
     def e_critical(self, p):
         p = float(p)

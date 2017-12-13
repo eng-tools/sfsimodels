@@ -91,6 +91,8 @@ class Building(PhysicalObject):
 class FrameBuilding(Building):
     _bay_lengths = np.array([])  # protected
     _beam_depths = np.array([])  # protected
+    _n_seismic_frames = None
+    _n_gravity_frames = None
 
     @property
     def inputs(self):
@@ -119,6 +121,22 @@ class FrameBuilding(Building):
     @bay_lengths.setter
     def bay_lengths(self, bay_lengths):
         self._bay_lengths = np.array(bay_lengths)
+
+    @property
+    def n_seismic_frames(self):
+        return self._n_seismic_frames
+
+    @n_seismic_frames.setter
+    def n_seismic_frames(self, value):
+        self._n_seismic_frames = value
+
+    @property
+    def n_gravity_frames(self):
+        return self._n_gravity_frames
+
+    @n_gravity_frames.setter
+    def n_gravity_frames(self, value):
+        self._n_gravity_frames = value
 
 
 class WallBuilding(Building):
