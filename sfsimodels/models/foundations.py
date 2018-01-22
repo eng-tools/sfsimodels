@@ -9,6 +9,8 @@ class Foundation(PhysicalObject):
     """
     An object to describe building foundations
     """
+    _id = None
+    name = None
     _width = None  # [m], The length of the foundation in the direction of shaking
     _length = None  # [m], The length of the foundation perpendicular to the shaking
     _depth = None  # [m], The depth of the foundation from the surface
@@ -18,15 +20,28 @@ class Foundation(PhysicalObject):
     ftype = None  # [], Foundation type
 
     inputs = [
+        "name",
         "width",
         "length",
         "depth",
         "height",
-        "density"
+        "density",
+        "mass"
     ]
+
+    def __str__(self):
+        return "Foundation id: {0}, name: {1}".format(self.id, self.name)
 
     def __format__(self, format_spec):
         return "Foundation"
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
 
     @property
     def area(self):
@@ -112,6 +127,9 @@ class RaftFoundation(Foundation):
     """
     ftype = "raft"
 
+    def __str__(self):
+        return "RaftFoundation id: {0}, name: {1}".format(self.id, self.name)
+
     @property
     def i_ww(self):
         return self.width * self.length ** 3 / 12
@@ -139,6 +157,9 @@ class PadFoundation(Foundation):
     n_pads_w = 3  # Number of pads in width direction
     pad_length = 1.0  # m  # TODO: make parameters protected
     pad_width = 1.0  # m
+
+    def __str__(self):
+        return "PadFoundation id: {0}, name: {1}".format(self.id, self.name)
 
     @property
     def i_ww(self):

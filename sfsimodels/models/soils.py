@@ -326,19 +326,26 @@ class SoilProfile(PhysicalObject):
     """
     An object to describe a soil profile
     """
-
-    gwl = None  # Ground water level [m]
+    _id = None
+    name = None
+    _gwl = None  # Ground water level [m]
     unit_weight_water = 9800.  # [N/m3]
+    _height = None
 
     inputs = [
+        "name",
         "gwl",
         "unit_weight_water",
-        "layers"
+        "layers",
+        "height"
     ]
 
     def __init__(self):
         super(PhysicalObject, self).__init__()  # run parent class initialiser function
         self._layers = OrderedDict([(0, Soil())])  # [depth to top of layer, Soil object]
+
+    def __str__(self):
+        return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
 
     def add_layer(self, depth, soil):
         self._layers[depth] = soil
@@ -350,6 +357,30 @@ class SoilProfile(PhysicalObject):
         :return:
         """
         self._layers = OrderedDict(sorted(self._layers.items(), key=lambda t: t[0]))
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
+    def gwl(self):
+        return self._gwl
+
+    @gwl.setter
+    def gwl(self, value):
+        self._gwl = value
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, value):
+        self._height = value
 
     @property
     def layers(self):

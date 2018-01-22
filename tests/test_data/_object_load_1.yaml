@@ -1,0 +1,49 @@
+name: deng experiment LJD03
+__units__: "N, kg, m, s"
+__version__:  "0.4.11"
+__doi__: "10.1002/eqe.1181"
+Structures:
+  - _id: 0
+    name: "Small footing SDOF"
+    h_eff: 12.1  # m
+    mass_eff: 553000  # kg
+    t_eff: 1.2  # s
+    mass_ratio: 1.0
+Foundations:
+    # lengths are in metres, mass in kg
+  - _id: 0
+    name: "Small footing"
+    type: "raft"
+    length: 7.35  # m
+    width: 1.24  # m
+    depth: 2.25  # m
+    height: 1.24  # m
+    mass: 79000  # kg
+Soils:
+  - _id: 0
+    g_mod: 25300000  # Pa
+    poissons_ratio: 0.3
+    phi: 32  # degrees
+    unit_dry_weight: 16400  # N/m3
+    cohesion: 0  # Pa
+    relative_density: 0.38
+    e_min: 0.511
+    e_max: 0.887
+SoilStructureSystems:
+  - _id: 0
+    name: "SDOF w Small footing"
+    structure_id: 0
+    foundation_id: 0
+    soil_id: 0
+SoilLayer:
+    soil_id: 0
+    height: 8.967  # m
+SoilProfiles:
+  - _id: 0
+    name: "Whole profile"
+    layers:
+      - soil_id: 0
+        depth: 0.0
+    height: 8.967
+    gwl: 1000  # m
+    base: "rigid"
