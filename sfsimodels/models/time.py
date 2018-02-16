@@ -1,12 +1,10 @@
 import numpy as np
 
-from sfsimodels.exceptions import ModelError
+from sfsimodels import exceptions
 
 
 class TimeSeries(object):
-    s_d = None
-    s_v = None
-    s_a = None
+    _npts = None
 
     def __init__(self, values, dt, name="unnamed"):
         """
@@ -15,10 +13,17 @@ class TimeSeries(object):
         :param values: A sequence of values recorded at equal time steps.
         :param dt: time step
         """
-        self.mtype = "time_series"
+        self.stype = "time_series"
         self._dt = dt
         self._values = values
         self.name = name
+        self.reassess()
+
+    def reassess(self):
+        """
+        re-computes dynamic properties
+        :return:
+        """
         self._npts = len(self.values)
 
     @property
@@ -55,22 +60,6 @@ class TimeSeries(object):
         s_index, e_index = time_indices(self.npts, self.dt, start, end, index)
         self._values = np.array(self.values[s_index:e_index])
 
-    def get_section_average(self, start=0, end=-1, index=False):
-        """
-        Gets the average value of a part of series.
-
-        Common use is so that it can be patched with another record.
-
-        :param start: int or float, optional, Section start point
-        :param end: int or float, optional, Section end point
-        :param index: bool, optional, if False then start and end are considered values in time.
-        :return float, The mean value of the section.
-        """
-        s_index, e_index = time_indices(self.npts, self.dt, start, end, index)
-
-        section_average = np.mean(self.values[s_index:e_index])
-        return section_average
-
 
 def time_indices(npts, dt, start, end, index):
     """
@@ -92,6 +81,6 @@ def time_indices(npts, dt, start, end, index):
     else:
         s_index = start
         e_index = end
-    if e_index > npts:  # TODO: raise a warning not an error
-        raise ModelError("Cut point is greater than time series length")
+    if e_index > npts:
+        raise exceptions.ModelWarning("Cut point is greater than time series length")
     return s_index, e_index

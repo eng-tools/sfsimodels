@@ -4,3 +4,7 @@ class DesignError(Exception):
 
 class ModelError(Exception):
     pass
+
+
+class ModelWarning(Warning):
+    pass

@@ -1,8 +1,7 @@
 import numpy as np
 
-import math
 from sfsimodels.models.abstract_models import PhysicalObject
-from sfsimodels.models import Hazard, Foundation, Soil
+from sfsimodels.models import SeismicHazard, Foundation, Soil
 from sfsimodels.models.material import Concrete
 from sfsimodels.exceptions import ModelError
 
@@ -216,7 +215,7 @@ class Structure(PhysicalObject):
 
     @property
     def k_eff(self):
-        return 4.0 * math.pi ** 2 * self.mass_eff / self.t_fixed ** 2
+        return 4.0 * np.pi ** 2 * self.mass_eff / self.t_fixed ** 2
 
     @property
     def weight(self):
@@ -227,7 +226,7 @@ class SoilStructureSystem(PhysicalObject):
     bd = Structure()
     fd = Foundation()
     sp = Soil()
-    hz = Hazard()
+    hz = SeismicHazard()
     name = "Nameless"
 
     inputs = ["name"] + bd.inputs + fd.inputs + sp.inputs + hz.inputs

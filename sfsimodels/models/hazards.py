@@ -2,7 +2,7 @@ import math
 from sfsimodels.models.abstract_models import PhysicalObject
 
 
-class Hazard(PhysicalObject):
+class SeismicHazard(PhysicalObject):
     """
     An object to describe seismic hazard.
     """
@@ -43,14 +43,16 @@ class Hazard(PhysicalObject):
     def corner_disp(self):
         return self.corner_acc / (2 * math.pi / self.corner_period) ** 2
 
-    @property
-    def msf(self):  # TODO: move this to functions.py
-        """
-        Magnitude scaling factor
-        :return:
-        """
-        msf = 10. ** 2.24 / self.magnitude ** 2.56
-        return msf
 
-    # def define_hazard_by_code(self, z_factor, r_factor, n_factor, site_class="C", code="NZS"):
-    #     pass
+def msf(magnitude):
+    """
+    Magnitude scaling factor
+
+    :param magnitude: Earthquake moment magnitude
+    :return: float
+    """
+    magnitude_sf = 10. ** 2.24 / magnitude ** 2.56
+    return magnitude_sf
+
+# def define_hazard_by_code(self, z_factor, r_factor, n_factor, site_class="C", code="NZS"):
+#     pass

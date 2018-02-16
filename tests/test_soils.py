@@ -48,6 +48,7 @@ def test_void_ratio_setter():
 
 
 def test_specific_gravity_setter():
+    # void ratio then specific gravity
     sl = models.Soil()
     sl.e_curr = 0.7
     assert sl.unit_dry_weight is None
@@ -55,6 +56,15 @@ def test_specific_gravity_setter():
     assert isclose(sl.unit_dry_weight, 17000, rel_tol=0.01)
     # check that void ratio is still consistent
     sl.e_curr = 0.7
+
+    # specific gravity then void ratio
+    sl = models.Soil()
+    sl.specific_gravity = 2.95
+    assert sl.unit_dry_weight is None
+    sl.e_curr = 0.7
+    assert isclose(sl.unit_dry_weight, 17000, rel_tol=0.01)
+    # check that specific gravity is still consistent
+    sl.specific_gravity = 2.95
 
 
 def test_dry_unit_weight_setter():

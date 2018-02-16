@@ -2,7 +2,7 @@
 from sfsimodels import models as dm
 
 def test_model_inputs():
-    p_models = [dm.Hazard(),
+    p_models = [dm.SeismicHazard(),
                 dm.FrameBuilding(),
                 dm.WallBuilding(),
                 dm.Soil(),
