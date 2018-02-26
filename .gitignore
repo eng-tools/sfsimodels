@@ -1,4 +1,8 @@
 .idea/
 sfsimodels.egg-info/
-sfsimodels/__pycache__/
+
 dist/
+.cache/
+sfsimodels/matplotlibrc
+__pycache__/
+tests/bwplot.egg-info/
