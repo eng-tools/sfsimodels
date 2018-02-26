@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='sfsimodels',
-      version='0.4.13',
+      version='0.4.14',
       description='A set of standard models for assessing structural and geotechnical problems',
       url='https://github.com/eng-tools/sfsimodels',  # The URL to the github repo
       author='Maxim Millen',
@@ -15,7 +15,9 @@ setup(name='sfsimodels',
           'Programming Language :: Python :: 3',
       ],
       packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-      install_requires=[],
+      install_requires=[
+          "numpy"
+      ],
       keywords="geotechnical structural soil",
       # List additional groups of dependencies here (e.g. development
       # dependencies). You can install these using the following syntax,
