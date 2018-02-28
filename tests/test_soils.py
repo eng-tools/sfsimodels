@@ -97,6 +97,15 @@ def test_saturation_setter_on_soil():
     assert isclose(sl.unit_sat_weight, 21035.3, rel_tol=0.01)
 
 
+def test_relative_density_to_e_curr_setter():
+    sl = models.Soil()
+    sl.e_max = 1.0
+    sl.e_min = 0.4
+    assert sl.e_curr is None
+    sl.relative_density = 0.4
+    expected_void_ratio = sl.e_max - sl.relative_density * (sl.e_max - sl.e_min)
+    assert isclose(sl.e_curr, expected_void_ratio, rel_tol=0.01), sl.e_curr
+
 
 if __name__ == '__main__':
-    test_saturation_setter_on_soil()
+    test_specific_gravity_setter()

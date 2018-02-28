@@ -148,12 +148,6 @@ class Soil(PhysicalObject):
     @e_curr.setter
     def e_curr(self, value, override=False):
         try:
-            void_ratio = self.e_max - self.relative_density * (self.e_max - self.e_min)
-            if void_ratio is not None and void_ratio != value and not override:
-                raise ModelError("New void ratio inconsistent with relative_density")
-        except TypeError:
-            pass
-        try:
             void_ratio = self._calc_void_ratio()
             if void_ratio is not None and not ct.isclose(void_ratio, value) and not override:
                 raise ModelError("New void ratio (%.3f) inconsistent with one from specific_gravity (%.3f)"
@@ -178,8 +172,7 @@ class Soil(PhysicalObject):
                     raise ModelError("New unit dry weight is inconsistent with specific gravity and void ratio")
             else:
                 self._specific_gravity = specific_gravity
-        elif self._specific_gravity is not None:
-            self.e_curr = self._calc_void_ratio()
+        self.e_curr = self._calc_void_ratio()
 
     @unit_sat_weight.setter
     def unit_sat_weight(self, value):
@@ -225,15 +218,14 @@ class Soil(PhysicalObject):
     def relative_density(self, value, override=False):
         try:
             relative_density = self._calc_relative_density()
-            if relative_density is not None and relative_density != value and not override:
+            if relative_density is not None and not ct.isclose(relative_density, value, rel_tol=0.001) and not override:
                     raise ModelError("New relative_density is inconsistent with e_curr")
 
         except TypeError:
             pass
         self._relative_density = value
-        if self.e_curr:
-            pass
-        # TODO: set parameters
+        self.e_curr = self._calc_void_ratio()
+
 
     @specific_gravity.setter
     def specific_gravity(self, value, override=False):
@@ -241,13 +233,18 @@ class Soil(PhysicalObject):
         specific_gravity = self._calc_specific_gravity()
         if specific_gravity is not None and specific_gravity != value and override is False:
             raise ModelError("specific gravity is inconsistent with set unit_dry_weight and void_ratio")
+        old_specific_gravity = self._specific_gravity
         self._specific_gravity = value
         unit_dry_weight = self._calc_unit_dry_weight()
         if unit_dry_weight is not None and unit_dry_weight != self.unit_dry_weight:
             self.unit_dry_weight = self._calc_unit_dry_weight()
         e_curr = self._calc_void_ratio()
-        if e_curr is not None and e_curr != self.e_curr:
-            self.e_curr = e_curr
+        if e_curr is not None:
+            if self.e_curr is None:
+                self.e_curr = e_curr
+            elif not ct.isclose(e_curr, self.e_curr, rel_tol=0.01):
+                self._specific_gravity = old_specific_gravity
+                raise ModelError("specific gravity is inconsistent with void_ratio")
 
     @e_min.setter
     def e_min(self, value):
@@ -319,6 +316,10 @@ class Soil(PhysicalObject):
     def _calc_void_ratio(self):
         try:
             return self.specific_gravity * self._pw / self.unit_dry_weight - 1
+        except TypeError:
+            pass
+        try:
+            return self.e_max - self.relative_density * (self.e_max - self.e_min)
         except TypeError:
             return None
 
