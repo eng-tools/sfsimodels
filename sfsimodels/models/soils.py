@@ -10,6 +10,7 @@ from sfsimodels import checking_tools as ct
 
 
 class Soil(PhysicalObject):
+    id = None
     # strength parameters
     _phi = None
     _cohesion = None
@@ -18,6 +19,7 @@ class Soil(PhysicalObject):
     _e_min = None
     _e_max = None
     _e_curr = None
+    _dilation_angle = None
     _relative_density = None  # [decimal]
     _specific_gravity = None
     _unit_sat_weight = None
@@ -35,6 +37,7 @@ class Soil(PhysicalObject):
     inputs = [
         "g_mod",
         "phi",
+        "dilation_angle",
         "relative_density",
         "unit_dry_weight",
         "unit_sat_weight",
@@ -42,10 +45,17 @@ class Soil(PhysicalObject):
         "poissons_ratio",
         "e_min",
         "e_max",
+        "e_curr",
         "e_cr0",
         "p_cr0",
         "lamb_crl"
     ]
+
+    def to_dict(self):
+        outputs = OrderedDict()
+        for item in self.inputs:
+            outputs[item] = self.__getattribute__(item)
+        return outputs
 
     @property
     def unit_weight(self):
@@ -56,6 +66,10 @@ class Soil(PhysicalObject):
     @property
     def phi(self):
         return self._phi
+
+    @property
+    def dilation_angle(self):
+        return self._dilation_angle
 
     @property
     def cohesion(self):
@@ -248,6 +262,14 @@ class Soil(PhysicalObject):
     def cohesion(self, value):
         self._cohesion = value
 
+    @porosity.setter
+    def porosity(self, value):
+        self._e_curr = value / (1 - value)
+
+    @dilation_angle.setter
+    def dilation_angle(self, value):
+        self._dilation_angle = value
+
     @permeability.setter
     def permeability(self, value):
         self._permeability = value
@@ -347,6 +369,17 @@ class SoilProfile(PhysicalObject):
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
 
+    def to_dict(self):
+        outputs = OrderedDict()
+        skip_list = ["layers"]
+        for item in self.inputs:
+            if item not in skip_list:
+                outputs[item] = self.__getattribute__(item)
+        outputs["layers"] = []
+        for depth in self.layers:
+            outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
+        return outputs
+
     def add_layer(self, depth, soil):
         self._layers[depth] = soil
         self._sort_layers()
@@ -372,7 +405,7 @@ class SoilProfile(PhysicalObject):
 
     @gwl.setter
     def gwl(self, value):
-        self._gwl = value
+        self._gwl = float(value)
 
     @property
     def height(self):
@@ -380,7 +413,7 @@ class SoilProfile(PhysicalObject):
 
     @height.setter
     def height(self, value):
-        self._height = value
+        self._height = float(value)
 
     @property
     def layers(self):
@@ -395,6 +428,7 @@ class SoilProfile(PhysicalObject):
     def layer_depth(self, index):
         return self.depths[index]
 
+    @property
     def n_layers(self):
         """
         Number of soil layers

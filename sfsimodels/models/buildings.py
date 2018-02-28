@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 
 from sfsimodels.models.abstract_models import PhysicalObject
@@ -24,6 +26,12 @@ class Building(PhysicalObject):
         'interstorey_heights',
         'n_storeys'
     ]
+
+    def to_dict(self):
+        outputs = OrderedDict()
+        for item in self.inputs:
+            outputs[item] = self.__getattribute__(item)
+        return outputs
 
     @property
     def floor_length(self):
@@ -180,6 +188,12 @@ class Structure(PhysicalObject):
         "t_eff",
         "mass_ratio"
     ]
+
+    def to_dict(self):
+        outputs = OrderedDict()
+        for item in self.inputs:
+            outputs[item] = self.__getattribute__(item)
+        return outputs
 
     @property
     def h_eff(self):

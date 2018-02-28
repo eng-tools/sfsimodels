@@ -3,3 +3,4 @@ from sfsimodels.models.foundations import Foundation, PadFoundation, RaftFoundat
 from sfsimodels.models.soils import Soil, SoilProfile
 from sfsimodels.models.buildings import Building, FrameBuilding, WallBuilding, Structure
 from sfsimodels.models import material
+from sfsimodels.models.systems import System

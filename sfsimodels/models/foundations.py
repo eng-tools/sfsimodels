@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 
 from sfsimodels.exceptions import ModelError
@@ -20,6 +22,7 @@ class Foundation(PhysicalObject):
     ftype = None  # [], Foundation type
 
     inputs = [
+        "id",
         "name",
         "width",
         "length",
@@ -34,6 +37,12 @@ class Foundation(PhysicalObject):
 
     def __format__(self, format_spec):
         return "Foundation"
+
+    def to_dict(self):
+        outputs = OrderedDict()
+        for item in self.inputs:
+            outputs[item] = self.__getattribute__(item)
+        return outputs
 
     @property
     def id(self):
