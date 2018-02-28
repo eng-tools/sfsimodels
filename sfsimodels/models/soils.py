@@ -377,10 +377,14 @@ class SoilProfile(PhysicalObject):
         skip_list = ["layers"]
         for item in self.inputs:
             if item not in skip_list:
-                outputs[item] = self.__getattribute__(item)
-        outputs["layers"] = []
-        for depth in self.layers:
-            outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
+                value = self.__getattribute__(item)
+                if isinstance(value, int):
+                    outputs[item] = str(value)
+                else:
+                    outputs[item] = str(value)
+        # outputs["layers"] = []
+        # for depth in self.layers:
+        #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
         return outputs
 
     def add_layer(self, depth, soil):

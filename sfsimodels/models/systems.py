@@ -1,4 +1,4 @@
-
+from collections import OrderedDict
 
 class SoilStructureSystem(object):
     name = None
@@ -6,5 +6,16 @@ class SoilStructureSystem(object):
     building_id = None
     foundation_id = None
 
+    inputs = ["soil_profile_id", "building_id", "foundation_id"]
+
     def to_dict(self):
-        return self.__dict__
+        outputs = OrderedDict()
+        skip_list = []
+        for item in self.inputs:
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                if isinstance(value, int):
+                    outputs[item] = str(value)
+                else:
+                    outputs[item] = str(value)
+        return outputs

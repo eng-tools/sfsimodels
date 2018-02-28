@@ -29,8 +29,14 @@ class Building(PhysicalObject):
 
     def to_dict(self):
         outputs = OrderedDict()
+        skip_list = []
         for item in self.inputs:
-            outputs[item] = self.__getattribute__(item)
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                if isinstance(value, int):
+                    outputs[item] = str(value)
+                else:
+                    outputs[item] = str(value)
         return outputs
 
     @property
@@ -191,8 +197,14 @@ class Structure(PhysicalObject):
 
     def to_dict(self):
         outputs = OrderedDict()
+        skip_list = []
         for item in self.inputs:
-            outputs[item] = self.__getattribute__(item)
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                if isinstance(value, int):
+                    outputs[item] = str(value)
+                else:
+                    outputs[item] = str(value)
         return outputs
 
     @property

@@ -82,17 +82,26 @@ class Output(object):
 
     def add_to_dict(self, an_object):
         if isinstance(an_object, models.Soil):
-            self.models["soils"] = an_object.to_dict()
+            self.models["soils"].append(an_object.to_dict())
         elif isinstance(an_object, models.SoilProfile):
-            self.models["soil_profiles"] = an_object.to_dict()
+            profile_dict = an_object.to_dict()
+            profile_dict["layers"] = []
+            for layer in an_object.layers:
+                self.models["soils"].append(an_object.layers[layer].to_dict())
+                profile_dict["layers"].append({
+                    "soil_id": str(an_object.layers[layer].id),
+                    "depth": float(layer)
+                })
+
+            self.models["soil_profiles"].append(profile_dict)
         elif isinstance(an_object, models.Foundation):
-            self.models["foundations"] = an_object.to_dict()
+            self.models["foundations"].append(an_object.to_dict())
         elif isinstance(an_object, models.Structure):
-            self.models["buildings"] = an_object.to_dict()
+            self.models["buildings"].append(an_object.to_dict())
         elif isinstance(an_object, models.Building):
-            self.models["buildings"] = an_object.to_dict()
+            self.models["buildings"].append(an_object.to_dict())
         elif isinstance(an_object, models.SoilStructureSystem):
-            self.models["systems"] = an_object.to_dict()
+            self.models["systems"].append(an_object.to_dict())
 
     def parameters(self):
         return ["name", "units", "doi", "sfsimodels_version", "comments", "models"]
