@@ -224,7 +224,7 @@ class Soil(PhysicalObject):
         except TypeError:
             pass
         self._relative_density = value
-        self.e_curr = self._calc_void_ratio()
+        self.recompute_all()
 
 
     @specific_gravity.setter
@@ -233,18 +233,23 @@ class Soil(PhysicalObject):
         specific_gravity = self._calc_specific_gravity()
         if specific_gravity is not None and specific_gravity != value and override is False:
             raise ModelError("specific gravity is inconsistent with set unit_dry_weight and void_ratio")
-        old_specific_gravity = self._specific_gravity
+
         self._specific_gravity = value
-        unit_dry_weight = self._calc_unit_dry_weight()
-        if unit_dry_weight is not None and unit_dry_weight != self.unit_dry_weight:
-            self.unit_dry_weight = self._calc_unit_dry_weight()
-        e_curr = self._calc_void_ratio()
-        if e_curr is not None:
-            if self.e_curr is None:
-                self.e_curr = e_curr
-            elif not ct.isclose(e_curr, self.e_curr, rel_tol=0.01):
-                self._specific_gravity = old_specific_gravity
-                raise ModelError("specific gravity is inconsistent with void_ratio")
+        self.recompute_all()
+
+    def recompute_all(self):
+        f_map = OrderedDict()
+        f_map["_e_curr"] = self._calc_void_ratio
+        f_map["_relative_density"] = self._calc_relative_density
+        f_map["_unit_dry_weight"] = self._calc_unit_dry_weight
+        f_map["_e_min"] = self._calc_min_void_ratio
+        f_map["_e_max"] = self._calc_max_void_ratio
+
+        for item in f_map:
+            value = f_map[item]()
+            if value is not None:
+                setattr(self, item, value)
+
 
     @e_min.setter
     def e_min(self, value):
@@ -320,6 +325,18 @@ class Soil(PhysicalObject):
             pass
         try:
             return self.e_max - self.relative_density * (self.e_max - self.e_min)
+        except TypeError:
+            return None
+
+    def _calc_max_void_ratio(self):
+        try:
+            return (self.e_curr - self.relative_density) / (1. - self.relative_density)
+        except TypeError:
+            return None
+
+    def _calc_min_void_ratio(self):
+        try:
+            return (self.e_curr + (self.relative_density - 1) * self.e_max) / self.relative_density
         except TypeError:
             return None
 

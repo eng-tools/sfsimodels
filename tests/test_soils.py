@@ -103,9 +103,31 @@ def test_relative_density_to_e_curr_setter():
     sl.e_min = 0.4
     assert sl.e_curr is None
     sl.relative_density = 0.4
-    expected_void_ratio = sl.e_max - sl.relative_density * (sl.e_max - sl.e_min)
+    # expected_void_ratio = sl.e_max - sl.relative_density * (sl.e_max - sl.e_min)
+    expected_void_ratio = 0.76
     assert isclose(sl.e_curr, expected_void_ratio, rel_tol=0.01), sl.e_curr
 
 
+def test_relative_density_to_e_min_setter():
+    sl = models.Soil()
+    sl.e_max = 1.0
+    sl.e_curr = 0.76
+    assert sl.e_min is None
+    sl.relative_density = 0.4
+    e_min = 0.4
+    assert isclose(sl.e_min, e_min, rel_tol=0.01), sl.e_min
+
+
+def test_relative_density_to_e_max_setter():
+    sl = models.Soil()
+    sl.e_min = 0.4
+    sl.e_curr = 0.76
+    assert sl.e_max is None
+    sl.relative_density = 0.4
+    e_max = 1.0
+    actual = sl.e_max
+    assert isclose(sl.e_max, e_max, rel_tol=0.01), actual
+
+
 if __name__ == '__main__':
-    test_specific_gravity_setter()
+    test_relative_density_to_e_min_setter()
