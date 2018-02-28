@@ -330,7 +330,8 @@ class Soil(PhysicalObject):
 
     def _calc_max_void_ratio(self):
         try:
-            return (self.e_curr - self.relative_density) / (1. - self.relative_density)
+            # return (self.e_curr - self.relative_density) / (1. - self.relative_density)
+            return (self.relative_density * self.e_min - self.e_curr) / (self.relative_density - 1)
         except TypeError:
             return None
 
