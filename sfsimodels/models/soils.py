@@ -11,6 +11,7 @@ from sfsimodels import checking_tools as ct
 
 class Soil(PhysicalObject):
     id = None
+    name = None
     # strength parameters
     _phi = None
     _cohesion = None
