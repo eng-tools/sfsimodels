@@ -185,7 +185,7 @@ class Structure(PhysicalObject):
     inputs = [
         "h_eff",
         "mass_eff",
-        "t_eff",
+        "t_fixed",
         "mass_ratio"
     ]
 

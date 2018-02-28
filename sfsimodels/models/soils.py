@@ -35,6 +35,8 @@ class Soil(PhysicalObject):
     lamb_crl = 0.0
 
     inputs = [
+        "id",
+        "name",
         "g_mod",
         "phi",
         "dilation_angle",
@@ -355,6 +357,7 @@ class SoilProfile(PhysicalObject):
     _height = None
 
     inputs = [
+        "id",
         "name",
         "gwl",
         "unit_weight_water",

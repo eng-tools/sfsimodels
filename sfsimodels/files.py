@@ -1,5 +1,7 @@
 import yaml
 from sfsimodels.models import soils, buildings, foundations, material
+from collections import OrderedDict
+from sfsimodels import models
 
 
 def add_to_obj(obj, dictionary, exceptions=[]):
@@ -64,6 +66,42 @@ def load_yaml(fp):
 
     return objs
 
+
+class Output(object):
+    name = ""
+    units = ""
+    doi = ""
+    sfsimodels_version = ""
+    comments = ""
+    models = OrderedDict([("soils", []),
+                            ("soil_profiles", []),
+                            ("foundations", []),
+                            ("buildings", []),
+                            ("systems", []),
+                            ])
+
+    def add_to_dict(self, an_object):
+        if isinstance(an_object, models.Soil):
+            self.models["soils"] = an_object.to_dict()
+        elif isinstance(an_object, models.SoilProfile):
+            self.models["soil_profiles"] = an_object.to_dict()
+        elif isinstance(an_object, models.Foundation):
+            self.models["foundations"] = an_object.to_dict()
+        elif isinstance(an_object, models.Structure):
+            self.models["buildings"] = an_object.to_dict()
+        elif isinstance(an_object, models.Building):
+            self.models["buildings"] = an_object.to_dict()
+        elif isinstance(an_object, models.SoilStructureSystem):
+            self.models["systems"] = an_object.to_dict()
+
+    def parameters(self):
+        return ["name", "units", "doi", "sfsimodels_version", "comments", "models"]
+
+    def to_dict(self):
+        outputs = OrderedDict()
+        for item in self.parameters():
+            outputs[item] = self.__getattribute__(item)
+        return outputs
 
 if __name__ == '__main__':
     fp = "../tests/test_data/_object_load_1.yaml"
