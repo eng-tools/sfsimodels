@@ -29,6 +29,7 @@ class Soil(PhysicalObject):
     _permeability = None
     # deformation parameters
     _g_mod = None  # Shear modulus [Pa]
+    _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
     # critical state parameters
     e_cr0 = 0.0
@@ -39,6 +40,7 @@ class Soil(PhysicalObject):
         "id",
         "name",
         "g_mod",
+        "bulk_mod",
         "phi",
         "dilation_angle",
         "relative_density",
@@ -130,6 +132,10 @@ class Soil(PhysicalObject):
         return self._g_mod
 
     @property
+    def bulk_mod(self):
+        return self._bulk_mod
+
+    @property
     def poissons_ratio(self):
         return self._poissons_ratio
 
@@ -155,12 +161,13 @@ class Soil(PhysicalObject):
         except TypeError:
             pass
         self._e_curr = value
-        unit_dry_weight = self._calc_unit_dry_weight()
-        if unit_dry_weight is not None and unit_dry_weight != self.unit_dry_weight:
-            self.unit_dry_weight = unit_dry_weight
-        specific_gravity = self._calc_specific_gravity()
-        if specific_gravity is not None and specific_gravity != self.specific_gravity:
-            self.specific_gravity = specific_gravity
+        self.recompute_all()
+        # unit_dry_weight = self._calc_unit_dry_weight()
+        # if unit_dry_weight is not None and unit_dry_weight != self.unit_dry_weight:
+        #     self.unit_dry_weight = unit_dry_weight
+        # specific_gravity = self._calc_specific_gravity()
+        # if specific_gravity is not None and specific_gravity != self.specific_gravity:
+        #     self.specific_gravity = specific_gravity
 
     @unit_dry_weight.setter
     def unit_dry_weight(self, value, override=False):
@@ -238,26 +245,34 @@ class Soil(PhysicalObject):
         self.recompute_all()
 
     def recompute_all(self):
+        # TODO: catch potential inconsistency when void ratio get defined based on weight and the again from saturation
         f_map = OrderedDict()
+        # voids
         f_map["_e_curr"] = self._calc_void_ratio
         f_map["_relative_density"] = self._calc_relative_density
-        f_map["_unit_dry_weight"] = self._calc_unit_dry_weight
+
         f_map["_e_min"] = self._calc_min_void_ratio
         f_map["_e_max"] = self._calc_max_void_ratio
+        # weights
+        f_map["_unit_dry_weight"] = self._calc_unit_dry_weight
+        f_map["_specific_gravity"] = self._calc_specific_gravity
+        # saturation
+        f_map["_unit_sat_weight"] = self._calc_unit_sat_weight
 
         for item in f_map:
             value = f_map[item]()
             if value is not None:
                 setattr(self, item, value)
 
-
     @e_min.setter
     def e_min(self, value):
         self._e_min = value
+        self.recompute_all()
 
     @e_max.setter
     def e_max(self, value):
         self._e_max = value
+        self.recompute_all()
 
     @phi.setter
     def phi(self, value):
@@ -283,8 +298,12 @@ class Soil(PhysicalObject):
     def g_mod(self, value):
         self._g_mod = value
 
+    @bulk_mod.setter
+    def bulk_mod(self, value):
+        self._bulk_mod = value
+
     @poissons_ratio.setter
-    def poissons_ratio(self, value):
+    def poissons_ratio(self, value):  # TODO: add correlation between g_mod and bulk_mod
         self._poissons_ratio = value
 
     def e_critical(self, p):
