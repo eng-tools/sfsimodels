@@ -262,6 +262,11 @@ class Soil(PhysicalObject):
         for item in f_map:
             value = f_map[item]()
             if value is not None:
+                curr_value = getattr(self, item)
+                if curr_value is not None and not ct.isclose(curr_value, value, rel_tol=0.001):
+                    raise ModelError("new value is inconsistent with current %s parameter (%.3f, %.3f)" % (item,
+                                                                                                           curr_value,
+                                                                                                           value))
                 setattr(self, item, value)
 
     @e_min.setter

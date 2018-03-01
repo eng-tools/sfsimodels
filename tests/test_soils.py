@@ -157,5 +157,22 @@ def test_relative_density_to_e_max_setter():
     assert isclose(sl.relative_density, relative_density, rel_tol=0.01), actual
 
 
+def test_e_max_to_saturated_weight_setter():
+    sl = models.Soil()
+    sl.e_min = 0.4
+    sl.e_max = 1.0
+    sl.unit_dry_weight = 16000
+    assert sl.unit_sat_weight is None
+    sl.saturation = 1.0
+    sl.e_curr = 0.76
+    assert sl.unit_sat_weight is not None
+    sl.relative_density = 0.4
+    unit_sat_weight = 20231.818
+
+    assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.01), sl.unit_sat_weight
+
+
+
+
 if __name__ == '__main__':
-    test_relative_density_to_e_min_setter()
+    test_e_max_to_saturated_weight_setter()
