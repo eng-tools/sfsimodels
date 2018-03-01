@@ -73,7 +73,10 @@ class Output(object):
     doi = ""
     sfsimodels_version = ""
     comments = ""
-    models = OrderedDict([("soils", []),
+
+
+    def __init__(self):
+        self.models = OrderedDict([("soils", []),
                             ("soil_profiles", []),
                             ("foundations", []),
                             ("buildings", []),
