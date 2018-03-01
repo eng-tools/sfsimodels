@@ -420,7 +420,7 @@ class SoilProfile(PhysicalObject):
                 if isinstance(value, int):
                     outputs[item] = str(value)
                 else:
-                    outputs[item] = str(value)
+                    outputs[item] = value
         # outputs["layers"] = []
         # for depth in self.layers:
         #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})

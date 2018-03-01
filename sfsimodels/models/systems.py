@@ -17,5 +17,5 @@ class SoilStructureSystem(object):
                 if isinstance(value, int):
                     outputs[item] = str(value)
                 else:
-                    outputs[item] = str(value)
+                    outputs[item] = value
         return outputs
