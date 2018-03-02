@@ -187,6 +187,47 @@ def test_e_max_to_moist_weight_setter():
     assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.01), sl.unit_sat_weight
 
 
+def test_bulk_to_g_mod_setter():
+    expected_bulk_mod = 1e6
+    expected_poissons_ratio = 0.3
+    expected_g_mod = 461538.46
+    # b - v - g
+    sl = models.Soil()
+    sl.bulk_mod = expected_bulk_mod
+    assert sl.g_mod is None
+    sl.poissons_ratio = expected_poissons_ratio
+    assert isclose(sl.g_mod, expected_g_mod, rel_tol=0.01), sl.g_mod
+    # b - g - v
+    sl = models.Soil()
+    sl.bulk_mod = expected_bulk_mod
+    assert sl.poissons_ratio is None
+    sl.g_mod = expected_g_mod
+    assert isclose(sl.poissons_ratio, expected_poissons_ratio, rel_tol=0.01), sl.poissons_ratio
+    # g - v - b
+    sl = models.Soil()
+    sl.g_mod = expected_g_mod
+    assert sl.bulk_mod is None
+    sl.poissons_ratio = expected_poissons_ratio
+    assert isclose(sl.bulk_mod, expected_bulk_mod, rel_tol=0.01), sl.bulk_mod
+    # g - b - v
+    sl = models.Soil()
+    sl.g_mod = expected_g_mod
+    assert sl.poissons_ratio is None
+    sl.bulk_mod = expected_bulk_mod
+    assert isclose(sl.poissons_ratio, expected_poissons_ratio, rel_tol=0.01), sl.poissons_ratio
+    # v - b - g
+    sl = models.Soil()
+    sl.poissons_ratio = expected_poissons_ratio
+    assert sl.g_mod is None
+    sl.bulk_mod = expected_bulk_mod
+    assert isclose(sl.g_mod, expected_g_mod, rel_tol=0.01), sl.g_mod
+    # v - g - b
+    sl = models.Soil()
+    sl.poissons_ratio = expected_poissons_ratio
+    assert sl.bulk_mod is None
+    sl.g_mod = expected_g_mod
+    assert isclose(sl.bulk_mod, expected_bulk_mod, rel_tol=0.01), sl.bulk_mod
+
 
 
 if __name__ == '__main__':
