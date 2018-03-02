@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 import numpy as np
 
-import math
 from sfsimodels.exceptions import ModelError
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels import checking_tools as ct
@@ -16,14 +15,15 @@ class Soil(PhysicalObject):
     _phi = None
     _cohesion = None
     # volume and weight
-    _unit_dry_weight = None
     _e_min = None
     _e_max = None
     _e_curr = None
     _dilation_angle = None
     _relative_density = None  # [decimal]
     _specific_gravity = None
+    _unit_dry_weight = None
     _unit_sat_weight = None
+    _unit_moist_weight = None
     _saturation = None
     _pw = 9800  # N/m3  # specific weight of water
     _permeability = None
@@ -115,16 +115,20 @@ class Soil(PhysicalObject):
         return self._unit_sat_weight
 
     @property
+    def unit_moist_weight(self):
+        return self._unit_moist_weight
+
+    @property
     def permeability(self):
         return self._permeability
 
     @property
     def phi_r(self):
-        return math.radians(self.phi)
+        return np.radians(self.phi)
 
     @property
     def k_0(self):
-        k_0 = 1 - math.sin(self.phi_r)  # Jaky 1944
+        k_0 = 1 - np.sin(self.phi_r)  # Jaky 1944
         return k_0
 
     @property
@@ -185,8 +189,8 @@ class Soil(PhysicalObject):
     def unit_sat_weight(self, value):
         try:
             unit_sat_weight = self._calc_unit_sat_weight()
-            if unit_sat_weight is not None and unit_sat_weight != value:
-                raise ModelError("new unit_sat_weight is inconsistent with other soil parameters")
+            if unit_sat_weight is not None and not ct.isclose(unit_sat_weight, value):
+                raise ModelError("new unit_sat_weight (%.2f) with calculated value (%.2f)." % (value, unit_sat_weight))
         except TypeError:
             pass
         self._unit_sat_weight = value
@@ -204,6 +208,18 @@ class Soil(PhysicalObject):
                 elif self.e_curr is not None:
                     self.unit_dry_weight = self.unit_sat_weight - unit_moisture_weight
 
+    @unit_moist_weight.setter
+    def unit_moist_weight(self, value):
+        try:
+            unit_moist_weight = self._calc_unit_moist_weight()
+            if unit_moist_weight is not None and not ct.isclose(unit_moist_weight, value):
+                raise ModelError("new unit_sat_weight (%.2f) is inconsistent with calculated value (%.2f)." % (value, unit_moist_weight))
+        except TypeError:
+            pass
+        self._unit_moist_weight = value
+        # try to set other parameters
+        self.recompute_all()
+
     @saturation.setter
     def saturation(self, value, override=False):
         """Volume of water to volume of voids"""
@@ -216,9 +232,10 @@ class Soil(PhysicalObject):
         except TypeError:
             pass
         self._saturation = value
-        unit_sat_weight = self._calc_unit_sat_weight()
-        if unit_sat_weight is not None and unit_sat_weight != self.unit_sat_weight:
-            self.unit_sat_weight = unit_sat_weight
+        self.recompute_all()
+        # unit_sat_weight = self._calc_unit_sat_weight()
+        # if unit_sat_weight is not None and unit_sat_weight != self.unit_sat_weight:
+        #     self.unit_sat_weight = unit_sat_weight
         # TODO: calculate dry weight from values
 
     @relative_density.setter
@@ -258,14 +275,15 @@ class Soil(PhysicalObject):
         f_map["_specific_gravity"] = self._calc_specific_gravity
         # saturation
         f_map["_unit_sat_weight"] = self._calc_unit_sat_weight
+        f_map["_unit_moist_weight"] = self._calc_unit_moist_weight
+        f_map["_saturation"] = self._calc_saturation
 
         for item in f_map:
             value = f_map[item]()
             if value is not None:
                 curr_value = getattr(self, item)
                 if curr_value is not None and not ct.isclose(curr_value, value, rel_tol=0.001):
-                    raise ModelError("new value is inconsistent with current %s parameter (%.3f, %.3f)" % (item,
-                                                                                                           curr_value,
+                    raise ModelError("new %s is inconsistent with current value (%.3f, %.3f)" % (item, curr_value,
                                                                                                            value))
                 setattr(self, item, value)
 
@@ -313,14 +331,25 @@ class Soil(PhysicalObject):
 
     def e_critical(self, p):
         p = float(p)
-        return self.e_cr0 - self.lamb_crl * math.log(p / self.p_cr0)
-
-    def n1_60(self):  # TODO: move to be a function
-        return (self.relative_density * 100. / 15) ** 2
+        return self.e_cr0 - self.lamb_crl * np.log(p / self.p_cr0)
 
     def _calc_unit_sat_weight(self):
         try:
+            return self._unit_void_volume * self._pw + self.unit_dry_weight
+        except TypeError:
+            return None
+
+    def _calc_unit_moist_weight(self):
+        try:
             return self._unit_moisture_weight + self.unit_dry_weight
+        except TypeError:
+            return None
+
+    def _calc_saturation(self):
+        try:
+            unit_moisture_weight = self.unit_moist_weight - self.unit_dry_weight
+            unit_moisture_volume = unit_moisture_weight / self._pw
+            return unit_moisture_volume / self._unit_void_volume
         except TypeError:
             return None
 
@@ -503,9 +532,9 @@ class SoilProfile(PhysicalObject):
         """
         if len(self.layers) > 1:
             crust = self.layer(0)
-            crust_phi_r = math.radians(crust.phi)
+            crust_phi_r = np.radians(crust.phi)
             equivalent_cohesion = crust.cohesion + crust.k_0 * self.crust_effective_unit_weight * \
-                                                    self.layer_depth(1) / 2 * math.tan(crust_phi_r)
+                                                    self.layer_depth(1) / 2 * np.tan(crust_phi_r)
             return equivalent_cohesion
 
     @property

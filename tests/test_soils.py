@@ -77,12 +77,12 @@ def test_dry_unit_weight_setter():
     sl.e_curr = 0.7
 
 
-def test_sat_weight_setter():
+def test_moist_weight_setter():
     sl = models.Soil()
     sl.unit_dry_weight = 17000
     sl.e_curr = 0.7
     assert sl.saturation is None
-    sl.unit_sat_weight = 18000
+    sl.unit_moist_weight = 18000
     assert isclose(sl.saturation, 0.248, 0.01)
     print(sl.saturation)
 
@@ -91,10 +91,12 @@ def test_saturation_setter_on_soil():
     sl = models.Soil()
     sl.unit_dry_weight = 17000
     sl.e_curr = 0.7
-    assert sl.saturation is None
-    assert sl.unit_sat_weight is None
-    sl.saturation = 1.0
     assert isclose(sl.unit_sat_weight, 21035.3, rel_tol=0.01)
+    assert sl.saturation is None
+    assert sl.unit_moist_weight is None
+    sl.saturation = 1.0
+    assert isclose(sl.unit_moist_weight, 21035.3, rel_tol=0.01)
+
 
 
 def test_relative_density_to_e_curr_setter():
@@ -163,9 +165,22 @@ def test_e_max_to_saturated_weight_setter():
     sl.e_max = 1.0
     sl.unit_dry_weight = 16000
     assert sl.unit_sat_weight is None
-    sl.saturation = 1.0
     sl.e_curr = 0.76
     assert sl.unit_sat_weight is not None
+    sl.relative_density = 0.4
+    unit_sat_weight = 20231.818
+
+    assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.01), sl.unit_sat_weight
+
+def test_e_max_to_moist_weight_setter():
+    sl = models.Soil()
+    sl.e_min = 0.4
+    sl.e_max = 1.0
+    sl.unit_dry_weight = 16000
+    assert sl.unit_moist_weight is None
+    sl.saturation = 1.0
+    sl.e_curr = 0.76
+    assert sl.unit_moist_weight is not None
     sl.relative_density = 0.4
     unit_sat_weight = 20231.818
 
@@ -175,4 +190,5 @@ def test_e_max_to_saturated_weight_setter():
 
 
 if __name__ == '__main__':
-    test_e_max_to_saturated_weight_setter()
+    test_moist_weight_setter()
+    # test_e_max_to_saturated_weight_setter()
