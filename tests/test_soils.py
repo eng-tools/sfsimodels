@@ -229,6 +229,23 @@ def test_bulk_to_g_mod_setter():
     assert isclose(sl.bulk_mod, expected_bulk_mod, rel_tol=0.01), sl.bulk_mod
 
 
+def test_inputs_soil():
+    sl = models.Soil()
+    assert "g_mod" in sl.inputs
+    assert "e_cr0" not in sl.inputs
+    crit_sl = models.CriticalSoil()
+    assert "g_mod" in crit_sl.inputs
+    assert "e_cr0" in crit_sl.inputs
+
+
+def test_e_critical():
+    crit_sl = models.CriticalSoil()
+    crit_sl.e_cr0 = 0.79  # Jin et al. 2015
+    crit_sl.p_cr0 = 10  # Jin et al. 2015
+    crit_sl.lamb_crl = 0.015  # Jin et al. 2015
+
+    assert isclose(crit_sl.e_critical(1.8), 0.81572, rel_tol=0.0001)
+
 
 if __name__ == '__main__':
     test_moist_weight_setter()

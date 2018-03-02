@@ -31,10 +31,6 @@ class Soil(PhysicalObject):
     _g_mod = None  # Shear modulus [Pa]
     _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
-    # critical state parameters
-    e_cr0 = 0.0
-    p_cr0 = 0.0
-    lamb_crl = 0.0
 
     inputs = [
         "id",
@@ -51,9 +47,6 @@ class Soil(PhysicalObject):
         "e_min",
         "e_max",
         "e_curr",
-        "e_cr0",
-        "p_cr0",
-        "lamb_crl"
     ]
 
     def to_dict(self):
@@ -302,7 +295,6 @@ class Soil(PhysicalObject):
                                                                                                            value))
                 setattr(self, item, value)
 
-
     @e_min.setter
     def e_min(self, value):
         self._e_min = value
@@ -341,7 +333,6 @@ class Soil(PhysicalObject):
         self._g_mod = value
         self.recompute_all_stiffness_parameters()
 
-
     @bulk_mod.setter
     def bulk_mod(self, value):
         curr_bulk_mod = self._calc_bulk_mod()
@@ -350,18 +341,13 @@ class Soil(PhysicalObject):
         self._bulk_mod = value
         self.recompute_all_stiffness_parameters()
 
-
     @poissons_ratio.setter
-    def poissons_ratio(self, value):  # TODO: add correlation between g_mod and bulk_mod
+    def poissons_ratio(self, value):
         curr_poissons_ratio = self._calc_relative_density()
         if curr_poissons_ratio is not None and not ct.isclose(curr_poissons_ratio, value, rel_tol=0.001):
                 raise ModelError("New poissons_ratio is inconsistent with current value")
         self._poissons_ratio = value
         self.recompute_all_stiffness_parameters()
-
-    def e_critical(self, p):
-        p = float(p)
-        return self.e_cr0 - self.lamb_crl * np.log(p / self.p_cr0)
 
     def _calc_unit_sat_weight(self):
         try:
@@ -456,6 +442,30 @@ class Soil(PhysicalObject):
     def _unit_moisture_weight(self):
         """Return the weight of the voids for total volume equal to a unit"""
         return self.saturation * self._unit_void_volume * self._pw
+
+
+class CriticalSoil(Soil):
+    # critical state parameters
+    e_cr0 = 0.0
+    p_cr0 = 0.0
+    lamb_crl = 0.0
+
+    def __init__(self):
+        super(CriticalSoil, self).__init__()  # run parent class initialiser function
+
+    @property
+    def inputs(self):
+        input_list = super(CriticalSoil, self).inputs
+        new_inputs = [
+        "e_cr0",
+        "p_cr0",
+        "lamb_crl"
+        ]
+        return input_list + new_inputs
+
+    def e_critical(self, p):
+        p = float(p)
+        return self.e_cr0 - self.lamb_crl * np.log(p / self.p_cr0)
 
 
 class SoilLayer(Soil):
