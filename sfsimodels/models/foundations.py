@@ -228,6 +228,10 @@ class PadFoundation(Foundation):
     def inputs(self):
         input_list = super(PadFoundation, self).inputs
         new_inputs = [
+            "n_pads_l",
+            "n_pads_w",
+            "pad_length",
+            "pad_width",
             "i_ww",
             "i_ll"
         ]
