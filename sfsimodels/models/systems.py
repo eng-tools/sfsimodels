@@ -1,6 +1,8 @@
 from collections import OrderedDict
 
+
 class SoilStructureSystem(object):
+    id = None
     name = None
     soil_profile_id = None
     building_id = None

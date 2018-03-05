@@ -12,6 +12,8 @@ class Building(PhysicalObject):
     """
     An object to define Buildings
     """
+    id = None
+    name = None
     physical_type = "building"
     _floor_length = None
     _floor_width = None
@@ -183,6 +185,8 @@ class Structure(PhysicalObject):
     """
     An object to describe structures.
     """
+    id = None
+    name = None
     _h_eff = None
     _mass_eff = None
     _t_fixed = None

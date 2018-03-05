@@ -36,7 +36,7 @@ def format_name(name):
     return name
 
 
-def format_value(value):
+def format_value(value, sf=3):
     if isinstance(value, str):
         return value
 
@@ -51,8 +51,8 @@ def format_value(value):
         return "N/A"
 
     else:
-
-        return "{0:.3g}".format(value)
+        fmt_str = "{0:.%ig}" % sf
+        return fmt_str.format(value)
 
 
 def add_table_ends(para, oformat='latex', caption="caption-text", label="table"):
