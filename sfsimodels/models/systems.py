@@ -8,7 +8,7 @@ class SoilStructureSystem(object):
     building_id = None
     foundation_id = None
 
-    inputs = ["soil_profile_id", "building_id", "foundation_id"]
+    inputs = ["id", "name", "soil_profile_id", "building_id", "foundation_id"]
 
     def to_dict(self):
         outputs = OrderedDict()

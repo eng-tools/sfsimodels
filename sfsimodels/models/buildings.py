@@ -23,6 +23,8 @@ class Building(PhysicalObject):
     _g = 9.81  # m/s2  # gravity
 
     inputs = [
+        "id",
+        "name",
         'floor_length',
         'floor_width',
         'interstorey_heights',
@@ -193,6 +195,8 @@ class Structure(PhysicalObject):
     _mass_ratio = None
 
     inputs = [
+        "id",
+        "name",
         "h_eff",
         "mass_eff",
         "t_fixed",
