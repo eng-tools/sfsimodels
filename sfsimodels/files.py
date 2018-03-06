@@ -71,8 +71,16 @@ def load_yaml(fp):
 
 
 def load_json(fp):
-
     data = json.load(open(fp))
+    return dicts_to_objects(data)
+
+
+def loads_json(p_str):
+    data = json.loads(p_str)
+    return dicts_to_objects(data)
+
+def dicts_to_objects(data):
+
     models = data["models"]
     soil_objs = {}
     soil_profile_objs = {}
@@ -125,15 +133,13 @@ def load_json(fp):
             else:
                 new_building = buildings.Building()
             add_to_obj(new_building, models["buildings"][id])
-            building_objs[models["buildings"][id]["id"]] = new_building
+            building_objs[int(models["buildings"][id]["id"])] = new_building
     if "systems" in models:
         for id in models["systems"]:
             new_system = systems.SoilStructureSystem()
             add_to_obj(new_system, models["systems"][id])
             system_objs[int(models["systems"][id]["id"])] = new_system
 
-    print(models)
-    print(foundation_objs[1])
     objs = {
         "soils": soil_objs,
         "soil_profiles": soil_profile_objs,
