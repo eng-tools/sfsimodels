@@ -1,0 +1,196 @@
+{
+    "name": "L1-A",
+    "units": "N, kg, m, s",
+    "doi": "",
+    "sfsimodels_version": "0.5.0",
+    "comments": "",
+    "models": {
+        "soils": {
+            "1": {
+                "id": 1,
+                "name": "Soil 0",
+                "g_mod": 50000000.0,
+                "bulk_mod": null,
+                "phi": 0.001,
+                "dilation_angle": 0.0,
+                "relative_density": 0.59999999932,
+                "unit_dry_weight": 15564.705881200001,
+                "unit_sat_weight": 19600.0,
+                "cohesion": 50000.0,
+                "poissons_ratio": null,
+                "e_min": 0.5,
+                "e_max": 1.0,
+                "e_curr": 0.70000000034
+            },
+            "2": {
+                "id": 2,
+                "name": "Soil 1",
+                "g_mod": 60400000.0,
+                "bulk_mod": null,
+                "phi": 33.0,
+                "dilation_angle": 0.0,
+                "relative_density": 0.7299999994277497,
+                "unit_dry_weight": 15883.7920486,
+                "unit_sat_weight": 19689.9082576,
+                "cohesion": 0.0,
+                "poissons_ratio": null,
+                "e_min": 0.5,
+                "e_max": 1.0,
+                "e_curr": 0.6350000002861251
+            },
+            "3": {
+                "id": 3,
+                "name": "Soil 2",
+                "g_mod": 200000000.0,
+                "bulk_mod": null,
+                "phi": 0.001,
+                "dilation_angle": 0.0,
+                "relative_density": 0.7999999999999998,
+                "unit_dry_weight": 16537.5,
+                "unit_sat_weight": 20212.5,
+                "cohesion": 200000.0,
+                "poissons_ratio": null,
+                "e_min": 0.5,
+                "e_max": 1.0,
+                "e_curr": 0.6000000000000001
+            }
+        },
+        "soil_profiles": {
+            "1": {
+                "id": "1",
+                "name": "L1",
+                "gwl": 4.0,
+                "unit_weight_water": 9800.0,
+                "height": 32.0,
+                "layers": [
+                    {
+                        "soil_id": "1",
+                        "depth": 0.0
+                    },
+                    {
+                        "soil_id": "2",
+                        "depth": 4.0
+                    },
+                    {
+                        "soil_id": "3",
+                        "depth": 8.0
+                    }
+                ]
+            },
+            "2": {
+                "id": "2",
+                "name": "L1",
+                "gwl": 4.0,
+                "unit_weight_water": 9800.0,
+                "height": 32.0,
+                "layers": [
+                    {
+                        "soil_id": "1",
+                        "depth": 0.0
+                    },
+                    {
+                        "soil_id": "2",
+                        "depth": 4.0
+                    }
+                ]
+            }
+        },
+        "foundations": {
+            "1": {
+                "id": "1",
+                "name": "A",
+                "type": "raft",
+                "width": 16.0,
+                "length": 1.0,
+                "depth": 1.0,
+                "height": 0.7,
+                "density": 2500.0,
+                "i_ww": 0.8333333333333334,
+                "i_ll": 83.33333333333333
+            },
+            "2": {
+                "id": "2",
+                "name": "B",
+                "type": "raft",
+                "width": 16.0,
+                "length": 1.0,
+                "depth": 1.0,
+                "height": 0.7,
+                "density": 2500.0,
+                "i_ww": 0.25,
+                "i_ll": 2.25
+            },
+            "3": {
+                "id": "3",
+                "name": "C",
+                "type": "raft",
+                "width": 16.0,
+                "length": 1.0,
+                "depth": 1.0,
+                "height": 0.7,
+                "density": 2500.0,
+                "i_ww": 1.3333333333333333,
+                "i_ll": 341.3333333333333
+            },
+            "4": {
+                "id": "4",
+                "name": "D",
+                "type": "raft",
+                "width": 16.0,
+                "length": 1.0,
+                "depth": 1.0,
+                "height": 0.7,
+                "density": 2500.0,
+                "i_ww": 0.8333333333333334,
+                "i_ll": 83.33333333333333
+            }
+        },
+        "buildings": {
+            "1": {
+                "id": "1",
+                "name": "foundation-only",
+                "type": "structure",
+                "h_eff": 0.0,
+                "mass_eff": 80000.0,
+                "t_fixed": 0.0,
+                "mass_ratio": 1.0
+            },
+            "2": {
+                "id": "2",
+                "name": "foundation-only",
+                "type": "structure",
+                "h_eff": 0.0,
+                "mass_eff": 80000.0,
+                "t_fixed": 0.0,
+                "mass_ratio": 1.0
+            },
+            "3": {
+                "id": "3",
+                "name": "foundation-only",
+                "type": "structure",
+                "h_eff": 0.0,
+                "mass_eff": 80000.0,
+                "t_fixed": 0.0,
+                "mass_ratio": 1.0
+            },
+            "4": {
+                "id": "4",
+                "name": "foundation-only",
+                "type": "structure",
+                "h_eff": 0.0,
+                "mass_eff": 80000.0,
+                "t_fixed": 0.0,
+                "mass_ratio": 1.0
+            }
+        },
+        "systems": {
+            "null": {
+                "id": 1,
+                "name": "main",
+                "soil_profile_id": "2",
+                "building_id": "4",
+                "foundation_id": "4"
+            }
+        }
+    }
+}

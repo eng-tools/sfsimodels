@@ -1,5 +1,5 @@
-import yaml
-from sfsimodels.models import soils, buildings, foundations, material
+import json
+from sfsimodels.models import soils, buildings, foundations, material, systems
 from collections import OrderedDict
 from sfsimodels import models
 
@@ -9,10 +9,13 @@ def add_to_obj(obj, dictionary, exceptions=[]):
         if item in exceptions:
             continue
         if item in dictionary and hasattr(obj, item):
-            setattr(obj, item, dictionary[item])
             print("assign: ", item, dictionary[item])
+            setattr(obj, item, dictionary[item])
+
+
 
 def load_yaml(fp):
+    import yaml  # Not in dependencies
 
     data = yaml.load(open(fp))
     soil_objs = {}
@@ -67,6 +70,82 @@ def load_yaml(fp):
     return objs
 
 
+def load_json(fp):
+
+    data = json.load(open(fp))
+    models = data["models"]
+    soil_objs = {}
+    soil_profile_objs = {}
+    foundation_objs = {}
+    building_objs = {}
+    system_objs = {}
+    if "soils" in models:
+        for id in models["soils"]:
+            new_soil = soils.Soil()
+            for item in new_soil.inputs:
+                if item in models["soils"][id] and hasattr(new_soil, item):
+                    setattr(new_soil, item, models["soils"][id][item])
+            soil_objs[int(models["soils"][id]["id"])] = new_soil
+
+    if "soil_profiles" in models:
+        for id in models["soil_profiles"]:
+            new_soil_profile = soils.SoilProfile()
+            new_soil_profile.id = models["soil_profiles"][id]["id"]
+            for j in range(len(models["soil_profiles"][id]["layers"])):
+                depth = models["soil_profiles"][id]['layers'][j]["depth"]
+                soil = soil_objs[int(models["soil_profiles"][id]['layers'][j]["soil_id"])]
+                new_soil_profile.add_layer(depth, soil)
+            add_to_obj(new_soil_profile, models["soil_profiles"][id], exceptions=["layers"])
+            # for item in new_soil_profile.inputs:
+            #     if item == "layers":
+            #         continue  # layers already loaded
+            #     if item in models["SoilProfiles"][i] and hasattr(new_soil_profile, item):
+            #         setattr(new_soil_profile, item, models["SoilProfiles"][i][item])
+            #         print("assign: ", item, models["SoilProfiles"][i][item])
+            soil_profile_objs[int(models["soil_profiles"][id]["id"])] = new_soil_profile
+
+    if "foundations" in models:
+        for id in models["foundations"]:
+            if models["foundations"][id]["type"] == "raft":
+                new_foundation = foundations.RaftFoundation()
+            elif models["foundations"][id]["type"] == "pad":
+                new_foundation = foundations.PadFoundation()
+            else:
+                new_foundation = foundations.Foundation()
+            new_foundation.id = models["foundations"][id]["id"]
+            add_to_obj(new_foundation, models["foundations"][id])
+            foundation_objs[int(models["foundations"][id]["id"])] = new_foundation
+
+    if "buildings" in models:
+        for id in models["buildings"]:
+            if models["buildings"][id]["type"] == "structure":
+                new_building = buildings.Structure()
+            elif models["buildings"][id]["type"] == "building":
+                new_building = buildings.Building()
+            else:
+                new_building = buildings.Building()
+            add_to_obj(new_building, models["buildings"][id])
+            building_objs[models["buildings"][id]["id"]] = new_building
+    if "systems" in models:
+        for id in models["systems"]:
+            new_system = systems.SoilStructureSystem()
+            add_to_obj(new_system, models["systems"][id])
+            system_objs[int(models["systems"][id]["id"])] = new_system
+
+    print(models)
+    print(foundation_objs[1])
+    objs = {
+        "soils": soil_objs,
+        "soil_profiles": soil_profile_objs,
+        "foundations": foundation_objs,
+        "buildings": building_objs,
+        "systems": system_objs,
+
+    }
+
+    return objs
+
+
 class Output(object):
     name = ""
     units = ""
@@ -114,6 +193,8 @@ class Output(object):
         for item in self.parameters():
             outputs[item] = self.__getattribute__(item)
         return outputs
+
+
 
 if __name__ == '__main__':
     fp = "../tests/test_data/_object_load_1.yaml"

@@ -19,11 +19,13 @@ class Foundation(PhysicalObject):
     _height = None  # [m], The height of the foundation from base of foundation to ground floor
     _density = None  # [kg/m3], Density of foundation
     _mass = None  # kg
-    ftype = None  # [], Foundation type
+    ftype = None  # [], Foundation type # redundant, TODO: remove
+    type = "foundation"
 
     inputs = [
         "id",
         "name",
+        "type",
         "width",
         "length",
         "depth",
@@ -157,8 +159,7 @@ class RaftFoundation(Foundation):
     def inputs(self):
         input_list = super(RaftFoundation, self).inputs
         new_inputs = [
-            "i_ww",
-            "i_ll"
+
         ]
         return input_list + new_inputs
 

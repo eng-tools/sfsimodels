@@ -14,7 +14,8 @@ class Building(PhysicalObject):
     """
     id = None
     name = None
-    physical_type = "building"
+    physical_type = "building"  # redundant
+    type = "building"
     _floor_length = None
     _floor_width = None
     _interstorey_heights = np.array([0.0])  # m
@@ -25,6 +26,7 @@ class Building(PhysicalObject):
     inputs = [
         "id",
         "name",
+        "type",
         'floor_length',
         'floor_width',
         'interstorey_heights',
@@ -189,6 +191,7 @@ class Structure(PhysicalObject):
     """
     id = None
     name = None
+    type = "structure"
     _h_eff = None
     _mass_eff = None
     _t_fixed = None
@@ -197,6 +200,7 @@ class Structure(PhysicalObject):
     inputs = [
         "id",
         "name",
+        "type",
         "h_eff",
         "mass_eff",
         "t_fixed",
