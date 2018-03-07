@@ -1,5 +1,8 @@
+import pytest
+
 from sfsimodels import models
 from sfsimodels.checking_tools import isclose
+from sfsimodels import exceptions
 
 
 def test_add_layer_to_soil_profile():
@@ -33,8 +36,9 @@ def test_vertical_stress_soil_profile():
     assert soil_profile.vertical_total_stress(6) == 105000.0
 
     soil_profile.gwl = 3.0
+    soil_profile.layer(1).unit_sat_weight = 21000
     assert soil_profile.vertical_effective_stress(2) == 30000.0
-    assert soil_profile.vertical_effective_stress(4) == 60200.0
+    assert soil_profile.vertical_effective_stress(4) == 61200.0
 
 
 def test_void_ratio_setter():
@@ -229,6 +233,63 @@ def test_bulk_to_g_mod_setter():
     assert isclose(sl.bulk_mod, expected_bulk_mod, rel_tol=0.01), sl.bulk_mod
 
 
+def test_soil_profile_vertical_total_stress():
+    soil_1 = models.Soil()
+    soil_1.phi = 33.
+    soil_1.cohesion = 50000
+    soil_1.unit_dry_weight = 18000
+    soil_profile = models.SoilProfile()
+    soil_profile.add_layer(0, soil_1)
+    assert isclose(soil_profile.vertical_total_stress(5), 5 * 18000, rel_tol=0.0001)
+    soil_profile.gwl = 3.
+    assert isclose(soil_profile.vertical_total_stress(3), 3 * 18000, rel_tol=0.0001)
+    with pytest.raises(exceptions.AnalysisError):
+        soil_profile.vertical_effective_stress(4)
+    soil_profile.layer(0).unit_sat_weight = 21000
+    expected = 3 * 18000 + 2 * 21000
+    assert isclose(soil_profile.vertical_total_stress(5), expected, rel_tol=0.0001)
+    soil_2 = models.Soil()
+    soil_2.phi = 33.
+    soil_2.cohesion = 50000
+    soil_2.unit_dry_weight = 16000
+
+    # CONSIDER TWO LAYER SOIL PROFILE
+    soil_profile.add_layer(4., soil_2)
+    soil_profile.gwl = 10000  # Dry first
+    assert isclose(soil_profile.vertical_total_stress(5), 4 * 18000 + 1 * 16000, rel_tol=0.0001)
+    soil_profile.gwl = 3.
+    with pytest.raises(exceptions.AnalysisError):
+        soil_profile.vertical_effective_stress(5)
+    soil_profile.layer(1).unit_sat_weight = 20000
+    expected = 3 * 18000 + 1 * 21000 + 1 * 20000
+    assert isclose(soil_profile.vertical_total_stress(5), expected, rel_tol=0.0001)
+
+
+def test_soil_profile_vertical_effective_stress():
+    soil_1 = models.Soil()
+    soil_1.phi = 33.
+    soil_1.cohesion = 50000
+    soil_1.unit_dry_weight = 18000
+    soil_2 = models.Soil()
+    soil_2.phi = 33.
+    soil_2.cohesion = 50000
+    soil_2.unit_dry_weight = 18000
+    soil_profile = models.SoilProfile()
+    soil_profile.add_layer(0, soil_1)
+    soil_profile.add_layer(5., soil_2)
+    z_c = 5.0
+    gwl = 4.0
+    soil_profile.gwl = gwl
+
+    assert soil_1.unit_sat_weight is None
+    assert isclose(soil_profile.vertical_effective_stress(2), 2 * 18000, rel_tol=0.0001)
+    with pytest.raises(exceptions.AnalysisError):
+        soil_profile.vertical_effective_stress(z_c)
+    soil_1.unit_sat_weight = 21000
+    expected_sigma_veff = (z_c - gwl) * (21000 - 9800) + gwl * 18000
+    assert isclose(soil_profile.vertical_effective_stress(z_c), expected_sigma_veff, rel_tol=0.0001)
+
+
 def test_inputs_soil():
     sl = models.Soil()
     assert "g_mod" in sl.inputs
@@ -254,5 +315,6 @@ def test_load_test_data():
 
 
 if __name__ == '__main__':
-    test_moist_weight_setter()
+    test_soil_profile_vertical_total_stress()
+    # test_soil_profile_vertical_effective_stress()
     # test_e_max_to_saturated_weight_setter()

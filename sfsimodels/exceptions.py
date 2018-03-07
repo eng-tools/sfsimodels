@@ -1,4 +1,8 @@
 class DesignError(Exception):
+    pass  # deprecated
+
+
+class AnalysisError(Exception):
     pass
 
 

@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-from sfsimodels.exceptions import ModelError
+from sfsimodels.exceptions import ModelError, AnalysisError
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels import checking_tools as ct
 
@@ -59,7 +59,7 @@ class Soil(PhysicalObject):
     @property
     def unit_weight(self):
         if self.saturation is not None:
-            return self._unit_moisture_weight + self.unit_dry_weight
+            return self.unit_moist_weight
         return self.unit_dry_weight
 
     @property
@@ -462,7 +462,7 @@ class SoilProfile(PhysicalObject):
     """
     _id = None
     name = None
-    _gwl = None  # Ground water level [m]
+    _gwl = 1e6  # Ground water level [m]
     unit_weight_water = 9800.  # [N/m3]
     _height = None
 
@@ -603,15 +603,30 @@ class SoilProfile(PhysicalObject):
         """
         total_stress = 0.0
         depths = self.depths
+        end = 0
         for i in range(len(depths)):
             if z_c > depths[i]:
                 if i < len(depths) - 1 and z_c > depths[i + 1]:
                     height = depths[i + 1] - depths[i]
-                    total_stress += height * self.layer(i).unit_weight
+                    bottom_depth = depths[i + 1]
                 else:
+                    end = 1
                     height = z_c - depths[i]
-                    total_stress += height * self.layer(i).unit_weight
-                    break
+                    bottom_depth = z_c
+
+                if bottom_depth <= self.gwl:
+                    total_stress += height * self.layer(i).unit_dry_weight
+                else:
+                    if self.layer(i).unit_sat_weight is None:
+                        raise AnalysisError("Saturated unit weight not defined for layer %i." % i)
+                    sat_height = bottom_depth - max(self.gwl, depths[i])
+                    dry_height = height - sat_height
+                    total_stress += dry_height * self.layer(i).unit_dry_weight + \
+                                    sat_height * self.layer(i).unit_sat_weight
+            else:
+                end = 1
+            if end:
+                break
         return total_stress
 
     def vertical_effective_stress(self, z_c):
