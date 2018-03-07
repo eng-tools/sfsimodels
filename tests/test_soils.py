@@ -247,6 +247,12 @@ def test_e_critical():
     assert isclose(crit_sl.e_critical(1.8), 0.81572, rel_tol=0.0001)
 
 
+def test_load_test_data():
+    from tests import load_test_data as ltd
+    soil = models.Soil()
+    ltd.load_soil_test_data(soil)
+
+
 if __name__ == '__main__':
     test_moist_weight_setter()
     # test_e_max_to_saturated_weight_setter()

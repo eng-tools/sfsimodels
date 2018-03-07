@@ -21,6 +21,7 @@ class Foundation(PhysicalObject):
     _mass = None  # kg
     ftype = None  # [], Foundation type # redundant, TODO: remove
     type = "foundation"
+    _tolerance = 0.0001  # consistency tolerance
 
     inputs = [
         "id",
@@ -58,7 +59,7 @@ class Foundation(PhysicalObject):
 
     @id.setter
     def id(self, value):
-        self._id = value
+        self._id = int(value)
 
     @property
     def area(self):
@@ -80,6 +81,10 @@ class Foundation(PhysicalObject):
         return self._height
 
     @property
+    def depth(self):
+        return self._depth
+
+    @property
     def mass(self):
         return self._mass
 
@@ -93,22 +98,26 @@ class Foundation(PhysicalObject):
 
     @length.setter
     def length(self, value):
-        self._length = value
+        self._length = float(value)
 
     @width.setter
     def width(self, value):
-        self._width = value
+        self._width = float(value)
 
     @height.setter
     def height(self, value):
-        self._height = value
+        self._height = float(value)
+
+    @depth.setter
+    def depth(self, value):
+        self._depth = float(value)
 
     @density.setter
     def density(self, value, override=False):
         density = self._calc_density()
-        if density is not None and not ct.isclose(density, value) and not override:
+        if density is not None and not ct.isclose(density, value, rel_tol=self._tolerance) and not override:
             raise ModelError("Density inconsistent with set mass")
-        self._density = value
+        self._density = float(value)
         mass = self._calc_mass()
         if mass is not None and not ct.isclose(mass, self.mass):
             self.mass = mass
@@ -116,11 +125,11 @@ class Foundation(PhysicalObject):
     @mass.setter
     def mass(self, value, override=False):
         mass = self._calc_mass()
-        if mass is not None and not ct.isclose(mass, value) and not override:
+        if mass is not None and not ct.isclose(mass, value, rel_tol=self._tolerance) and not override:
             raise ModelError("Mass inconsistent with set density")
-        self._mass = value
+        self._mass = float(value)
         density = self._calc_density()
-        if density is not None and not ct.isclose(density, self.density):
+        if density is not None and not ct.isclose(density, self.density, rel_tol=self._tolerance):
             self.density = density
 
     def _calc_mass(self):
@@ -233,8 +242,6 @@ class PadFoundation(Foundation):
             "n_pads_w",
             "pad_length",
             "pad_width",
-            "i_ww",
-            "i_ll"
         ]
         return input_list + new_inputs
 

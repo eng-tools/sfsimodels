@@ -12,7 +12,7 @@ class Building(PhysicalObject):
     """
     An object to define Buildings
     """
-    id = None
+    _id = None
     name = None
     physical_type = "building"  # redundant
     type = "building"
@@ -44,6 +44,14 @@ class Building(PhysicalObject):
                 else:
                     outputs[item] = value
         return outputs
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = int(value)
 
     @property
     def floor_length(self):
@@ -189,7 +197,7 @@ class Structure(PhysicalObject):
     """
     An object to describe structures.
     """
-    id = None
+    _id = None
     name = None
     type = "structure"
     _h_eff = None
@@ -218,6 +226,14 @@ class Structure(PhysicalObject):
                 else:
                     outputs[item] = value
         return outputs
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = int(value)
 
     @property
     def h_eff(self):

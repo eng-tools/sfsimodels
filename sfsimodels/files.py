@@ -8,7 +8,7 @@ def add_to_obj(obj, dictionary, exceptions=[]):
     for item in obj.inputs:
         if item in exceptions:
             continue
-        if item in dictionary and hasattr(obj, item):
+        if item in dictionary and dictionary[item] is not None and hasattr(obj, item):
             print("assign: ", item, dictionary[item])
             setattr(obj, item, dictionary[item])
 
@@ -24,9 +24,10 @@ def load_yaml(fp):
     if "Soils" in data:
         for i in range(len(data["Soils"])):
             new_soil = soils.Soil()
-            for item in new_soil.inputs:
-                if item in data["Soils"][i] and hasattr(new_soil, item):
-                    setattr(new_soil, item, data["Soils"][i][item])
+            add_to_obj(new_soil, data["Soils"][i])
+            # for item in new_soil.inputs:
+            #     if item in data["Soils"][i] and hasattr(new_soil, item):
+            #         setattr(new_soil, item, data["Soils"][i][item])
             soil_objs[data["Soils"][i]["_id"]] = new_soil
 
     if "SoilProfiles" in data:
@@ -79,6 +80,7 @@ def loads_json(p_str):
     data = json.loads(p_str)
     return dicts_to_objects(data)
 
+
 def dicts_to_objects(data):
 
     models = data["models"]
@@ -90,9 +92,7 @@ def dicts_to_objects(data):
     if "soils" in models:
         for id in models["soils"]:
             new_soil = soils.Soil()
-            for item in new_soil.inputs:
-                if item in models["soils"][id] and hasattr(new_soil, item):
-                    setattr(new_soil, item, models["soils"][id][item])
+            add_to_obj(new_soil, models["soils"][id])
             soil_objs[int(models["soils"][id]["id"])] = new_soil
 
     if "soil_profiles" in models:
