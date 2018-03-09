@@ -4,14 +4,23 @@ from collections import OrderedDict
 from sfsimodels import models
 
 
-def add_to_obj(obj, dictionary, exceptions=[]):
+def add_to_obj(obj, dictionary, exceptions=[], verbose=False):
+    """
+    Cycles through a dictionary and adds the key-value pairs to an object.
+
+    :param obj:
+    :param dictionary:
+    :param exceptions:
+    :param verbose:
+    :return:
+    """
     for item in obj.inputs:
         if item in exceptions:
             continue
         if item in dictionary and dictionary[item] is not None and hasattr(obj, item):
-            print("assign: ", item, dictionary[item])
+            if verbose:
+                print("assign: ", item, dictionary[item])
             setattr(obj, item, dictionary[item])
-
 
 
 def load_yaml(fp):
@@ -25,9 +34,6 @@ def load_yaml(fp):
         for i in range(len(data["Soils"])):
             new_soil = soils.Soil()
             add_to_obj(new_soil, data["Soils"][i])
-            # for item in new_soil.inputs:
-            #     if item in data["Soils"][i] and hasattr(new_soil, item):
-            #         setattr(new_soil, item, data["Soils"][i][item])
             soil_objs[data["Soils"][i]["_id"]] = new_soil
 
     if "SoilProfiles" in data:
@@ -39,12 +45,6 @@ def load_yaml(fp):
                 soil = soil_objs[data["SoilProfiles"][i]['layers'][j]["soil_id"]]
                 new_soil_profile.add_layer(depth, soil)
             add_to_obj(new_soil_profile, data["SoilProfiles"][i], exceptions=["layers"])
-            # for item in new_soil_profile.inputs:
-            #     if item == "layers":
-            #         continue  # layers already loaded
-            #     if item in data["SoilProfiles"][i] and hasattr(new_soil_profile, item):
-            #         setattr(new_soil_profile, item, data["SoilProfiles"][i][item])
-            #         print("assign: ", item, data["SoilProfiles"][i][item])
             soil_profile_objs[data["SoilProfiles"][i]["_id"]] = new_soil_profile
 
     if "Foundations" in data:
@@ -59,8 +59,6 @@ def load_yaml(fp):
             add_to_obj(new_foundation, data["Foundations"][i])
             foundation_objs[data["Foundations"][i]["_id"]] = new_foundation
 
-    print(data)
-    print(foundation_objs[0])
     objs = {
         "soils": soil_objs,
         "soil_profiles": soil_profile_objs,
