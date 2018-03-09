@@ -532,6 +532,14 @@ class SoilProfile(PhysicalObject):
     def height(self, value):
         self._height = float(value)
 
+    def layer_height(self, layer_int):
+        if layer_int == len(self.layers):
+            if self.height is None:
+                return None
+            return self.height - self.layer_depth(layer_int)
+        else:
+            return self.layer_depth(layer_int + 1) - self.layer_depth(layer_int)
+
     @property
     def layers(self):
         return self._layers
