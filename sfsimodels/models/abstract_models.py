@@ -1,3 +1,4 @@
+import copy
 from sfsimodels.loader import add_inputs_to_object
 
 
@@ -28,3 +29,7 @@ class PhysicalObject(object):
         Set the frame object parameters using a dictionary
         """""
         add_inputs_to_object(self, values)
+
+    def deepcopy(self):
+        """ Make a clone of the object """
+        return copy.deepcopy(self)
