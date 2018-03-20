@@ -1,7 +1,11 @@
 from setuptools import setup, find_packages
 
+about = {}
+with open("__about__.py") as fp:
+    exec(fp.read(), about)
+
 setup(name='sfsimodels',
-      version='0.5.9',
+      version=about['__version__'],
       description='A set of standard models for assessing structural and geotechnical problems',
       url='https://github.com/eng-tools/sfsimodels',  # The URL to the github repo
       author='Maxim Millen',
