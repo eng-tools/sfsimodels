@@ -241,7 +241,7 @@ class Structure(PhysicalObject):
 
     @h_eff.setter
     def h_eff(self, value):
-        self._h_eff = value
+        self._h_eff = float(value)
 
     @property
     def mass_eff(self):
@@ -249,7 +249,7 @@ class Structure(PhysicalObject):
 
     @mass_eff.setter
     def mass_eff(self, value):
-        self._mass_eff = value
+        self._mass_eff = float(value)
 
     @property
     def t_fixed(self):
@@ -257,7 +257,7 @@ class Structure(PhysicalObject):
 
     @t_fixed.setter
     def t_fixed(self, value):
-        self._t_fixed = value
+        self._t_fixed = float(value)
 
     @property
     def mass_ratio(self):
@@ -265,7 +265,7 @@ class Structure(PhysicalObject):
 
     @mass_ratio.setter
     def mass_ratio(self, value):
-        self._mass_ratio = value
+        self._mass_ratio = float(value)
 
     @property
     def k_eff(self):
