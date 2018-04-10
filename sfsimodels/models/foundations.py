@@ -59,7 +59,7 @@ class Foundation(PhysicalObject):
 
     @id.setter
     def id(self, value):
-        self._id = int(value)
+        self._id = value
 
     @property
     def area(self):
@@ -98,22 +98,32 @@ class Foundation(PhysicalObject):
 
     @length.setter
     def length(self, value):
+        if value is None or value == "":
+            return
         self._length = float(value)
 
     @width.setter
     def width(self, value):
+        if value is None or value == "":
+            return
         self._width = float(value)
 
     @height.setter
     def height(self, value):
+        if value is None or value == "":
+            return
         self._height = float(value)
 
     @depth.setter
     def depth(self, value):
+        if value is None or value == "":
+            return
         self._depth = float(value)
 
     @density.setter
     def density(self, value, override=False):
+        if value is None or value == "":
+            return
         density = self._calc_density()
         if density is not None and not ct.isclose(density, value, rel_tol=self._tolerance) and not override:
             raise ModelError("Density inconsistent with set mass")
@@ -124,6 +134,8 @@ class Foundation(PhysicalObject):
 
     @mass.setter
     def mass(self, value, override=False):
+        if value is None or value == "":
+            return
         mass = self._calc_mass()
         if mass is not None and not ct.isclose(mass, value, rel_tol=self._tolerance) and not override:
             raise ModelError("Mass inconsistent with set density")

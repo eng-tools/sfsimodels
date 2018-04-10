@@ -30,7 +30,10 @@ class Building(PhysicalObject):
         'floor_length',
         'floor_width',
         'interstorey_heights',
-        'n_storeys'
+    ]
+
+    all_parameters = inputs + [
+        "n_storeys"
     ]
 
     def to_dict(self):
@@ -51,7 +54,7 @@ class Building(PhysicalObject):
 
     @id.setter
     def id(self, value):
-        self._id = int(value)
+        self._id = value
 
     @property
     def floor_length(self):
@@ -241,6 +244,8 @@ class Structure(PhysicalObject):
 
     @h_eff.setter
     def h_eff(self, value):
+        if value is None or value == "":
+            return
         self._h_eff = float(value)
 
     @property
@@ -249,6 +254,8 @@ class Structure(PhysicalObject):
 
     @mass_eff.setter
     def mass_eff(self, value):
+        if value is None or value == "":
+            return
         self._mass_eff = float(value)
 
     @property
@@ -257,6 +264,8 @@ class Structure(PhysicalObject):
 
     @t_fixed.setter
     def t_fixed(self, value):
+        if value is None or value == "":
+            return
         self._t_fixed = float(value)
 
     @property
@@ -265,6 +274,8 @@ class Structure(PhysicalObject):
 
     @mass_ratio.setter
     def mass_ratio(self, value):
+        if value is None or value == "":
+            return
         self._mass_ratio = float(value)
 
     @property

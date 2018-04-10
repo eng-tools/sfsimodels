@@ -40,7 +40,7 @@ def load_soil_test_data(sl):
     
 
 def load_soil_profile_test_data(sp):
-    sp.id = 1
+    sp.id = "1"
     sl = sp.layer(0)
     load_soil_test_data(sl)
     
@@ -53,7 +53,7 @@ def load_foundation_test_data(fd):
     :return:
     """
     # foundation
-    fd.id = 1
+    fd.id = "1"
     fd.width = 16.0  # m
     fd.length = 18.0  # m
     fd.depth = 0.0  # m
@@ -67,7 +67,7 @@ def load_structure_test_data(st):
     :return:
     """
     # structure
-    st.id = 1
+    st.id = "1"
     st.h_eff = 9.0  # m
     st.mass_eff = 120e3  # kg
     st.t_eff = 1.0  # s
@@ -81,7 +81,7 @@ def load_hazard_test_data(hz):
     :return:
     """
     # hazard
-    hz.id = 1
+    hz.id = "1"
     hz.z_factor = 0.3  # Hazard factor
     hz.r_factor = 1.0  # Return period factor
     hz.n_factor = 1.0  # Near-fault factor

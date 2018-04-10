@@ -69,5 +69,23 @@ def test_zero_height_raft():
     assert fd2.density is None
 
 
+def test_load_nan():
+    fd = models.RaftFoundation()
+    fd.g_mod = ""
+    fd.bulk_mod = ""
+    fd.g_mod = None
+    for item in fd.inputs:
+        setattr(fd, item, "")
+        setattr(fd, item, None)
+
+    pd = models.PadFoundation()
+    pd.g_mod = ""
+    pd.bulk_mod = ""
+    pd.g_mod = None
+    for item in pd.inputs:
+        setattr(pd, item, "")
+        setattr(pd, item, None)
+
+
 if __name__ == '__main__':
-    test_zero_height_raft()
+    test_load_nan()

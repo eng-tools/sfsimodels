@@ -26,5 +26,16 @@ def test_k_eff():
     assert isclose(structure.k_eff, expected_k_eff, rel_tol=0.001)
 
 
+def test_load_nan():
+    bd = models.Building()
+    bd.g_mod = ""
+    bd.bulk_mod = ""
+    bd.g_mod = None
+    for item in bd.inputs:
+        setattr(bd, item, "")
+        setattr(bd, item, None)
+
+
 if __name__ == '__main__':
+    test_load_nan()
     pass

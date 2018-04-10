@@ -9,7 +9,7 @@ from sfsimodels import checking_tools as ct
 
 
 class Soil(PhysicalObject):
-    id = None
+    _id = None
     name = None
     # strength parameters
     _phi = None
@@ -55,6 +55,14 @@ class Soil(PhysicalObject):
         for item in self.inputs:
             outputs[item] = self.__getattribute__(item)
         return outputs
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
 
     @property
     def unit_weight(self):
@@ -150,10 +158,12 @@ class Soil(PhysicalObject):
         return self._relative_density
 
     @e_curr.setter
-    def e_curr(self, value, override=False):
+    def e_curr(self, value):
+        if value is None or value == "":
+            return
         try:
             void_ratio = self._calc_void_ratio()
-            if void_ratio is not None and not ct.isclose(void_ratio, value, rel_tol=self._tolerance) and not override:
+            if void_ratio is not None and not ct.isclose(void_ratio, value, rel_tol=self._tolerance):
                 raise ModelError("New void ratio (%.3f) inconsistent with one from specific_gravity (%.3f)"
                                  % (value, void_ratio))
         except TypeError:
@@ -162,7 +172,9 @@ class Soil(PhysicalObject):
         self.recompute_all_weights_and_void()
 
     @unit_dry_weight.setter
-    def unit_dry_weight(self, value, override=False):
+    def unit_dry_weight(self, value):
+        if value is None or value == "":
+            return
         try:
             unit_dry_weight = self._calc_unit_dry_weight()
             if unit_dry_weight is not None and not ct.isclose(unit_dry_weight, value, rel_tol=self._tolerance):
@@ -175,6 +187,8 @@ class Soil(PhysicalObject):
 
     @unit_sat_weight.setter
     def unit_sat_weight(self, value):
+        if value is None or value == "":
+            return
         try:
             unit_sat_weight = self._calc_unit_sat_weight()
             if unit_sat_weight is not None and not ct.isclose(unit_sat_weight, value, rel_tol=self._tolerance):
@@ -187,6 +201,8 @@ class Soil(PhysicalObject):
 
     @unit_moist_weight.setter
     def unit_moist_weight(self, value):
+        if value is None or value == "":
+            return
         try:
             unit_moist_weight = self._calc_unit_moist_weight()
             if unit_moist_weight is not None and not ct.isclose(unit_moist_weight, value, rel_tol=self._tolerance):
@@ -200,6 +216,8 @@ class Soil(PhysicalObject):
     @saturation.setter
     def saturation(self, value, override=False):
         """Volume of water to volume of voids"""
+        if value is None or value == "":
+            return
         try:
             unit_moisture_weight = self.unit_sat_weight - self.unit_dry_weight
             unit_moisture_volume = unit_moisture_weight / self._pw
@@ -212,20 +230,22 @@ class Soil(PhysicalObject):
         self.recompute_all_weights_and_void()
 
     @relative_density.setter
-    def relative_density(self, value, override=False):
+    def relative_density(self, value):
+        if value is None or value == "":
+            return
 
         relative_density = self._calc_relative_density()
-        if relative_density is not None and not ct.isclose(relative_density, value, rel_tol=self._tolerance) and not override:
+        if relative_density is not None and not ct.isclose(relative_density, value, rel_tol=self._tolerance):
                 raise ModelError("New relative_density is inconsistent with e_curr")
 
         self._relative_density = float(value)
         self.recompute_all_weights_and_void()
 
     @specific_gravity.setter
-    def specific_gravity(self, value, override=False):
+    def specific_gravity(self, value):
         """ Set the relative weight of the solid """
         specific_gravity = self._calc_specific_gravity()
-        if specific_gravity is not None and not ct.isclose(specific_gravity, value, rel_tol=self._tolerance) and override is False:
+        if specific_gravity is not None and not ct.isclose(specific_gravity, value, rel_tol=self._tolerance):
             raise ModelError("specific gravity is inconsistent with set unit_dry_weight and void_ratio")
 
         self._specific_gravity = float(value)
@@ -276,20 +296,28 @@ class Soil(PhysicalObject):
 
     @e_min.setter
     def e_min(self, value):
+        if value is None or value == "":
+            return
         self._e_min = float(value)
         self.recompute_all_weights_and_void()
 
     @e_max.setter
     def e_max(self, value):
+        if value is None or value == "":
+            return
         self._e_max = float(value)
         self.recompute_all_weights_and_void()
 
     @phi.setter
     def phi(self, value):
+        if value is None or value == "":
+            return
         self._phi = float(value)
 
     @cohesion.setter
     def cohesion(self, value):
+        if value is None or value == "":
+            return
         self._cohesion = float(value)
 
     @porosity.setter
@@ -298,14 +326,20 @@ class Soil(PhysicalObject):
 
     @dilation_angle.setter
     def dilation_angle(self, value):
+        if value is None or value == "":
+            return
         self._dilation_angle = float(value)
 
     @permeability.setter
     def permeability(self, value):
+        if value is None or value == "":
+            return
         self._permeability = float(value)
 
     @g_mod.setter
     def g_mod(self, value):
+        if value is None or value == "":
+            return
         curr_g_mod = self._calc_g_mod()
         if curr_g_mod is not None and not ct.isclose(curr_g_mod, value, rel_tol=0.001):
                 raise ModelError("New g_mod is inconsistent with current value")
@@ -314,6 +348,8 @@ class Soil(PhysicalObject):
 
     @bulk_mod.setter
     def bulk_mod(self, value):
+        if value is None or value == "":
+            return
         curr_bulk_mod = self._calc_bulk_mod()
         if curr_bulk_mod is not None and not ct.isclose(curr_bulk_mod, value, rel_tol=0.001):
                 raise ModelError("New bulk_mod is inconsistent with current value")
@@ -322,6 +358,8 @@ class Soil(PhysicalObject):
 
     @poissons_ratio.setter
     def poissons_ratio(self, value):
+        if value is None or value == "":
+            return
         curr_poissons_ratio = self._calc_relative_density()
         if curr_poissons_ratio is not None and not ct.isclose(curr_poissons_ratio, value, rel_tol=0.001):
                 raise ModelError("New poissons_ratio is inconsistent with current value")

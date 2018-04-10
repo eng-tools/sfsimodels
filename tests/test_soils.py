@@ -314,7 +314,18 @@ def test_load_test_data():
     ltd.load_soil_test_data(soil)
 
 
+def test_load_nan():
+    sl = models.Soil()
+    sl.g_mod = ""
+    sl.bulk_mod = ""
+    sl.g_mod = None
+    for item in sl.inputs:
+        setattr(sl, item, "")
+        setattr(sl, item, None)
+
+
+
 if __name__ == '__main__':
-    test_soil_profile_vertical_total_stress()
+    test_load_nan()
     # test_soil_profile_vertical_effective_stress()
     # test_e_max_to_saturated_weight_setter()
