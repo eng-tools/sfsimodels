@@ -342,9 +342,24 @@ def test_override():
     # Can call override when value is inconsistent, but it removes some of the stack
     new_unit_sat_weight = 19000.
     conflicts = sl.override("unit_sat_weight", new_unit_sat_weight)
-    print(conflicts)
+    expected_conflicts = ['e_curr', 'relative_density']
+    assert len(conflicts) == len(expected_conflicts)
+    for i in range(len(conflicts)):
+        assert conflicts[i] == expected_conflicts[i]
     assert isclose(sl.unit_sat_weight, new_unit_sat_weight, rel_tol=0.001), sl.unit_sat_weight
-    print(sl.unit_sat_weight)
+
+
+def test_can_override_all():
+    from tests import load_test_data as ltd
+    soil = models.Soil()
+    ltd.load_soil_test_data(soil)
+    soil.reset_all()
+    for item in soil.inputs:
+        soil2 = soil.deepcopy()
+        value = getattr(soil, item)
+        if value is not None:
+            soil2.override(item, value * 1.3)
+            assert getattr(soil2, item) == value * 1.3
 
 
 def test_override_fake_key():

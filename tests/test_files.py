@@ -62,7 +62,7 @@ def test_full_save_and_load():
     a = open("temp.json", "w")
     a.write(p_str)
     a.close()
-    objs = files.loads_json(p_str)
+    objs = files.loads_json(p_str, verbose=0)
     assert ct.isclose(system.bd.mass_eff, objs['buildings'][1].mass_eff)
 
     soil = system.sp.layer(0)
