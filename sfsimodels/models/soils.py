@@ -8,6 +8,12 @@ from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels import checking_tools as ct
 
 
+def clean_float(value):
+    if value is None or value == "":
+        return None
+    return float(value)
+
+
 class Soil(PhysicalObject):
     _id = None
     name = None
@@ -38,17 +44,24 @@ class Soil(PhysicalObject):
         "name",
         "g_mod",
         "bulk_mod",
+        "poissons_ratio",
         "phi",
         "dilation_angle",
-        "relative_density",
-        "unit_dry_weight",
-        "unit_sat_weight",
-        "cohesion",
-        "poissons_ratio",
         "e_min",
         "e_max",
         "e_curr",
+        "relative_density",
+        "specific_gravity",
+        "unit_dry_weight",
+        "unit_sat_weight",
+        "saturation",
+        "cohesion",
+
+        "permeability"
     ]
+
+    def __init__(self):
+        self.stack = []
 
     def to_dict(self):
         outputs = OrderedDict()
@@ -56,13 +69,53 @@ class Soil(PhysicalObject):
             outputs[item] = self.__getattribute__(item)
         return outputs
 
+    def override(self, item, value):
+        if not hasattr(self, item):
+            raise KeyError("Soil Object does not have property: %s", item)
+        # try:
+        #     setattr(self, item, value)
+        # except ModelError:
+        #     setattr(self, "_%s" % item, value)
+            # print("Can not override")
+        # create a new stack trace
+        new_stack = list(self.stack)
+        # remove item from original position in stack
+        new_stack[:] = (value for value in new_stack if value[0] != item)
+        # add item to the start of the stack
+        new_stack.insert(0, (item, value))
+        # clear object to rebuild
+        self.reset_all()
+        # reapply new trace
+        conflicts = []
+        for item, value in new_stack:
+            # catch all conflicts
+            try:
+                setattr(self, item, value)
+            except ModelError:
+                conflicts.append(item)
+
+        return conflicts
+
+    def reset_all(self):
+        for item in self.inputs:
+            setattr(self, "_%s" % item, None)
+        self.stack = []
+
+    def add_to_stack(self, item, value):
+        """
+        Add a parameter-value pair to the stack of parameters that have been set.
+        :param item:
+        :param value:
+        :return:
+        """
+        p_value = (item, value)
+        if p_value not in self.stack:
+            self.stack.append(p_value)
+
+
     @property
     def id(self):
         return self._id
-
-    @id.setter
-    def id(self, value):
-        self._id = value
 
     @property
     def unit_weight(self):
@@ -157,6 +210,11 @@ class Soil(PhysicalObject):
     def relative_density(self):
         return self._relative_density
 
+    @id.setter
+    def id(self, value):
+        self.stack.append(("id", value))
+        self._id = value
+
     @e_curr.setter
     def e_curr(self, value):
         if value is None or value == "":
@@ -168,8 +226,16 @@ class Soil(PhysicalObject):
                                  % (value, void_ratio))
         except TypeError:
             pass
+        old_value = self._e_curr
         self._e_curr = float(value)
-        self.recompute_all_weights_and_void()
+        try:
+            self.recompute_all_weights_and_void()
+            self.add_to_stack("e_curr", float(value))
+        except ModelError as e:
+            self._e_curr = old_value
+            raise ModelError(e)
+
+
 
     @unit_dry_weight.setter
     def unit_dry_weight(self, value):
@@ -182,6 +248,7 @@ class Soil(PhysicalObject):
         except TypeError:
             pass
         self._unit_dry_weight = float(value)
+        self.stack.append(("unit_dry_weight", float(value)))
         # try to set other parameters
         self.recompute_all_weights_and_void()
 
@@ -196,12 +263,14 @@ class Soil(PhysicalObject):
         except TypeError:
             pass
         self._unit_sat_weight = float(value)
+        self.stack.append(("unit_sat_weight", float(value)))
         # try to set other parameters
         self.recompute_all_weights_and_void()
 
     @unit_moist_weight.setter
     def unit_moist_weight(self, value):
-        if value is None or value == "":
+        value = clean_float(value)
+        if value is None:
             return
         try:
             unit_moist_weight = self._calc_unit_moist_weight()
@@ -210,13 +279,15 @@ class Soil(PhysicalObject):
         except TypeError:
             pass
         self._unit_moist_weight = float(value)
+        self.stack.append(("unit_moist_weight", float(value)))
         # try to set other parameters
         self.recompute_all_weights_and_void()
 
     @saturation.setter
     def saturation(self, value, override=False):
         """Volume of water to volume of voids"""
-        if value is None or value == "":
+        value = clean_float(value)
+        if value is None:
             return
         try:
             unit_moisture_weight = self.unit_sat_weight - self.unit_dry_weight
@@ -226,79 +297,42 @@ class Soil(PhysicalObject):
                 raise ModelError("new saturation is inconsistent with unit weights")
         except TypeError:
             pass
-        self._saturation = float(value)
+        self._saturation = value
         self.recompute_all_weights_and_void()
 
     @relative_density.setter
     def relative_density(self, value):
-        if value is None or value == "":
+        value = clean_float(value)
+        if value is None:
             return
 
         relative_density = self._calc_relative_density()
         if relative_density is not None and not ct.isclose(relative_density, value, rel_tol=self._tolerance):
                 raise ModelError("New relative_density is inconsistent with e_curr")
 
-        self._relative_density = float(value)
+        self._relative_density = value
+        self.stack.append(("relative_density", value))
         self.recompute_all_weights_and_void()
 
     @specific_gravity.setter
     def specific_gravity(self, value):
         """ Set the relative weight of the solid """
+        if value is None or value == "":
+            return
         specific_gravity = self._calc_specific_gravity()
         if specific_gravity is not None and not ct.isclose(specific_gravity, value, rel_tol=self._tolerance):
             raise ModelError("specific gravity is inconsistent with set unit_dry_weight and void_ratio")
 
         self._specific_gravity = float(value)
+        self.stack.append(("specific_gravity", float(value)))
         self.recompute_all_weights_and_void()
-
-    def recompute_all_weights_and_void(self):
-        # TODO: catch potential inconsistency when void ratio get defined based on weight and the again from saturation
-        f_map = OrderedDict()
-        # voids
-        f_map["_e_curr"] = self._calc_void_ratio
-        f_map["_relative_density"] = self._calc_relative_density
-
-        f_map["_e_min"] = self._calc_min_void_ratio
-        f_map["_e_max"] = self._calc_max_void_ratio
-        # weights
-        f_map["_unit_dry_weight"] = self._calc_unit_dry_weight
-        f_map["_specific_gravity"] = self._calc_specific_gravity
-        # saturation
-        f_map["_unit_sat_weight"] = self._calc_unit_sat_weight
-        f_map["_unit_moist_weight"] = self._calc_unit_moist_weight
-        f_map["_saturation"] = self._calc_saturation
-
-        for item in f_map:
-            value = f_map[item]()
-            if value is not None:
-                curr_value = getattr(self, item)
-                if curr_value is not None and not ct.isclose(curr_value, value, rel_tol=0.001):
-                    raise ModelError("new %s is inconsistent with current value (%.3f, %.3f)" % (item, curr_value,
-                                                                                                           value))
-                setattr(self, item, value)
-
-    def recompute_all_stiffness_parameters(self):
-        f_map = OrderedDict()
-        # voids
-        f_map["_g_mod"] = self._calc_g_mod
-        f_map["_bulk_mod"] = self._calc_bulk_mod
-
-        f_map["_poissons_ratio"] = self._calc_poissons_ratio
-
-        for item in f_map:
-            value = f_map[item]()
-            if value is not None:
-                curr_value = getattr(self, item)
-                if curr_value is not None and not ct.isclose(curr_value, value, rel_tol=0.001):
-                    raise ModelError("new %s is inconsistent with current value (%.3f, %.3f)" % (item, curr_value,
-                                                                                                           value))
-                setattr(self, item, value)
 
     @e_min.setter
     def e_min(self, value):
         if value is None or value == "":
             return
         self._e_min = float(value)
+        self.stack.append(("e_min", float(value)))
         self.recompute_all_weights_and_void()
 
     @e_max.setter
@@ -306,6 +340,7 @@ class Soil(PhysicalObject):
         if value is None or value == "":
             return
         self._e_max = float(value)
+        self.stack.append(("e_max", float(value)))
         self.recompute_all_weights_and_void()
 
     @phi.setter
@@ -313,28 +348,35 @@ class Soil(PhysicalObject):
         if value is None or value == "":
             return
         self._phi = float(value)
+        self.stack.append(("phi", float(value)))
 
     @cohesion.setter
     def cohesion(self, value):
         if value is None or value == "":
             return
         self._cohesion = float(value)
+        self.stack.append(("cohesion", float(value)))
 
     @porosity.setter
     def porosity(self, value):
-        self._e_curr = value / (1 - value)
+        if value is None or value == "":
+            return
+        self._e_curr = float(value) / (1 - float(value))
+        self.stack.append(("e_curr", float(value)))  # note that it is the set store variable that goes in the stack
 
     @dilation_angle.setter
     def dilation_angle(self, value):
         if value is None or value == "":
             return
         self._dilation_angle = float(value)
+        self.stack.append(("dilation_angle", float(value)))
 
     @permeability.setter
     def permeability(self, value):
         if value is None or value == "":
             return
         self._permeability = float(value)
+        self.stack.append(("permeability", float(value)))
 
     @g_mod.setter
     def g_mod(self, value):
@@ -344,6 +386,7 @@ class Soil(PhysicalObject):
         if curr_g_mod is not None and not ct.isclose(curr_g_mod, value, rel_tol=0.001):
                 raise ModelError("New g_mod is inconsistent with current value")
         self._g_mod = float(value)
+        self.stack.append(("g_mod", float(value)))
         self.recompute_all_stiffness_parameters()
 
     @bulk_mod.setter
@@ -354,6 +397,7 @@ class Soil(PhysicalObject):
         if curr_bulk_mod is not None and not ct.isclose(curr_bulk_mod, value, rel_tol=0.001):
                 raise ModelError("New bulk_mod is inconsistent with current value")
         self._bulk_mod = float(value)
+        self.stack.append(("bulk_mod", float(value)))
         self.recompute_all_stiffness_parameters()
 
     @poissons_ratio.setter
@@ -364,6 +408,7 @@ class Soil(PhysicalObject):
         if curr_poissons_ratio is not None and not ct.isclose(curr_poissons_ratio, value, rel_tol=0.001):
                 raise ModelError("New poissons_ratio is inconsistent with current value")
         self._poissons_ratio = float(value)
+        self.stack.append(("poissons_ratio", float(value)))
         self.recompute_all_stiffness_parameters()
 
     def _calc_unit_sat_weight(self):
@@ -444,6 +489,49 @@ class Soil(PhysicalObject):
             return (3 * self.bulk_mod - 2 * self.g_mod) / (2 * (3 * self.bulk_mod + self.g_mod))
         except TypeError:
             return None
+
+    def recompute_all_weights_and_void(self):
+        # TODO: catch potential inconsistency when void ratio get defined based on weight and the again from saturation
+        f_map = OrderedDict()
+        # voids
+        f_map["_e_curr"] = self._calc_void_ratio
+        f_map["_relative_density"] = self._calc_relative_density
+
+        f_map["_e_min"] = self._calc_min_void_ratio
+        f_map["_e_max"] = self._calc_max_void_ratio
+        # weights
+        f_map["_unit_dry_weight"] = self._calc_unit_dry_weight
+        f_map["_specific_gravity"] = self._calc_specific_gravity
+        # saturation
+        f_map["_unit_sat_weight"] = self._calc_unit_sat_weight
+        f_map["_unit_moist_weight"] = self._calc_unit_moist_weight
+        f_map["_saturation"] = self._calc_saturation
+
+        for item in f_map:
+            value = f_map[item]()
+            if value is not None:
+                curr_value = getattr(self, item)
+                if curr_value is not None and not ct.isclose(curr_value, value, rel_tol=0.001):
+                    raise ModelError("new %s is inconsistent with current value (%.3f, %.3f)" % (item, curr_value,
+                                                                                                           value))
+                setattr(self, item, value)
+
+    def recompute_all_stiffness_parameters(self):
+        f_map = OrderedDict()
+        # voids
+        f_map["_g_mod"] = self._calc_g_mod
+        f_map["_bulk_mod"] = self._calc_bulk_mod
+
+        f_map["_poissons_ratio"] = self._calc_poissons_ratio
+
+        for item in f_map:
+            value = f_map[item]()
+            if value is not None:
+                curr_value = getattr(self, item)
+                if curr_value is not None and not ct.isclose(curr_value, value, rel_tol=0.001):
+                    raise ModelError("new %s is inconsistent with current value (%.3f, %.3f)" % (item, curr_value,
+                                                                                                           value))
+                setattr(self, item, value)
 
     @property
     def _unit_void_volume(self):

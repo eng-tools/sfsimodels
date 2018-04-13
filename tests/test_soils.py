@@ -324,8 +324,47 @@ def test_load_nan():
         setattr(sl, item, None)
 
 
+def test_override():
+    sl = models.Soil()
+    sl.e_min = 0.4
+    sl.e_max = 1.0
+    sl.unit_dry_weight = 16000
+    assert sl.unit_moist_weight is None
+    sl.saturation = 1.0
+    sl.e_curr = 0.76
+    assert sl.unit_moist_weight is not None
+    sl.relative_density = 0.4
+    unit_sat_weight = 20231.818
+    assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.001), sl.unit_sat_weight
+
+    # Can call override when value is consistent
+    sl.override("unit_sat_weight", unit_sat_weight)
+    # Can call override when value is inconsistent, but it removes some of the stack
+    new_unit_sat_weight = 19000.
+    conflicts = sl.override("unit_sat_weight", new_unit_sat_weight)
+    print(conflicts)
+    assert isclose(sl.unit_sat_weight, new_unit_sat_weight, rel_tol=0.001), sl.unit_sat_weight
+    print(sl.unit_sat_weight)
+
+
+def test_override_fake_key():
+    sl = models.Soil()
+    with pytest.raises(KeyError):
+        sl.override("not_a_parameter", 1)
+
+
+def test_reset_all():
+    from tests import load_test_data as ltd
+    soil = models.Soil()
+    ltd.load_soil_test_data(soil)
+    soil.reset_all()
+    for item in soil.inputs:
+        assert getattr(soil, item) is None
+
 
 if __name__ == '__main__':
-    test_load_nan()
+    # test_reset_all()
+    # test_override_fake_key()
+    test_override()
     # test_soil_profile_vertical_effective_stress()
     # test_e_max_to_saturated_weight_setter()
