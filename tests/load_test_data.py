@@ -41,7 +41,7 @@ def load_soil_test_data(sl):
 
 def load_soil_profile_test_data(sp):
     sp.id = "1"
-    sl = sp.layer(0)
+    sl = sp.layer(1)
     load_soil_test_data(sl)
     
 

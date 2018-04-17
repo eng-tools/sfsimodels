@@ -1,5 +1,7 @@
 import pytest
+import os
 
+from sfsimodels import files
 from sfsimodels import models
 from sfsimodels.checking_tools import isclose
 from sfsimodels import exceptions
@@ -36,7 +38,7 @@ def test_vertical_stress_soil_profile():
     assert soil_profile.vertical_total_stress(6) == 105000.0
 
     soil_profile.gwl = 3.0
-    soil_profile.layer(1).unit_sat_weight = 21000
+    soil_profile.layer(2).unit_sat_weight = 21000
     assert soil_profile.vertical_effective_stress(2) == 30000.0
     assert soil_profile.vertical_effective_stress(4) == 61200.0
 
@@ -245,7 +247,7 @@ def test_soil_profile_vertical_total_stress():
     assert isclose(soil_profile.vertical_total_stress(3), 3 * 18000, rel_tol=0.0001)
     with pytest.raises(exceptions.AnalysisError):
         soil_profile.vertical_effective_stress(4)
-    soil_profile.layer(0).unit_sat_weight = 21000
+    soil_profile.layer(1).unit_sat_weight = 21000
     expected = 3 * 18000 + 2 * 21000
     assert isclose(soil_profile.vertical_total_stress(5), expected, rel_tol=0.0001)
     soil_2 = models.Soil()
@@ -260,7 +262,7 @@ def test_soil_profile_vertical_total_stress():
     soil_profile.gwl = 3.
     with pytest.raises(exceptions.AnalysisError):
         soil_profile.vertical_effective_stress(5)
-    soil_profile.layer(1).unit_sat_weight = 20000
+    soil_profile.layer(2).unit_sat_weight = 20000
     expected = 3 * 18000 + 1 * 21000 + 1 * 20000
     assert isclose(soil_profile.vertical_total_stress(5), expected, rel_tol=0.0001)
 
@@ -377,9 +379,25 @@ def test_reset_all():
         assert getattr(soil, item) is None
 
 
+def test_can_compute_layer_depth():
+    test_dir = os.path.dirname(__file__)
+    fp = test_dir + "/test_data/ecp_models.json"
+    objs = files.load_json(fp)
+    soil_profile = objs["soil_profiles"][1]
+    assert isinstance(soil_profile, models.SoilProfile)
+
+    assert isclose(soil_profile.layers[0].unit_dry_weight, 15564.70588)
+    rel_density = soil_profile.layer(2).relative_density
+    assert isclose(rel_density, 0.7299999994277497), rel_density
+    print(soil_profile.layer(1).id)
+    assert soil_profile.layer(1).id == 1
+    assert soil_profile.layer_depth(2) == 4.0
+    assert soil_profile.layer_height(2) == 4.0
+
+
 if __name__ == '__main__':
     # test_reset_all()
     # test_override_fake_key()
-    test_override()
+    test_can_compute_layer_depth()
     # test_soil_profile_vertical_effective_stress()
     # test_e_max_to_saturated_weight_setter()

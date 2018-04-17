@@ -711,6 +711,11 @@ class SoilProfile(PhysicalObject):
         self._height = float(value)
 
     def layer_height(self, layer_int):
+        """
+        The number of the layer.
+        :param layer_int:
+        :return:
+        """
         if layer_int == len(self.layers):
             if self.height is None:
                 return None
@@ -726,10 +731,16 @@ class SoilProfile(PhysicalObject):
         del self._layers[depth]
 
     def layer(self, index):
-        return list(self._layers.values())[index]
+        index = int(index)
+        if index == 0:
+            raise KeyError("index=%i, but must be 1 or greater." % index)
+        return list(self._layers.values())[index - 1]
 
     def layer_depth(self, index):
-        return self.depths[index]
+        index = int(index)
+        if index == 0:
+            raise KeyError("index=%i, but must be 1 or greater." % index)
+        return self.depths[index - 1]
 
     @property
     def n_layers(self):
@@ -790,25 +801,26 @@ class SoilProfile(PhysicalObject):
         total_stress = 0.0
         depths = self.depths
         end = 0
-        for i in range(len(depths)):
-            if z_c > depths[i]:
-                if i < len(depths) - 1 and z_c > depths[i + 1]:
-                    height = depths[i + 1] - depths[i]
-                    bottom_depth = depths[i + 1]
+        for layer_int in range(1, len(depths) + 1):
+            l_index = layer_int - 1
+            if z_c > depths[layer_int - 1]:
+                if l_index < len(depths) - 1 and z_c > depths[l_index + 1]:
+                    height = depths[l_index + 1] - depths[l_index]
+                    bottom_depth = depths[l_index + 1]
                 else:
                     end = 1
-                    height = z_c - depths[i]
+                    height = z_c - depths[l_index]
                     bottom_depth = z_c
 
                 if bottom_depth <= self.gwl:
-                    total_stress += height * self.layer(i).unit_dry_weight
+                    total_stress += height * self.layer(layer_int).unit_dry_weight
                 else:
-                    if self.layer(i).unit_sat_weight is None:
-                        raise AnalysisError("Saturated unit weight not defined for layer %i." % i)
-                    sat_height = bottom_depth - max(self.gwl, depths[i])
+                    if self.layer(layer_int).unit_sat_weight is None:
+                        raise AnalysisError("Saturated unit weight not defined for layer %i." % layer_int)
+                    sat_height = bottom_depth - max(self.gwl, depths[l_index])
                     dry_height = height - sat_height
-                    total_stress += dry_height * self.layer(i).unit_dry_weight + \
-                                    sat_height * self.layer(i).unit_sat_weight
+                    total_stress += dry_height * self.layer(layer_int).unit_dry_weight + \
+                                    sat_height * self.layer(layer_int).unit_sat_weight
             else:
                 end = 1
             if end:

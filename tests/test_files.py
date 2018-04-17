@@ -23,8 +23,8 @@ def test_load_json():
     assert ct.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
     assert ct.isclose(objs["foundations"][1].length, 1.0)
     assert ct.isclose(objs["soil_profiles"][1].layers[0].unit_dry_weight, 15564.70588)
-    rel_density = objs["soil_profiles"][1].layer(1).relative_density
-    assert ct.isclose(objs["soil_profiles"][1].layer(1).relative_density, 0.7299999994277497), rel_density
+    rel_density = objs["soil_profiles"][1].layer(2).relative_density
+    assert ct.isclose(objs["soil_profiles"][1].layer(2).relative_density, 0.7299999994277497), rel_density
 
 
 def test_load_and_save_structure():
@@ -65,7 +65,7 @@ def test_full_save_and_load():
     objs = files.loads_json(p_str, verbose=0)
     assert ct.isclose(system.bd.mass_eff, objs['buildings'][1].mass_eff)
 
-    soil = system.sp.layer(0)
+    soil = system.sp.layer(1)
     for item in soil.inputs:
         if getattr(soil, item) is not None:
             assert ct.isclose(getattr(soil, item), getattr(objs['soils'][1], item)), item
