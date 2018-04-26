@@ -20,7 +20,7 @@ class Foundation(PhysicalObject):
     _density = None  # [kg/m3], Density of foundation
     _mass = None  # kg
     ftype = None  # [], Foundation type # redundant, TODO: remove
-    type = "foundation"
+    type = "foundation"  # TODO: Change this to ftype
     _tolerance = 0.0001  # consistency tolerance
 
     inputs = [

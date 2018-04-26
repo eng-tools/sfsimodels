@@ -14,10 +14,10 @@ def add_to_obj(obj, dictionary, exceptions=[], verbose=False):
     :param verbose:
     :return:
     """
-    for item in obj.inputs:
+    for item in dictionary:
         if item in exceptions:
             continue
-        if item in dictionary and dictionary[item] is not None and hasattr(obj, item):
+        if dictionary[item] is not None:
             if verbose:
                 print("assign: ", item, dictionary[item])
             setattr(obj, item, dictionary[item])
@@ -69,9 +69,9 @@ def load_yaml(fp):
     return objs
 
 
-def load_json(fp):
+def load_json(fp, verbose=0):
     data = json.load(open(fp))
-    return dicts_to_objects(data)
+    return dicts_to_objects(data, verbose=verbose)
 
 
 def loads_json(p_str, verbose=0):

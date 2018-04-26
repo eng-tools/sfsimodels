@@ -359,7 +359,7 @@ def test_can_override_all():
     for item in soil.inputs:
         soil2 = soil.deepcopy()
         value = getattr(soil, item)
-        if value is not None:
+        if value is not None and not isinstance(value, str):
             soil2.override(item, value * 1.3)
             assert getattr(soil2, item) == value * 1.3
 
@@ -375,8 +375,10 @@ def test_reset_all():
     soil = models.Soil()
     ltd.load_soil_test_data(soil)
     soil.reset_all()
+    exception_list = ["stype"]
     for item in soil.inputs:
-        assert getattr(soil, item) is None
+        if item not in exception_list:
+            assert getattr(soil, item) is None
 
 
 def test_can_compute_layer_depth():
@@ -389,13 +391,28 @@ def test_can_compute_layer_depth():
     assert isclose(soil_profile.layers[0].unit_dry_weight, 15564.70588)
     rel_density = soil_profile.layer(2).relative_density
     assert isclose(rel_density, 0.7299999994277497), rel_density
-    print(soil_profile.layer(1).id)
     assert soil_profile.layer(1).id == 1
     assert soil_profile.layer_depth(2) == 4.0
     assert soil_profile.layer_height(2) == 4.0
 
 
+def test_poissons_ratio_again():
+    soil = models.Soil()
+    g_mod = 60000000.0
+    bulk_mod = 87142857.14285
+    poissons_ratio = 0.22
+    soil.g_mod = g_mod
+    soil.bulk_mod = bulk_mod
+    soil.poissons_ratio = poissons_ratio
+    soil2 = models.Soil()
+    soil2.bulk_mod = bulk_mod
+    soil2.g_mod = g_mod
+    soil2.poissons_ratio = poissons_ratio
+
+
+
 if __name__ == '__main__':
+    # test_poissons_ratio_again()
     # test_reset_all()
     # test_override_fake_key()
     test_can_compute_layer_depth()

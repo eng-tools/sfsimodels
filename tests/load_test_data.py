@@ -128,6 +128,9 @@ def load_test_data(sss):
     :return:
     """
     sss.id = 1
+    # sss.sp.reset_all()
+    sss.sp.layer(1).reset_all()
+    print(sss.sp.layer(1).poissons_ratio)
     load_soil_profile_test_data(sss.sp)  # soil_profile
     load_foundation_test_data(sss.fd)  # foundation
     load_structure_test_data(sss.bd)  # structure

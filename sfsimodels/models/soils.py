@@ -17,6 +17,7 @@ def clean_float(value):
 class Soil(PhysicalObject):
     _id = None
     name = None
+    stype = "soil"
     # strength parameters
     _phi = None
     _cohesion = None
@@ -42,6 +43,7 @@ class Soil(PhysicalObject):
     inputs = [
         "id",
         "name",
+        "stype",
         "g_mod",
         "bulk_mod",
         "poissons_ratio",
@@ -56,7 +58,6 @@ class Soil(PhysicalObject):
         "unit_sat_weight",
         "saturation",
         "cohesion",
-
         "permeability"
     ]
 
@@ -450,7 +451,7 @@ class Soil(PhysicalObject):
     def poissons_ratio(self, value):
         if value is None or value == "":
             return
-        curr_poissons_ratio = self._calc_relative_density()
+        curr_poissons_ratio = self._calc_poissons_ratio()
         if curr_poissons_ratio is not None and not ct.isclose(curr_poissons_ratio, value, rel_tol=0.001):
                 raise ModelError("New poissons_ratio (%.3f) is inconsistent "
                                  "with current value (%.3f)" % (value, curr_poissons_ratio))

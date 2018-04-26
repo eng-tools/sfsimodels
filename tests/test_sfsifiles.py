@@ -19,7 +19,7 @@ def test_load_yaml():
 
 def test_load_json():
     fp = test_dir + "/test_data/ecp_models.json"
-    objs = files.load_json(fp)
+    objs = files.load_json(fp, verbose=1)
     assert ct.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
     assert ct.isclose(objs["foundations"][1].length, 1.0)
     assert ct.isclose(objs["soil_profiles"][1].layers[0].unit_dry_weight, 15564.70588)
@@ -68,7 +68,8 @@ def test_full_save_and_load():
     soil = system.sp.layer(1)
     for item in soil.inputs:
         if getattr(soil, item) is not None:
-            assert ct.isclose(getattr(soil, item), getattr(objs['soils'][1], item)), item
+            if not isinstance(getattr(soil, item), str):
+                assert ct.isclose(getattr(soil, item), getattr(objs['soils'][1], item)), item
     for item in system.fd.inputs:
         if getattr(system.fd, item) is not None:
             if isinstance(getattr(system.fd, item), str):
@@ -83,4 +84,5 @@ def test_full_save_and_load():
                 assert ct.isclose(getattr(system.bd, item), getattr(objs['buildings'][1], item)), item
 
 if __name__ == '__main__':
+    # test_load_json()
     test_full_save_and_load()
