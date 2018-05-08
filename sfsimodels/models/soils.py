@@ -642,14 +642,15 @@ class SoilProfile(PhysicalObject):
     _id = None
     name = None
     _gwl = 1e6  # Ground water level [m]
-    unit_weight_water = 9800.  # [N/m3]
+    unit_weight_water = 9800.  # [N/m3]  # DEPRECATED
+    unit_water_weight = 9800.  # [N/m3]
     _height = None
 
     inputs = [
         "id",
         "name",
         "gwl",
-        "unit_weight_water",
+        "unit_water_weight",
         "layers",
         "height"
     ]
@@ -778,7 +779,7 @@ class SoilProfile(PhysicalObject):
             crust = self.layer(0)
             crust_height = self.layer_depth(1)
             total_stress_base = crust_height * crust.unit_weight
-            pore_pressure_base = (crust_height - self.gwl) * self.unit_weight_water
+            pore_pressure_base = (crust_height - self.gwl) * self.unit_water_weight
             unit_weight_eff = (total_stress_base - pore_pressure_base) / crust_height
             return unit_weight_eff
 
@@ -833,7 +834,7 @@ class SoilProfile(PhysicalObject):
         Determine the vertical effective stress at a single depth z_c.
         """
         sigma_v_c = self.vertical_total_stress(z_c)
-        sigma_veff_c = sigma_v_c - max(z_c - self.gwl, 0.0) * self.unit_weight_water
+        sigma_veff_c = sigma_v_c - max(z_c - self.gwl, 0.0) * self.unit_water_weight
         return sigma_veff_c
 
 # TODO: extend to have LiquefiableSoil
