@@ -292,6 +292,28 @@ def test_soil_profile_vertical_effective_stress():
     assert isclose(soil_profile.vertical_effective_stress(z_c), expected_sigma_veff, rel_tol=0.0001)
 
 
+def test_hydrostatic_pressure():
+    soil_1 = models.Soil()
+    soil_1.phi = 33.
+    soil_1.cohesion = 50000
+    soil_1.unit_dry_weight = 18000
+    soil_2 = models.Soil()
+    soil_2.phi = 33.
+    soil_2.cohesion = 50000
+    soil_2.unit_dry_weight = 18000
+    soil_profile = models.SoilProfile()
+    soil_profile.add_layer(0, soil_1)
+    soil_profile.add_layer(5., soil_2)
+    z_c = 5.0
+    gwl = 4.0
+    soil_profile.gwl = gwl
+
+    assert soil_1.unit_sat_weight is None
+    assert isclose(soil_profile.hydrostatic_pressure(2), 0.0, rel_tol=0.0001)
+    assert isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rel_tol=0.0001)
+
+
+
 def test_inputs_soil():
     sl = models.Soil()
     assert "g_mod" in sl.inputs

@@ -829,12 +829,19 @@ class SoilProfile(PhysicalObject):
                 break
         return total_stress
 
-    def vertical_effective_stress(self, z_c):
+    def hydrostatic_pressure(self, y_c):
+        """
+        Determine the vertical effective stress at a single depth y_c.
+        """
+        return max(y_c - self.gwl, 0.0) * self.unit_water_weight
+
+    def vertical_effective_stress(self, y_c):
         """
         Determine the vertical effective stress at a single depth z_c.
         """
-        sigma_v_c = self.vertical_total_stress(z_c)
-        sigma_veff_c = sigma_v_c - max(z_c - self.gwl, 0.0) * self.unit_water_weight
+        sigma_v_c = self.vertical_total_stress(y_c)
+        pp = self.hydrostatic_pressure(y_c)
+        sigma_veff_c = sigma_v_c - pp
         return sigma_veff_c
 
 # TODO: extend to have LiquefiableSoil
