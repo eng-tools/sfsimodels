@@ -13,7 +13,6 @@ def test_add_layer_to_soil_profile():
     soil_profile.add_layer(3, soil)
     soil_profile.add_layer(5, soil)
     soil_profile.add_layer(2.5, soil)
-    print(soil_profile.layers)
     layer_order = [0, 2.5, 3, 5]
     ind = 0
     for layer in soil_profile.layers:
@@ -90,7 +89,6 @@ def test_moist_weight_setter():
     assert sl.saturation is None
     sl.unit_moist_weight = 18000
     assert isclose(sl.saturation, 0.248, 0.01)
-    print(sl.saturation)
 
 
 def test_saturation_setter_on_soil():

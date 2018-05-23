@@ -4,7 +4,11 @@ import numpy as np
 def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, prefix=""):
     """
     Compile the properties to a table.
-    :param format:
+
+    :param olist: list, Names of the parameters to be in the output table
+    :param oformat: str, The type of table to be output
+    :param table_ends: bool, Add ends to the table
+    :param prefix: str, A string to be added to the start of each parameter name
     :return: para, str, table as a string
     """
     para = ""
@@ -20,7 +24,10 @@ def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, pref
             value = getattr(obj, item)
             value_str = format_value(value)
             if oformat == "latex":
-                para += "{0} & {1}\\\\\n".format(prefix + format_name(item), value_str)
+                delimeter = " & "
+            else:
+                delimeter = ","
+            para += "{0}{1}{2}\\\\\n".format(prefix + format_name(item), delimeter, value_str)
     if table_ends:
         para = add_table_ends(para, oformat)
     return para
@@ -72,6 +79,6 @@ def add_table_ends(para, oformat='latex', caption="caption-text", label="table")
     return fpara
 
 
-if __name__ == '__main__':
-    avalue = np.array([[0, 0]])
-    print(format_value(avalue))
+# if __name__ == '__main__':
+#     avalue = np.array([[0, 0]])
+#     print(format_value(avalue))

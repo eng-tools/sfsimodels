@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def lc_score(value):
@@ -22,17 +21,17 @@ def lc_score(value):
     return score
 
 
-def show_scores():
-    print(lc_score(0.2))
-
-    r_vals = 1.0 - np.logspace(-4, -0.01)
-    scores = []
-    print(r_vals)
-    for r in r_vals:
-        scores.append(lc_score(r))
-
-    plt.plot(r_vals, scores)
-    plt.show()
-
-if __name__ == '__main__':
-    show_scores()
+# def show_scores():
+#     print(lc_score(0.2))
+#
+#     r_vals = 1.0 - np.logspace(-4, -0.01)
+#     scores = []
+#     print(r_vals)
+#     for r in r_vals:
+#         scores.append(lc_score(r))
+#
+#     plt.plot(r_vals, scores)
+#     plt.show()
+#
+# if __name__ == '__main__':
+#     show_scores()

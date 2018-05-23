@@ -8,18 +8,9 @@ import json
 test_dir = os.path.dirname(__file__)
 
 
-def test_load_yaml():
-    fp = test_dir + "/test_data/_object_load_1.yaml"
-    objs = files.load_yaml(fp)
-    assert objs["soils"][0].unit_dry_weight == 16400
-    assert objs["foundations"][0].length == 7.35
-    assert objs["soil_profiles"][0].layers[0].unit_dry_weight == 16400
-    assert objs["soil_profiles"][0].layers[0].relative_density == 0.38
-
-
 def test_load_json():
     fp = test_dir + "/test_data/ecp_models.json"
-    objs = files.load_json(fp, verbose=1)
+    objs = files.load_json(fp, verbose=0)
     assert ct.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
     assert ct.isclose(objs["foundations"][1].length, 1.0)
     assert ct.isclose(objs["soil_profiles"][1].layers[0].unit_dry_weight, 15564.70588)

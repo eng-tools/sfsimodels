@@ -11,9 +11,9 @@ def test_youngs():
 
 def can_iterate():
     concrete = Concrete()
-    print(concrete.attributes)
     for item in concrete:
-        print(item)
+        pass
+
 
 if __name__ == '__main__':
     can_iterate()

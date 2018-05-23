@@ -77,8 +77,8 @@ def load_from_xlsx(sss, fp):
         parts = val.split(" [")
         val = parts[0]
         val = val.replace(" ", "")
-        if isinstance(row[1].value, str) and "=" in row[1].value:
-            print(row[1].value)
+        # if isinstance(row[1].value, str) and "=" in row[1].value:
+        #     print(row[1].value)
         d_values[val] = row[1].value
         p_values[val] = []
         x = 4

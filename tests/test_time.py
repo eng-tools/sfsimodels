@@ -1,6 +1,6 @@
 import numpy as np
 
-from sfsimodels.checking_tools import isclose
+# from sfsimodels.checking_tools import isclose
 from sfsimodels.models import time
 
 
@@ -11,8 +11,8 @@ def test_time_series():
     assert ts.npts == 101
     assert ts.dt == 0.5
     assert len(ts.time) == len(values)
-    assert isclose(ts.time[4], 2.0)
-    assert isclose(ts.time[-1], 50.0)
+    assert np.isclose(ts.time[4], 2.0)
+    assert np.isclose(ts.time[-1], 50.0)
 
 
 def test_time_indices():

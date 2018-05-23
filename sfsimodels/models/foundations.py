@@ -125,7 +125,7 @@ class Foundation(PhysicalObject):
         if value is None or value == "":
             return
         density = self._calc_density()
-        if density is not None and not ct.isclose(density, value, rel_tol=self._tolerance) and not override:
+        if density is not None and not np.isclose(density, value, rtol=self._tolerance) and not override:
             raise ModelError("Density inconsistent with set mass")
         self._density = float(value)
         mass = self._calc_mass()

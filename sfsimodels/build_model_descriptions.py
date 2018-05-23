@@ -13,11 +13,13 @@ def add_items(obj, para):
         else:
             para.append(item)
 
-para = []
-add_items(models.Soil(), para)
-add_items(models.SoilProfile(), para)
-add_items(models.Foundation(), para)
-add_items(models.PadFoundation(), para)
-add_items(models.Structure(), para)
 
-print("\n".join(para))
+def descriptions():
+    para = []
+    add_items(models.Soil(), para)
+    add_items(models.SoilProfile(), para)
+    add_items(models.Foundation(), para)
+    add_items(models.PadFoundation(), para)
+    add_items(models.Structure(), para)
+
+    print("\n".join(para))
