@@ -17,9 +17,11 @@
 sfsimodels
 **********
 
-A set of standard python models for assessing structural and geotechnical problems
+A set of python objects to represent physical objects for assessing structural and geotechnical problems
 
-Liskov Substitution Principle
+Attempting to solve the `Liskov Substitution Principle <https://en.wikipedia.org/wiki/Liskov_substitution_principle>`_
+problem for combining independently developed source
+code in the fields of structural and geotechnical engineering.
 
 
 Installation
