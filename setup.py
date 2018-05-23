@@ -20,7 +20,8 @@ setup(name='sfsimodels',
       ],
       packages=find_packages(exclude=['contrib', 'docs', 'tests']),
       install_requires=[
-          "numpy>=1.7"
+          "numpy>=1.7",
+          "openpyxl"
       ],
       keywords="geotechnical structural soil",
       # List additional groups of dependencies here (e.g. development
