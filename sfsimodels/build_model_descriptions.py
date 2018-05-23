@@ -15,6 +15,11 @@ def add_items(obj, para):
 
 
 def descriptions():
+    """
+    Generates a list of descriptions of all the models
+
+    :return:
+    """
     para = []
     add_items(models.Soil(), para)
     add_items(models.SoilProfile(), para)

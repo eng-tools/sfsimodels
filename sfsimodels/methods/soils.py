@@ -21,3 +21,7 @@ def peak_friction_angle_peak_et_al_1974(spt_blow_count):
     """
     return 30. + 10. / 35 * (spt_blow_count - 10)
 
+
+def n1_60(sl):
+    """ Compute the normalised SPT blow count"""
+    return (sl.relative_density * 100. / 15) ** 2

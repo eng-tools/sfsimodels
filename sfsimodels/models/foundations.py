@@ -63,6 +63,10 @@ class Foundation(PhysicalObject):
 
     @property
     def area(self):
+        """
+        Foundation area in plan
+        :return:
+        """
         try:
             return self.length * self.width
         except TypeError:
@@ -70,30 +74,58 @@ class Foundation(PhysicalObject):
 
     @property
     def length(self):
+        """
+        Length of the foundation (typically in the out-of-plane direction)
+        :return:
+        """
         return self._length
 
     @property
     def width(self):
+        """
+        Length of the foundation (typically in the in-plane direction)
+        :return:
+        """
         return self._width
 
     @property
     def height(self):
+        """
+        Measure of the base of the foundation to the top
+        :return:
+        """
         return self._height
 
     @property
     def depth(self):
+        """
+        Measure of the base of the foundation to the surface of the soil
+        :return:
+        """
         return self._depth
 
     @property
     def mass(self):
+        """
+        The mass of the whole foundation
+        :return:
+        """
         return self._mass
 
     @property
     def density(self):
+        """
+        The mass density of the foundation [kg/m3]
+        :return:
+        """
         return self._density
 
     @property
     def weight(self):
+        """
+        The weight of the foundation [N]
+        :return:
+        """
         return self.mass * 9.8
 
     @length.setter
@@ -170,10 +202,18 @@ class RaftFoundation(Foundation):
 
     @property
     def i_ww(self):
+        """
+        Contact moment-area around the width axis
+        :return:
+        """
         return self.width * self.length ** 3 / 12
 
     @property
     def i_ll(self):
+        """
+        Contact moment-area around the length axis
+        :return:
+        """
         return self.length * self.width ** 3 / 12
 
     @property
@@ -214,6 +254,10 @@ class PadFoundation(Foundation):
 
     @property
     def i_ll(self):
+        """
+        Second moment of inertia around the length axis.
+        :return:
+        """
         d_values = []
         for i in range(self.n_pads_w):
             d_values.append(self.pad_position_w(i))
@@ -224,30 +268,50 @@ class PadFoundation(Foundation):
 
     @property
     def n_pads(self):
+        """
+        Total number of pad footings
+        :return:
+        """
         return self.n_pads_w * self.n_pads_l
 
     @property
     def pad_area(self):
+        """
+        Area of a pad
+        :return:
+        """
         return self.pad_length * self.pad_width
 
     @property
     def pad_i_ww(self):
+        """
+        Second moment of inertia of a single pad around the width axis.
+        :return:
+        """
         return self.pad_length ** 3 * self.pad_width / 12
 
     @property
     def pad_i_ll(self):
+        """
+        Second moment of inertia of a single pad around the length axis.
+        :return:
+        """
         return self.pad_width ** 3 * self.pad_length / 12
 
     @property
     def area(self):
+        """
+        Contact area of the whole foundation in plan
+        :return:
+        """
         return self.n_pads * self.pad_area
 
     @property
-    def weight(self):
-        return self.mass * 9.8
-
-    @property
     def inputs(self):
+        """
+        A list of possible inputs for defining the object
+        :return:
+        """
         input_list = super(PadFoundation, self).inputs
         new_inputs = [
             "n_pads_l",
@@ -261,6 +325,7 @@ class PadFoundation(Foundation):
         """
         Determines the position of the ith pad in the length direction.
         Assumes equally spaced pads.
+
         :param i: ith number of pad in length direction (0-indexed)
         :return:
         """
@@ -272,6 +337,7 @@ class PadFoundation(Foundation):
         """
         Determines the position of the ith pad in the width direction.
         Assumes equally spaced pads.
+
         :param i: ith number of pad in width direction (0-indexed)
         :return:
         """

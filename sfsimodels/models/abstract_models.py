@@ -25,9 +25,9 @@ class PhysicalObject(object):
         return all_attributes[self._counter]
 
     def set(self, values):
-        """""
+        """
         Set the frame object parameters using a dictionary
-        """""
+        """
         add_inputs_to_object(self, values)
 
     def deepcopy(self):

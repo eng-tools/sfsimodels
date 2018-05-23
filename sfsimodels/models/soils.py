@@ -65,12 +65,27 @@ class Soil(PhysicalObject):
         self.stack = []
 
     def to_dict(self):
+        """
+        Passes all of the inputs and the values to an ordered dictionary
+        :return:
+        """
         outputs = OrderedDict()
         for item in self.inputs:
             outputs[item] = self.__getattribute__(item)
         return outputs
 
     def override(self, item, value):
+        """
+        Can set a parameter to a value that is inconsistent with existing values.
+
+        This method sets the inconsistent value and then reapplies all existing values
+        that are still consistent, all non-consistent (conflicting) values are removed from the object
+        and returned as a list
+
+        :param item: name of parameter to be set
+        :param value: value of the parameter to be set
+        :return: list, conflicting values
+        """
         if not hasattr(self, item):
             raise KeyError("Soil Object does not have property: %s", item)
         try:
@@ -97,11 +112,15 @@ class Soil(PhysicalObject):
         return conflicts
 
     def reset_all(self):
+        """
+        Resets all parameters to None
+        :return:
+        """
         for item in self.inputs:
             setattr(self, "_%s" % item, None)
         self.stack = []
 
-    def add_to_stack(self, item, value):
+    def _add_to_stack(self, item, value):
         """
         Add a parameter-value pair to the stack of parameters that have been set.
         :param item:
@@ -112,47 +131,68 @@ class Soil(PhysicalObject):
         if p_value not in self.stack:
             self.stack.append(p_value)
 
-
     @property
     def id(self):
+        """
+        Object id
+        :return:
+        """
         return self._id
 
     @property
     def unit_weight(self):
+        """
+        The unit moist weight of the soil (accounts for saturation level)
+        :return:
+        """
         if self.saturation is not None:
             return self.unit_moist_weight
         return self.unit_dry_weight
 
     @property
     def phi(self):
+        """Internal friction angle of the soil"""
         return self._phi
 
     @property
     def dilation_angle(self):
+        """
+        Internal dilation angle of the soil
+
+        peak_angle = phi + dilation_angle
+        """
         return self._dilation_angle
 
     @property
     def cohesion(self):
+        """Cohesive strength of the soil"""
         return self._cohesion
 
     @property
     def unit_dry_weight(self):
+        """The unit weight of the soil if saturation=0"""
         return self._unit_dry_weight
 
     @property
     def e_curr(self):
+        """The current void ratio of the soil"""
         return self._e_curr
 
     @property
     def specific_gravity(self):
+        """The specific gravity of the soil"""
         return self._specific_gravity
 
     @property
     def saturation(self):
+        """The current saturation of the soil"""
         return self._saturation
 
     @property
     def moisture_content(self):
+        """
+        The moisture of the soil :math:`(unit_moisture_weight) / (unit_dry_weight)`.
+        """
         try:
             return self._unit_moisture_weight / self.unit_dry_weight
         except TypeError:
@@ -160,6 +200,7 @@ class Soil(PhysicalObject):
 
     @property
     def porosity(self):
+        """Soil porosity"""
         try:
             return self.e_curr / (1 + self.e_curr)
         except TypeError:
@@ -167,18 +208,22 @@ class Soil(PhysicalObject):
 
     @property
     def unit_sat_weight(self):
+        """The weight of the soil if saturation=1"""
         return self._unit_sat_weight
 
     @property
     def unit_moist_weight(self):
+        """The unit moist weight of the soil (accounts for saturation level)"""
         return self._unit_moist_weight
 
     @property
     def permeability(self):
+        """The permeability of the soil"""
         return self._permeability
 
     @property
     def phi_r(self):
+        """internal friction angle in radians"""
         return np.radians(self.phi)
 
     @property
@@ -188,26 +233,32 @@ class Soil(PhysicalObject):
 
     @property
     def g_mod(self):
+        """Shear modulus of the soil"""
         return self._g_mod
 
     @property
     def bulk_mod(self):
+        """Bulk modulus of the soil"""
         return self._bulk_mod
 
     @property
     def poissons_ratio(self):
+        """Poisson's ratio of the soil"""
         return self._poissons_ratio
 
     @property
     def e_min(self):
+        """The minimum void ratio"""
         return self._e_min
 
     @property
     def e_max(self):
+        """The maximum void ratio"""
         return self._e_max
 
     @property
     def relative_density(self):
+        """The relative density :math (e_max - e_curr) / (.e_max - .e_min)"""
         return self._relative_density
 
     @id.setter
@@ -231,7 +282,7 @@ class Soil(PhysicalObject):
         self._e_curr = float(value)
         try:
             self.recompute_all_weights_and_void()
-            self.add_to_stack("e_curr", float(value))
+            self._add_to_stack("e_curr", float(value))
         except ModelError as e:
             self._e_curr = old_value
             raise ModelError(e)
@@ -251,7 +302,7 @@ class Soil(PhysicalObject):
         self._unit_dry_weight = value
         try:
             self.recompute_all_weights_and_void()
-            self.add_to_stack("unit_dry_weight", value)
+            self._add_to_stack("unit_dry_weight", value)
         except ModelError as e:
             self._unit_dry_weight = old_value
             raise ModelError(e)
@@ -271,7 +322,7 @@ class Soil(PhysicalObject):
         self._unit_sat_weight = value
         try:
             self.recompute_all_weights_and_void()
-            self.add_to_stack("unit_sat_weight", value)
+            self._add_to_stack("unit_sat_weight", value)
         except ModelError as e:
             self._unit_sat_weight = old_value
             raise ModelError(e)
@@ -291,7 +342,7 @@ class Soil(PhysicalObject):
         self._unit_moist_weight = value
         try:
             self.recompute_all_weights_and_void()
-            self.add_to_stack("unit_moist_weight", value)
+            self._add_to_stack("unit_moist_weight", value)
         except ModelError as e:
             self._unit_moist_weight = old_value
             raise ModelError(e)
@@ -315,7 +366,7 @@ class Soil(PhysicalObject):
         self._saturation = value
         try:
             self.recompute_all_weights_and_void()
-            self.add_to_stack("saturation", value)
+            self._add_to_stack("saturation", value)
         except ModelError as e:
             self._saturation = old_value
             raise ModelError(e)
@@ -335,11 +386,10 @@ class Soil(PhysicalObject):
         self._relative_density = value
         try:
             self.recompute_all_weights_and_void()
-            self.add_to_stack("relative_density", value)
+            self._add_to_stack("relative_density", value)
         except ModelError as e:
             self._relative_density = old_value
             raise ModelError(e)
-
 
     @specific_gravity.setter
     def specific_gravity(self, value):
@@ -425,7 +475,7 @@ class Soil(PhysicalObject):
         self._g_mod = value
         try:
             self.recompute_all_stiffness_parameters()
-            self.add_to_stack("g_mod", value)
+            self._add_to_stack("g_mod", value)
         except ModelError as e:
             self._g_mod = old_value
             raise ModelError(e)
@@ -442,7 +492,7 @@ class Soil(PhysicalObject):
         self._bulk_mod = value
         try:
             self.recompute_all_stiffness_parameters()
-            self.add_to_stack("bulk_mod", value)
+            self._add_to_stack("bulk_mod", value)
         except ModelError as e:
             self._bulk_mod = old_value
             raise ModelError(e)
@@ -459,7 +509,7 @@ class Soil(PhysicalObject):
         self._poissons_ratio = value
         try:
             self.recompute_all_stiffness_parameters()
-            self.add_to_stack("poissons_ratio", value)
+            self._add_to_stack("poissons_ratio", value)
         except ModelError as e:
             self._poissons_ratio = old_value
             raise ModelError(e)

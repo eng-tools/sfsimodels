@@ -43,6 +43,7 @@ def loads_json(p_str, verbose=0):
 
 # Deprecated name
 def dicts_to_objects(data, verbose=0):
+    """Deprecated. Use ecp_dict_to_objects"""
     deprecation('Deprecated, dicts_to_objects should be switched to ecp_dict_to_objects')
     ecp_dict_to_objects(data, verbose=verbose)
 

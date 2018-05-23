@@ -36,7 +36,8 @@ def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, pref
 def format_name(name):
     """
     format parameter names for output
-    :param name:
+
+    :param name: Cleans a name for output
     :return:
     """
     name = name.replace("_", " ")
@@ -44,6 +45,13 @@ def format_name(name):
 
 
 def format_value(value, sf=3):
+    """
+    convert a parameter value into a formatted string with certain significant figures
+
+    :param value: the value to be formatted
+    :param sf: number of significant figures
+    :return: str
+    """
     if isinstance(value, str):
         return value
 
@@ -63,6 +71,15 @@ def format_value(value, sf=3):
 
 
 def add_table_ends(para, oformat='latex', caption="caption-text", label="table"):
+    """
+    Adds the latex table ends
+
+    :param para:
+    :param oformat:
+    :param caption:
+    :param label:
+    :return:
+    """
     fpara = ""
     if oformat == 'latex':
         fpara += "\\begin{table}[H]\n"

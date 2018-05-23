@@ -1,6 +1,7 @@
 def isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
     """
     To check equality of floats
+
     :param a:
     :param b:
     :param rel_tol:
