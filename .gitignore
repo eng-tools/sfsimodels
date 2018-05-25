@@ -7,3 +7,4 @@ sfsimodels/matplotlibrc
 __pycache__/
 tests/bwplot.egg-info/
 venv/
+.pytest_cache/

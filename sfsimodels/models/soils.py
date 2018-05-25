@@ -15,6 +15,9 @@ def clean_float(value):
 
 
 class Soil(PhysicalObject):
+    """
+    An object to simulate an element of soil
+    """
     _id = None
     name = None
     stype = "soil"
