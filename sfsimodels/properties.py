@@ -45,7 +45,7 @@ variable_properties["density"] = ["Foundation mass density", "kg/m3"]
 
 # pad foundation
 variable_properties["n_pads_l"] = ["Number of footings in length direction", ""]
-variable_properties["n_pads_w"] = ["Number of footings in width direction", "kg/m3"]
+variable_properties["n_pads_w"] = ["Number of footings in width direction", ""]
 variable_properties["pad_length"] = ["Length of footing", "m"]
 variable_properties["pad_width"] = ["Width of footing", "m"]
 
