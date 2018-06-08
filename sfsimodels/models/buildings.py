@@ -37,7 +37,9 @@ class Building(PhysicalObject):
         "n_storeys"
     ]
 
-    def __init__(self, n_storeys, verbose=0):
+    def __init__(self, n_storeys, verbose=0, **kwargs):
+        print(**kwargs)
+        super(Building, self).__init__()
         self._n_storeys = n_storeys
 
     def to_dict(self):
@@ -156,19 +158,23 @@ class Section(object):
         self._width = value
 
 
-class FrameBuilding(Building):
-    _bay_lengths = np.array([])  # protected
-    _beam_depths = np.array([])  # protected
-    _beams = []
-    _n_seismic_frames = None
-    _n_gravity_frames = None
-
-    _n_bays = None  # Cannot be set publicly
+class Frame(object):
+    _bay_lengths = None
 
     def __init__(self, n_storeys, n_bays):
-        super(FrameBuilding, self).__init__(n_storeys)  # run parent class initialiser function
+        self._n_storeys = n_storeys
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
+
+    @property
+    def inputs(self):
+        new_inputs = [
+            "bay_lengths",
+            "beam_depths",
+            "n_seismic_frames",
+            "n_gravity_frames"
+        ]
+        return new_inputs
 
     def _allocate_beams_and_columns(self):
         self._beams = [[Section() for i in range(self.n_bays)] for ss in range(self.n_storeys)]
@@ -187,23 +193,16 @@ class FrameBuilding(Building):
         return self._n_bays
 
     @property
+    def n_storeys(self):
+        return self._n_storeys
+
+    @property
     def n_cols(self):
         return self._n_bays + 1
 
     @n_bays.setter
     def n_bays(self, value):
         raise ModelError("Can not set n_bays, only on initialisation")
-
-    @property
-    def inputs(self):
-        input_list = super(FrameBuilding, self).inputs
-        new_inputs = [
-            "bay_lengths",
-            "beam_depths",
-            "n_seismic_frames",
-            "n_gravity_frames"
-        ]
-        return input_list + new_inputs
 
     def set_beam_prop(self, prop, values, repeat="up"):
         """
@@ -294,6 +293,16 @@ class FrameBuilding(Building):
             raise ModelError("bay_lengths does not match number of bays (%i)." % self.n_bays)
         self._bay_lengths = np.array(bay_lengths)
 
+
+class FrameBuilding(Frame, Building):
+    _n_seismic_frames = None
+    _n_gravity_frames = None
+
+    def __init__(self, n_storeys, n_bays):
+        super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
+        self._n_bays = n_bays
+        self._allocate_beams_and_columns()
+
     @property
     def n_seismic_frames(self):
         return self._n_seismic_frames
@@ -309,6 +318,11 @@ class FrameBuilding(Building):
     @n_gravity_frames.setter
     def n_gravity_frames(self, value):
         self._n_gravity_frames = value
+
+
+class FrameBuilding2D(Frame, Building):
+    def __init__(self, n_storeys, n_bays):
+        super(FrameBuilding2D, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
 
 
 class WallBuilding(Building):
@@ -426,3 +440,9 @@ class SoilStructureSystem(PhysicalObject):
     name = "Nameless"
 
     inputs = ["name"] + bd.inputs + fd.inputs + sp.inputs + hz.inputs
+
+
+if __name__ == '__main__':
+    print(FrameBuilding2D.__mro__)
+    a = FrameBuilding2D(1, 2)
+    print(a.n_bays)
