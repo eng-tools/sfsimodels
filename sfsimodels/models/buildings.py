@@ -21,6 +21,7 @@ class Building(PhysicalObject):
     _interstorey_heights = np.array([0.0])  # m
     _storey_masses = np.array([0.0])  # kg
     _concrete = Concrete()
+    _n_storeys = None
     _g = 9.81  # m/s2  # gravity
 
     inputs = [
@@ -35,6 +36,9 @@ class Building(PhysicalObject):
     all_parameters = inputs + [
         "n_storeys"
     ]
+
+    def __init__(self, n_storeys, verbose=0):
+        self._n_storeys = n_storeys
 
     def to_dict(self):
         outputs = OrderedDict()
@@ -101,7 +105,7 @@ class Building(PhysicalObject):
 
     @property
     def n_storeys(self):
-        return len(self._interstorey_heights)
+        return self._n_storeys
 
     @property
     def interstorey_heights(self):
@@ -109,6 +113,8 @@ class Building(PhysicalObject):
 
     @interstorey_heights.setter
     def interstorey_heights(self, heights):
+        if len(heights) != self.n_storeys:
+            raise ModelError("Specified heights must match number of storeys (%i)." % self.n_storeys)
         self._interstorey_heights = np.array(heights)
 
     @property
@@ -129,11 +135,64 @@ class Building(PhysicalObject):
             self.storey_masses = stresses * np.ones(self.n_storeys) * self.floor_area / self._g
 
 
+class Section(object):
+    _depth = None
+    _width = None
+
+    @property
+    def depth(self):
+        return self._depth
+
+    @depth.setter
+    def depth(self, value):
+        self._depth = value
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, value):
+        self._width = value
+
+
 class FrameBuilding(Building):
     _bay_lengths = np.array([])  # protected
     _beam_depths = np.array([])  # protected
+    _beams = []
     _n_seismic_frames = None
     _n_gravity_frames = None
+
+    _n_bays = None  # Cannot be set publicly
+
+    def __init__(self, n_storeys, n_bays):
+        super(FrameBuilding, self).__init__(n_storeys)  # run parent class initialiser function
+        self._n_bays = n_bays
+        self._allocate_beams_and_columns()
+
+    def _allocate_beams_and_columns(self):
+        self._beams = [[Section() for i in range(self.n_bays)] for ss in range(self.n_storeys)]
+        self._columns = [[Section() for i in range(self.n_cols + 1)] for ss in range(self.n_storeys)]
+
+    @property
+    def beams(self):
+        return self._beams
+
+    @property
+    def columns(self):
+        return self._columns
+
+    @property
+    def n_bays(self):
+        return self._n_bays
+
+    @property
+    def n_cols(self):
+        return self._n_bays + 1
+
+    @n_bays.setter
+    def n_bays(self, value):
+        raise ModelError("Can not set n_bays, only on initialisation")
 
     @property
     def inputs(self):
@@ -146,14 +205,84 @@ class FrameBuilding(Building):
         ]
         return input_list + new_inputs
 
+    def set_beam_prop(self, prop, values, repeat="up"):
+        """
+        Specify the properties of the beams
+
+        :param values:
+        :param repeat: if 'up' then duplicate up the structure
+        :return:
+        """
+        values = np.array(values)
+        if repeat == "up":
+            assert len(values.shape) == 1
+            values = [values for ss in range(self.n_storeys)]
+        else:
+            assert len(values.shape) == 2
+        if len(values[0]) != self.n_bays:
+            raise ModelError("beam depths does not match number of bays (%i)." % self.n_bays)
+        for ss in range(self.n_storeys):
+            for i in range(self.n_bays):
+                setattr(self._beams[ss][i], prop, values[i])
+
+    def set_column_prop(self, prop, values, repeat="up"):
+        """
+        Specify the properties of the columns
+
+        :param values:
+        :param repeat: if 'up' then duplicate up the structure
+        :return:
+        """
+        values = np.array(values)
+        if repeat == "up":
+            assert len(values.shape) == 1
+            values = [values for ss in range(self.n_storeys)]
+        else:
+            assert len(values.shape) == 2
+        if len(values[0]) != self.n_cols:
+            raise ModelError("column props does not match n_cols (%i)." % self.n_cols)
+        for ss in range(self.n_storeys):
+            for i in range(self.n_cols):
+                setattr(self._columns[ss][i], prop, values[i])
+
+    def beams_at_storey(self, storey):
+        return self._beams[storey - 1]
 
     @property
     def beam_depths(self):
-        return self._beam_depths
+        beam_depths = []
+        for ss in range(self.n_storeys):
+            beam_depths.append([])
+            for i in range(self.n_bays):
+                beam_depths[ss].append(self.beams[ss][i].depth)
+        return np.array(beam_depths)
 
-    @beam_depths.setter
-    def beam_depths(self, beam_depths):
-        self._beam_depths = np.array(beam_depths)
+    @property
+    def beam_widths(self):
+        beam_widths = []
+        for ss in range(self.n_storeys):
+            beam_widths.append([])
+            for i in range(self.n_bays):
+                beam_widths[ss].append(self.beams[ss][i].width)
+        return np.array(beam_widths)
+
+    @property
+    def column_depths(self):
+        column_depths = []
+        for ss in range(self.n_storeys):
+            column_depths.append([])
+            for i in range(self.n_cols):
+                column_depths[ss].append(self.columns[ss][i].width)
+        return np.array(column_depths)
+
+    @property
+    def column_widths(self):
+        column_widths = []
+        for ss in range(self.n_storeys):
+            column_widths.append([])
+            for i in range(self.n_cols):
+                column_widths[ss].append(self.columns[ss][i].width)
+        return np.array(column_widths)
 
     @property
     def bay_lengths(self):
@@ -161,6 +290,8 @@ class FrameBuilding(Building):
 
     @bay_lengths.setter
     def bay_lengths(self, bay_lengths):
+        if len(bay_lengths) != self.n_bays:
+            raise ModelError("bay_lengths does not match number of bays (%i)." % self.n_bays)
         self._bay_lengths = np.array(bay_lengths)
 
     @property

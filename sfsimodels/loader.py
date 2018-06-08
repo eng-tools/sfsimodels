@@ -1,6 +1,7 @@
 __author__ = 'maximmillen'
 
 import numpy as np
+from sfsimodels import models
 
 
 def add_inputs_to_object(obj, values):
@@ -110,18 +111,30 @@ def load_building_sample_data(bd):
     bd.storey_masses = masses * np.ones(number_of_storeys)  # kg
 
 
-def load_frame_building_sample_data(fb):
+def load_frame_building_sample_data():
     """
     Sample data for the FrameBuilding object
 
-    :param fb:
     :return:
     """
-    load_building_sample_data(fb)
+    number_of_storeys = 6
+    interstorey_height = 3.4  # m
+    masses = 40.0e3  # kg
+    n_bays = 3
+
+    fb = models.FrameBuilding(number_of_storeys, n_bays)
+    fb.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
+    fb.floor_length = 18.0  # m
+    fb.floor_width = 16.0  # m
+    fb.storey_masses = masses * np.ones(number_of_storeys)  # kg
 
     fb.bay_lengths = [6., 6.0, 6.0]
-    fb.beam_depths = [.5]
+    fb.set_beam_prop("depth", [0.5, 0.5, 0.5], repeat="up")
+    fb.set_beam_prop("width", [0.4, 0.4, 0.4], repeat="up")
+    fb.set_column_prop("width", [0.5, 0.5, 0.5, 0.5], repeat="up")
+    fb.set_column_prop("depth", [0.5, 0.5, 0.5, 0.5], repeat="up")
     fb.n_seismic_frames = 3
     fb.n_gravity_frames = 0
+    return fb
 
 
