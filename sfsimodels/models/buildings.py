@@ -222,7 +222,7 @@ class Frame(object):
             raise ModelError("beam depths does not match number of bays (%i)." % self.n_bays)
         for ss in range(self.n_storeys):
             for i in range(self.n_bays):
-                setattr(self._beams[ss][i], prop, values[i])
+                setattr(self._beams[ss][i], prop, values[0][i])
 
     def set_column_prop(self, prop, values, repeat="up"):
         """
@@ -242,7 +242,7 @@ class Frame(object):
             raise ModelError("column props does not match n_cols (%i)." % self.n_cols)
         for ss in range(self.n_storeys):
             for i in range(self.n_cols):
-                setattr(self._columns[ss][i], prop, values[i])
+                setattr(self._columns[ss][i], prop, values[0][i])
 
     def beams_at_storey(self, storey):
         return self._beams[storey - 1]
