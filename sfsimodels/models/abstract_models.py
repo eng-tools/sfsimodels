@@ -8,9 +8,9 @@ class PhysicalObject(object):
     def __iter__(self):  # real signature unknown
         return self
 
-    def __init__(self, **kwargs):
-        super(PhysicalObject, self).__init__()
-        print("Initialised")
+    # def __init__(self, **kwargs):
+    #     # super(PhysicalObject, self).__init__()
+    #     print("Initialised")
 
     @property
     def attributes(self):

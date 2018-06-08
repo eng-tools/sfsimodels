@@ -300,8 +300,8 @@ class FrameBuilding(Frame, Building):
 
     def __init__(self, n_storeys, n_bays):
         super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
-        self._n_bays = n_bays
-        self._allocate_beams_and_columns()
+        # Frame.__init__(self, n_storeys, n_bays)
+        # Building.__init__(self, n_storeys, n_bays)
 
     @property
     def n_seismic_frames(self):
