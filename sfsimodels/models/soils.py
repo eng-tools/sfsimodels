@@ -698,6 +698,7 @@ class SoilProfile(PhysicalObject):
     unit_weight_water = 9800.  # [N/m3]  # DEPRECATED
     unit_water_weight = 9800.  # [N/m3]
     _height = None
+    hydrostatic = False
 
     inputs = [
         "id",
@@ -730,9 +731,29 @@ class SoilProfile(PhysicalObject):
         #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
         return outputs
 
+    def get_layer_index_by_depth(self, depth):
+        for i, ld in enumerate(self.layers):
+            if ld >= depth:
+                return i + 1
+        return self.n_layers
+
     def add_layer(self, depth, soil):
+
         self._layers[depth] = soil
         self._sort_layers()
+        if self.hydrostatic:
+            if depth >= self.gwl:
+                soil.saturation = 1.0
+            else:
+                li = self.get_layer_index_by_depth(depth)
+                layer_height = self.layer_height(li)
+                if layer_height is None:
+                    soil.saturation = 0.0
+                elif depth + layer_height <= self.gwl:
+                    soil.saturation = 0.0
+                else:
+                    sat_height = depth + self.layer_height(li) - self.gwl
+                    soil.saturation = sat_height / self.layer_height(li)
 
     def _sort_layers(self):
         """

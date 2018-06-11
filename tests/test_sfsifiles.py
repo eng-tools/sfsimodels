@@ -2,6 +2,7 @@ import os
 from tests import load_test_data as ltd
 from sfsimodels import files
 from sfsimodels import checking_tools as ct
+import numpy as np
 from sfsimodels import models
 import json
 
@@ -73,6 +74,31 @@ def test_full_save_and_load():
                 assert getattr(system.bd, item) == getattr(objs['buildings'][1], item), item
             else:
                 assert ct.isclose(getattr(system.bd, item), getattr(objs['buildings'][1], item)), item
+
+
+def test_saturation_set_in_soil_profile():
+    sl = models.Soil()
+    sl.id = 1
+    sl.relative_density = .40  # [decimal]
+    sl.unit_dry_weight = 17000  # [N/m3]
+
+    sp = models.SoilProfile()
+    sp.hydrostatic = True
+    sp.gwl = 4.0
+    sp.add_layer(0, sl)
+    sp.add_layer(6, sl.deepcopy())
+    assert np.isclose(sp.layer(1).saturation, 0.00)
+    assert np.isclose(sp.layer(2).saturation, 1.00)
+
+    # Add a layer in between
+    sl = models.Soil()
+    sl.id = 2
+    sl.relative_density = .50  # [decimal]
+    sl.unit_dry_weight = 18000  # [N/m3]
+    sp.add_layer(2, sl)
+    assert np.isclose(sp.layer(2).saturation, 0.50)
+
+
 
 if __name__ == '__main__':
     # test_load_json()

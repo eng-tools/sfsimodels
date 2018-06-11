@@ -26,7 +26,6 @@ def load_soil_test_data(sl):
     sl.g_mod = 60.0e6  # [Pa]
     sl.phi = 30  # [degrees]
     sl.relative_density = .40  # [decimal]
-    sl.gwl = 2.  # [m], ground water level
     sl.unit_dry_weight = 17000  # [N/m3]
     sl.unit_moist_weight = 18000  # [N/m3]
     sl.unit_weight_water = 9800  # [N/m3]
@@ -42,8 +41,8 @@ def load_soil_test_data(sl):
 def load_soil_profile_test_data(sp):
     sp.id = "1"
     sl = sp.layer(1)
+    sl.gwl = 2.  # [m], ground water level
     load_soil_test_data(sl)
-    
 
 
 def load_foundation_test_data(fd):
