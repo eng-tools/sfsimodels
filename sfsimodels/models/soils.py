@@ -792,7 +792,7 @@ class SoilProfile(PhysicalObject):
         :param layer_int:
         :return:
         """
-        if layer_int == len(self.layers):
+        if layer_int == self.n_layers:
             if self.height is None:
                 return None
             return self.height - self.layer_depth(layer_int)
