@@ -13,6 +13,7 @@ class SeismicHazard(PhysicalObject):
     corner_period = -1.0
     corner_acc_factor = 0.0
     site_class = None
+    type = "seismic_hazard"
 
     inputs = [
         "z_factor",
@@ -30,6 +31,10 @@ class SeismicHazard(PhysicalObject):
         "corner_acc",
         "corner_disp",
     ]
+
+    @property
+    def base_types(self):
+        return super(SeismicHazard, self).base_types + [self.type]
 
     @property
     def pga(self):

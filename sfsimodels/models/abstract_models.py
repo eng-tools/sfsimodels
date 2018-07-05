@@ -4,6 +4,7 @@ from sfsimodels.loader import add_inputs_to_object
 
 class PhysicalObject(object):
     _counter = 0
+    type = "physical_object"
 
     def __iter__(self):  # real signature unknown
         return self
@@ -37,3 +38,7 @@ class PhysicalObject(object):
     def deepcopy(self):
         """ Make a clone of the object """
         return copy.deepcopy(self)
+
+    @property
+    def base_types(self):
+        return ["physical_object"]

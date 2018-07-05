@@ -20,7 +20,7 @@ class Foundation(PhysicalObject):
     _density = None  # [kg/m3], Density of foundation
     _mass = None  # kg
     ftype = None  # [], Foundation type # redundant, TODO: remove
-    type = "foundation"  # TODO: Change this to ftype
+    type = "foundation"
     _tolerance = 0.0001  # consistency tolerance
 
     inputs = [
@@ -52,6 +52,10 @@ class Foundation(PhysicalObject):
                 else:
                     outputs[item] = value
         return outputs
+
+    @property
+    def base_types(self):
+        return super(Foundation, self).base_types + ["foundation"]
 
     @property
     def id(self):
@@ -196,9 +200,14 @@ class RaftFoundation(Foundation):
     An extension to the Foundation Object to describe Raft foundations
     """
     ftype = "raft"
+    type = "raft_foundation"
 
     def __str__(self):
         return "RaftFoundation id: {0}, name: {1}".format(self.id, self.name)
+
+    @property
+    def base_types(self):
+        return super(RaftFoundation, self).base_types + ["raft_foundation"]
 
     @property
     def i_ww(self):
@@ -230,6 +239,7 @@ class PadFoundation(Foundation):
     An extension to the Foundation Object to describe Pad foundations
     """
     ftype = "pad"
+    type = "pad_foundation"
     n_pads_l = 4  # Number of pads in length direction
     n_pads_w = 3  # Number of pads in width direction
     pad_length = 1.0  # m  # TODO: make parameters protected
@@ -237,6 +247,10 @@ class PadFoundation(Foundation):
 
     def __str__(self):
         return "PadFoundation id: {0}, name: {1}".format(self.id, self.name)
+
+    @property
+    def base_types(self):
+        return super(PadFoundation, self).base_types + ["pad_foundation"]
 
     @property
     def i_ww(self):

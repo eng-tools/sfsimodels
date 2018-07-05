@@ -20,6 +20,7 @@ class Soil(PhysicalObject):
     """
     _id = None
     name = None
+    type = "soil"
     stype = "soil"
     # strength parameters
     _phi = None
@@ -76,6 +77,11 @@ class Soil(PhysicalObject):
         for item in self.inputs:
             outputs[item] = self.__getattribute__(item)
         return outputs
+
+    @property
+    def base_types(self):
+        parent_base_types = super(Soil, self).base_types
+        return parent_base_types + ["soil"]
 
     def override(self, item, value):
         """
@@ -660,6 +666,7 @@ class CriticalSoil(Soil):
     e_cr0 = 0.0
     p_cr0 = 0.0
     lamb_crl = 0.0
+    type = "critical_soil"
 
     def __init__(self):
         super(CriticalSoil, self).__init__()  # run parent class initialiser function
@@ -673,6 +680,10 @@ class CriticalSoil(Soil):
         "lamb_crl"
         ]
         return input_list + new_inputs
+
+    @property
+    def base_types(self):
+        return super(CriticalSoil, self).base_types + ["critical_soil"]
 
     def e_critical(self, p):
         p = float(p)
@@ -699,6 +710,7 @@ class SoilProfile(PhysicalObject):
     unit_water_weight = 9800.  # [N/m3]
     _height = None
     hydrostatic = False
+    type = "soil_profile"
 
     inputs = [
         "id",
@@ -730,6 +742,10 @@ class SoilProfile(PhysicalObject):
         # for depth in self.layers:
         #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
         return outputs
+
+    @property
+    def base_types(self):
+        return super(SoilProfile, self).base_types + ["soil_profile"]
 
     def get_layer_index_by_depth(self, depth):
         for i, ld in enumerate(self.layers):

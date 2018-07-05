@@ -1,4 +1,5 @@
 from sfsimodels import output
+from sfsimodels import build_model_descriptions as bmd
 
 
 def test_format_value():
@@ -10,6 +11,10 @@ def test_format_value():
     assert output.format_value(0.45584, sf=4) == "0.4558"
     assert output.format_value(0.45) == "0.45"
     pass
+
+
+def test_model_descriptions():
+    assert len(bmd.all_descriptions()) > 1
 
 
 if __name__ == '__main__':

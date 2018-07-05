@@ -1,64 +1,80 @@
 __author__ = 'maximmillen'
 
 
-variable_properties = {}
+pp = {}
 
 # generic
-variable_properties["name"] = ["Name to identify object", ""]
-variable_properties["id"] = ["Id number", ""]
+pp["physical_object"] = {}
+pp["physical_object"]["type"] = ["Object type", ""]
+pp["physical_object"]["name"] = ["Name to identify object", ""]
+pp["physical_object"]["id"] = ["Id number", ""]
 
 # soil
-variable_properties["stype"] = ["Soil model type", ""]
-variable_properties["g_mod"] = ["Soil shear modulus", "Pa"]
-variable_properties["bulk_mod"] = ["Soil bulk modulus", "Pa"]
-variable_properties["poissons_ratio"] = ["Soil Poissons ratio", "Pa"]
-variable_properties["phi"] = ["Soil friction angle", "deg"]
-variable_properties["cohesion"] = ["Cohesive strength of soil", "Pa"]
-variable_properties["dilation_angle"] = ["Soil dilation angle", "deg"]
-variable_properties["e_min"] = ["Minimum void ratio", ""]
-variable_properties["e_max"] = ["Maximum void ratio", ""]
-variable_properties["e_curr"] = ["Current void ratio", ""]
-variable_properties["relative_density"] = ["Relative density", ""]
-variable_properties["specific_gravity"] = ["Specific gravity of soil", ""]
-variable_properties["unit_dry_weight"] = ["Dry unit weight of soil", "N/m3"]
-variable_properties["unit_sat_weight"] = ["Saturated unit weight of soil", "N/m3"]
-variable_properties["saturation"] = ["Saturation ratio of soil", ""]
-variable_properties["permeability"] = ["Permeability of soil", ""]
+pp["soil"] = {}
+pp["soil"]["stype"] = ["Soil model type", ""]
+pp["soil"]["g_mod"] = ["Soil shear modulus", "Pa"]
+pp["soil"]["bulk_mod"] = ["Soil bulk modulus", "Pa"]
+pp["soil"]["poissons_ratio"] = ["Soil Poissons ratio", "Pa"]
+pp["soil"]["phi"] = ["Soil friction angle", "deg"]
+pp["soil"]["cohesion"] = ["Cohesive strength of soil", "Pa"]
+pp["soil"]["dilation_angle"] = ["Soil dilation angle", "deg"]
+pp["soil"]["e_min"] = ["Minimum void ratio", ""]
+pp["soil"]["e_max"] = ["Maximum void ratio", ""]
+pp["soil"]["e_curr"] = ["Current void ratio", ""]
+pp["soil"]["relative_density"] = ["Relative density", ""]
+pp["soil"]["specific_gravity"] = ["Specific gravity of soil", ""]
+pp["soil"]["unit_dry_weight"] = ["Dry unit weight of soil", "N/m3"]
+pp["soil"]["unit_sat_weight"] = ["Saturated unit weight of soil", "N/m3"]
+pp["soil"]["saturation"] = ["Saturation ratio of soil", ""]
+pp["soil"]["permeability"] = ["Permeability of soil", ""]
 
-variable_properties["e_cr0"] = ["", ""]
-variable_properties["p_cr0"] = ["", ""]
-variable_properties["lamb_crl"] = ["", ""]
+pp["critical_soil"] = {}
+pp["critical_soil"]["e_cr0"] = ["", ""]
+pp["critical_soil"]["p_cr0"] = ["", ""]
+pp["critical_soil"]["lamb_crl"] = ["", ""]
 
 # soil profile
-variable_properties["gwl"] = ["Ground water level", "m"]
-variable_properties["unit_water_weight"] = ["Unit weight of water", "N/m3"]
-variable_properties["height"] = ["Total height of soil profile", "m"]
-variable_properties["layers"] = ["Layers of soil specified by depth to top of layer", "m"]
+pp["soil_profile"] = {}
+pp["soil_profile"]["gwl"] = ["Ground water level", "m"]
+pp["soil_profile"]["unit_water_weight"] = ["Unit weight of water", "N/m3"]
+pp["soil_profile"]["height"] = ["Total height of soil profile", "m"]
+pp["soil_profile"]["layers"] = ["Layers of soil specified by id and depth to top of layer", "m"]
 
 # foundation
-variable_properties["ftype"] = ["Foundation type", ""]
-variable_properties["width"] = ["Foundation width", "m"]
-variable_properties["length"] = ["Foundation length", "m"]
-variable_properties["depth"] = ["Foundation depth", "m"]
-variable_properties["mass"] = ["Foundation mass", "kg"]
-variable_properties["density"] = ["Foundation mass density", "kg/m3"]
+pp["foundation"] = {}
+pp["foundation"]["ftype"] = ["Foundation type", ""]
+pp["foundation"]["width"] = ["Foundation width", "m"]
+pp["foundation"]["length"] = ["Foundation length", "m"]
+pp["foundation"]["depth"] = ["Foundation depth from surface", "m"]
+pp["foundation"]["height"] = ["Foundation height", "m"]
+pp["foundation"]["mass"] = ["Foundation mass", "kg"]
+pp["foundation"]["density"] = ["Foundation mass density", "kg/m3"]
 
 # pad foundation
-variable_properties["n_pads_l"] = ["Number of footings in length direction", ""]
-variable_properties["n_pads_w"] = ["Number of footings in width direction", ""]
-variable_properties["pad_length"] = ["Length of footing", "m"]
-variable_properties["pad_width"] = ["Width of footing", "m"]
+pp["pad_foundation"] = {}
+pp["pad_foundation"]["n_pads_l"] = ["Number of footings in length direction", ""]
+pp["pad_foundation"]["n_pads_w"] = ["Number of footings in width direction", ""]
+pp["pad_foundation"]["pad_length"] = ["Length of footing", "m"]
+pp["pad_foundation"]["pad_width"] = ["Width of footing", "m"]
 
 # structure
-variable_properties["h_eff"] = ["Structure effective height", "m"]
-variable_properties["mass_eff"] = ["Structure effective mass", "T"]
-variable_properties["t_fixed"] = ["Structure effective period", "s"]
-variable_properties["mass_ratio"] = ["Ratio of horizontal seismic mass to vertical mass", ""]
+pp["structure"] = {}
+pp["structure"]["h_eff"] = ["Structure effective height", "m"]
+pp["structure"]["mass_eff"] = ["Structure effective mass", "T"]
+pp["structure"]["t_fixed"] = ["Structure effective period", "s"]
+pp["structure"]["mass_ratio"] = ["Ratio of horizontal seismic mass to vertical mass", ""]
+
+pp["frame_building"] = {}
+pp["frame_building"]["bay_lengths"] = ["Length between columns", "m"]
+pp["frame_building"]["beam_depths"] = ["Depth of beams", "m"]
+pp["frame_building"]["n_seismic_frames"] = ["Number of seismic frames", ""]
+pp["frame_building"]["n_gravity_frames"] = ["Number of gravity frames", ""]
 
 # hazard
-variable_properties["z_factor"] = ["Hazard factor (Z)", ""]
-variable_properties["r_factor"] = ["Return period factor (R)", ""]
-variable_properties["n_factor"] = ["Near-field factor (N)", ""]
-variable_properties["magnitude"] = ["Magnitude", ""]
-variable_properties["corner_period"] = ["Spectrum corner period", "s"]
-variable_properties["corner_acc_factor"] = ["Spectrum corner acceleration factor", ""]
+pp["seismic_hazard"] = {}
+pp["seismic_hazard"]["z_factor"] = ["Hazard factor (Z)", ""]
+pp["seismic_hazard"]["r_factor"] = ["Return period factor (R)", ""]
+pp["seismic_hazard"]["n_factor"] = ["Near-field factor (N)", ""]
+pp["seismic_hazard"]["magnitude"] = ["Magnitude", ""]
+pp["seismic_hazard"]["corner_period"] = ["Spectrum corner period", "s"]
+pp["seismic_hazard"]["corner_acc_factor"] = ["Spectrum corner acceleration factor", ""]

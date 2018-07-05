@@ -55,6 +55,10 @@ class Building(PhysicalObject):
         return outputs
 
     @property
+    def base_types(self):
+        return super(Building, self).base_types + ["building"]
+
+    @property
     def id(self):
         return self._id
 
@@ -175,6 +179,10 @@ class Frame(object):
             "n_gravity_frames"
         ]
         return new_inputs
+
+    @property
+    def base_types(self):
+        return ["frame"]
 
     def _allocate_beams_and_columns(self):
         self._beams = [[Section() for i in range(self.n_bays)] for ss in range(self.n_storeys)]
@@ -297,11 +305,16 @@ class Frame(object):
 class FrameBuilding(Frame, Building):
     _n_seismic_frames = None
     _n_gravity_frames = None
+    type = "frame_building"
 
     def __init__(self, n_storeys, n_bays):
         super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
         # Frame.__init__(self, n_storeys, n_bays)
         # Building.__init__(self, n_storeys, n_bays)
+
+    @property
+    def base_types(self):
+        return super(FrameBuilding, self).base_types + ["frame_building"]
 
     @property
     def n_seismic_frames(self):
@@ -324,11 +337,16 @@ class FrameBuilding2D(Frame, Building):
     def __init__(self, n_storeys, n_bays):
         super(FrameBuilding2D, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
 
+    @property
+    def base_types(self):
+        return super(FrameBuilding2D, self).base_types + ["frame_building2D"]
+
 
 class WallBuilding(Building):
     n_walls = 1
     wall_depth = 0.0  # m
     wall_width = 0.0  # m
+    type = "wall_building"
 
     @property
     def inputs(self):
@@ -339,6 +357,10 @@ class WallBuilding(Building):
             "wall_width"
         ]
         return input_list + new_inputs
+
+    @property
+    def base_types(self):
+        return super(WallBuilding, self).base_types + ["wall_building"]
 
 
 class Structure(PhysicalObject):
@@ -374,6 +396,10 @@ class Structure(PhysicalObject):
                 else:
                     outputs[item] = value
         return outputs
+
+    @property
+    def base_types(self):
+        return super(Structure, self).base_types + ["structure"]
 
     @property
     def id(self):
