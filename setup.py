@@ -4,9 +4,13 @@ about = {}
 with open("sfsimodels/__about__.py") as fp:
     exec(fp.read(), about)
 
+with open('README.rst') as readme_file:
+    readme = readme_file.read()
+
 setup(name='sfsimodels',
       version=about['__version__'],
       description='A set of standard models for assessing structural and geotechnical problems',
+      long_description=readme,
       url='https://github.com/eng-tools/sfsimodels',  # The URL to the github repo
       author='Maxim Millen',
       author_email='mmi46@uclive.ac.nz',

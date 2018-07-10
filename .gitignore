@@ -8,3 +8,5 @@ __pycache__/
 tests/bwplot.egg-info/
 venv/
 .pytest_cache/
+# Sphinx documentation
+docs/_build/

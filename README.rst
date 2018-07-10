@@ -80,3 +80,9 @@ To deploy the package to pypi.com you need to:
  .. code:: bash
     git tag 0.5.2 -m "version 0.5.2"
     git push --tags origin pypi
+
+
+Documentation
+=============
+
+At http://sfsimodels.readthedocs.io/en/latest/
