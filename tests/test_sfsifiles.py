@@ -63,7 +63,7 @@ def test_save_and_load_soil():
     a.write(p_str)
     a.close()
     objs = sm.loads_json(p_str, verbose=0)
-    loaded_soil = objs['soil'][0]
+    loaded_soil = objs['soils'][1]
     assert np.isclose(loaded_soil.g_mod, sl.g_mod)
 
 
@@ -132,4 +132,4 @@ def test_saturation_set_in_soil_profile():
 if __name__ == '__main__':
     # test_load_json()
     # test_full_save_and_load()
-    test_save_and_load_soil()
+    test_saturation_set_in_soil_profile()

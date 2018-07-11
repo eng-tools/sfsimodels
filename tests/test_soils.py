@@ -3,6 +3,7 @@ import os
 
 from sfsimodels import files
 from sfsimodels import models
+import numpy as np
 from sfsimodels.checking_tools import isclose
 from sfsimodels import exceptions
 
@@ -431,11 +432,98 @@ def test_poissons_ratio_again():
     soil2.poissons_ratio = poissons_ratio
 
 
+def test_get_layer_index_by_depth():
+    sl1 = models.Soil()
+    sl2 = models.Soil()
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    assert sp.get_layer_index_by_depth(0) == 1
+    assert sp.get_layer_index_by_depth(1) == 1
+    assert sp.get_layer_index_by_depth(3) == 2
+    assert sp.get_layer_index_by_depth(4) == 2
+
+
+
+
+def test_set_soil_ids_in_soil_profile():
+    sl1 = models.Soil()
+    sl2 = models.Soil()
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    assert sp.layer(2).id is None
+    sp.set_soil_ids_to_layers()
+    assert sp.layer(2).id == 2
+
+
+def test_get_parameter_at_depth_in_soil_profile():
+    sl1 = models.Soil()
+    sl1_gmod = 30e6
+    sl1.g_mod = sl1_gmod
+    sl2 = models.Soil()
+    sl2_cohesion = 20e3
+    sl2.cohesion = sl2_cohesion
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    print(sp.get_parameter_at_depth(2, 'g_mod'))
+    assert np.isclose(sp.get_parameter_at_depth(2, 'g_mod'), sl1_gmod)
+    assert sp.get_parameter_at_depth(4, 'g_mod') is None
+    assert np.isclose(sp.get_parameter_at_depth(4, 'cohesion'), sl2_cohesion)
+    assert sp.get_parameter_at_depth(2, 'cohesion') is None
+
+
+def test_get_parameters_at_depth_in_soil_profile():
+    sl1 = models.Soil()
+    sl1_gmod = 30e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+    sl2 = models.Soil()
+    sl2_cohesion = 20e3
+    sl2.cohesion = sl2_cohesion
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    vals_at_2 = sp.get_parameters_at_depth(2, ['g_mod', 'unit_dry_weight', 'cohesion'])
+    vals_at_4 = sp.get_parameters_at_depth(4, ['g_mod', 'unit_dry_weight', 'cohesion'])
+    assert np.isclose(vals_at_2['g_mod'], sl1_gmod)
+    assert np.isclose(vals_at_2['unit_dry_weight'], sl1_unit_dry_weight)
+    assert vals_at_2['cohesion'] is None
+    assert vals_at_4['g_mod'] is None
+    assert vals_at_4['unit_dry_weight'] is None
+    assert np.isclose(vals_at_4['cohesion'], sl2_cohesion)
+
+
+def test_get_soil_at_depth_in_soil_profile():
+    sl1 = models.Soil()
+    sl1_gmod = 30e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+    sl2 = models.Soil()
+    sl2_cohesion = 20e3
+    sl2.cohesion = sl2_cohesion
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    sl_at_2 = sp.get_soil_at_depth(2)
+    sl_at_4 = sp.get_soil_at_depth(4)
+    assert np.isclose(sl_at_2.g_mod, sl1_gmod)
+    assert np.isclose(sl_at_2.unit_dry_weight, sl1_unit_dry_weight)
+    assert sl_at_2.cohesion is None
+    assert sl_at_4.g_mod is None
+    assert sl_at_4.unit_dry_weight is None
+    assert np.isclose(sl_at_4.cohesion, sl2_cohesion)
+
 
 if __name__ == '__main__':
     # test_poissons_ratio_again()
     # test_reset_all()
     # test_override_fake_key()
-    test_can_compute_layer_depth()
+    # test_can_compute_layer_depth()
+    test_get_layer_index_by_depth()
+    # test_get_soil_at_depth_in_soil_profile()
     # test_soil_profile_vertical_effective_stress()
     # test_e_max_to_saturated_weight_setter()

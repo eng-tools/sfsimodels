@@ -747,12 +747,6 @@ class SoilProfile(PhysicalObject):
     def base_types(self):
         return super(SoilProfile, self).base_types + ["soil_profile"]
 
-    def get_layer_index_by_depth(self, depth):
-        for i, ld in enumerate(self.layers):
-            if ld >= depth:
-                return i + 1
-        return self.n_layers
-
     def add_layer(self, depth, soil):
 
         self._layers[depth] = soil
@@ -833,6 +827,37 @@ class SoilProfile(PhysicalObject):
         if index == 0:
             raise KeyError("index=%i, but must be 1 or greater." % index)
         return self.depths[index - 1]
+
+    def set_soil_ids_to_layers(self):
+        for i in range(1, len(self._layers) + 1):
+            self.layer(i).id = i
+
+    def get_layer_index_by_depth(self, depth):
+        for i, ld in enumerate(self.layers):
+            if ld > depth:
+                return i
+        return self.n_layers
+
+    def get_soil_at_depth(self, depth):
+        lay_index = self.get_layer_index_by_depth(depth)
+        return self.layer(lay_index)
+
+    def get_parameter_at_depth(self, depth, parameter):
+        lay_index = self.get_layer_index_by_depth(depth)
+        soil = self.layer(lay_index)
+        if hasattr(soil, parameter):
+            return getattr(soil, parameter)
+        else:
+            raise ModelError("%s not in soil object at depth (%.3f)." % (parameter, depth))
+
+    def get_parameters_at_depth(self, depth, parameters):
+        lay_index = self.get_layer_index_by_depth(depth)
+        soil = self.layer(lay_index)
+        od = OrderedDict()
+        for parameter in parameters:
+            if hasattr(soil, parameter):
+                od[parameter] = getattr(soil, parameter)
+        return od
 
     @property
     def n_layers(self):
