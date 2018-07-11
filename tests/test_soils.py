@@ -176,6 +176,7 @@ def test_e_max_to_saturated_weight_setter():
 
     assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.01), sl.unit_sat_weight
 
+
 def test_e_max_to_moist_weight_setter():
     sl = models.Soil()
     sl.e_min = 0.4

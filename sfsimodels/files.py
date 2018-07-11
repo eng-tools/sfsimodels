@@ -2,7 +2,7 @@ import json
 from sfsimodels.models import soils, buildings, foundations, material, systems
 from collections import OrderedDict
 from sfsimodels import models
-from sfsimodels.exceptions import deprecation
+from sfsimodels.exceptions import deprecation, ModelError
 
 
 def add_to_obj(obj, dictionary, exceptions=[], verbose=0):
@@ -136,6 +136,8 @@ class Output(object):
                             ])
 
     def add_to_dict(self, an_object):
+        if an_object.id is None:
+            raise ModelError("id must be set on object before adding to output.")
         if isinstance(an_object, models.Soil):
             self.models["soils"][an_object.id] = an_object.to_dict()
         elif isinstance(an_object, models.SoilProfile):

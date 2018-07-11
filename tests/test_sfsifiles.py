@@ -4,6 +4,7 @@ from sfsimodels import files
 from sfsimodels import checking_tools as ct
 import numpy as np
 from sfsimodels import models
+import sfsimodels as sm
 import json
 
 test_dir = os.path.dirname(__file__)
@@ -36,6 +37,34 @@ def test_load_and_save_structure():
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
     objs = files.loads_json(p_str)
     assert ct.isclose(structure.mass_eff, objs['buildings'][1].mass_eff)
+
+
+def test_save_and_load_soil():
+    # Set the void ratio and specific gravity
+    sl = sm.Soil()
+    sl.id = 1
+    sl.e_curr = 0.7
+    assert sl.unit_dry_weight is None
+    sl.specific_gravity = 2.95
+    assert np.isclose(sl.unit_dry_weight, 17000, rtol=0.01)
+
+    # set modulus parameters
+    g_mod_set = 40e6
+    sl.g_mod = g_mod_set
+    sl.poissons_ratio = 0.4
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(sl)
+
+    ecp_output.name = "a single soil"
+    ecp_output.units = "N, kg, m, s"
+    ecp_output.comments = ""
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    a = open("temp.json", "w")
+    a.write(p_str)
+    a.close()
+    objs = sm.loads_json(p_str, verbose=0)
+    loaded_soil = objs['soil'][0]
+    assert np.isclose(loaded_soil.g_mod, sl.g_mod)
 
 
 def test_full_save_and_load():
@@ -102,4 +131,5 @@ def test_saturation_set_in_soil_profile():
 
 if __name__ == '__main__':
     # test_load_json()
-    test_full_save_and_load()
+    # test_full_save_and_load()
+    test_save_and_load_soil()
