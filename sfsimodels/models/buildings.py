@@ -189,11 +189,14 @@ class Frame(object):
     def to_dict(self, extra=()):
         outputs = OrderedDict()
         skip_list = []
+        # skip_list = ["beams", "columns"]  # TODO: uncomment this
         full_inputs = self.inputs + list(extra)
         for item in full_inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
                 outputs[item] = sf.collect_serial_value(value)
+        # TODO: implement logic for only storing novel sections and then save section_ids only
+
         return outputs
 
     @property
