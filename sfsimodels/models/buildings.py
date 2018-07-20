@@ -6,7 +6,7 @@ from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models import SeismicHazard, Foundation, Soil
 from sfsimodels.models.material import Concrete
 from sfsimodels.exceptions import ModelError
-
+from sfsimodels import functions as sf
 
 class Building(PhysicalObject):
     """
@@ -50,14 +50,7 @@ class Building(PhysicalObject):
         for item in full_inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
-                if isinstance(value, int):
-                    outputs[item] = str(value)
-                elif hasattr(value, "__len__"):
-                    tolist = getattr(value, "tolist", None)
-                    if callable(tolist):
-                        value.tolist()
-                else:
-                    outputs[item] = value
+                outputs[item] = sf.collect_serial_value(value)
         return outputs
 
     @property
@@ -150,6 +143,18 @@ class Building(PhysicalObject):
 class Section(object):
     _depth = None
     _width = None
+    inputs = ["depth",
+              "width"]
+
+    def to_dict(self, extra=()):
+        outputs = OrderedDict()
+        skip_list = []
+        full_inputs = self.inputs + list(extra)
+        for item in full_inputs:
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                outputs[item] = sf.collect_serial_value(value)
+        return outputs
 
     @property
     def depth(self):
@@ -172,9 +177,8 @@ class Frame(object):
     _bay_lengths = None
 
     inputs = [
-        "bay_lengths",
-        "beam_depths",
-        "beams"
+        "beams",
+        "columns"
     ]
 
     def __init__(self, n_storeys, n_bays):
@@ -189,14 +193,7 @@ class Frame(object):
         for item in full_inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
-                if isinstance(value, int):
-                    outputs[item] = str(value)
-                elif hasattr(value, "__len__"):
-                    tolist = getattr(value, "tolist", None)
-                    if callable(tolist):
-                        value.tolist()
-                else:
-                    outputs[item] = value
+                outputs[item] = sf.collect_serial_value(value)
         return outputs
 
     @property
@@ -373,17 +370,7 @@ class FrameBuilding2D(Frame, Building):
         for item in full_inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
-                if isinstance(value, int):
-                    outputs[item] = str(value)
-                elif hasattr(value, "__len__"):
-                    tolist = getattr(value, "tolist", None)
-                    if callable(tolist):
-                        value = value.tolist()
-                        outputs[item] = value
-                    # else:
-                    #     raise ValueError
-                else:
-                    outputs[item] = value
+                outputs[item] = sf.collect_serial_value(value)
         return outputs
 
 
