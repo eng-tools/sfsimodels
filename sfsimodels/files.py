@@ -135,7 +135,14 @@ class Output(object):
                             ("systems", OrderedDict()),
                             ])
 
-    def add_to_dict(self, an_object):
+    def add_to_dict(self, an_object, extras={}):
+        """
+        Convert models to json serialisable output
+
+        :param an_object: An instance of a model object
+        :param extras: A dictionary of extra variables that should be
+        :return:
+        """
         if an_object.id is None:
             raise ModelError("id must be set on object before adding to output.")
         if isinstance(an_object, models.Soil):
@@ -159,6 +166,31 @@ class Output(object):
             self.models["buildings"][an_object.id] = an_object.to_dict()
         elif isinstance(an_object, models.SoilStructureSystem):
             self.models["systems"][an_object.id] = an_object.to_dict()
+        elif hasattr(an_object, "to_dict"):  # Catch any custom objects
+            if hasattr(an_object, "type"):
+                mtype = an_object.type
+                if mtype not in self.models:
+                    self.models[mtype] = OrderedDict()
+                self.models[mtype][an_object.id] = an_object.to_dict()
+                self.models["systems"][an_object.id] = an_object.to_dict()
+            else:
+                raise ModelError("Object does not have attribute 'type', cannot add to output.")
+        else:
+            raise ModelError("Object does not have method 'to_dict', cannot add to output.")
+
+    def add_to_output(self, mtype, m_id, serialisable_dict):
+        """
+        Can add additional objects or dictionaries to output file that don't conform to standard objects.
+
+        :param mtype:
+        :param m_id:
+        :param serialisable_dict:
+        :return:
+        """
+        if mtype not in self.models:
+            self.models[mtype] = OrderedDict()
+        self.models[mtype][m_id] = serialisable_dict
+
 
     @staticmethod
     def parameters():

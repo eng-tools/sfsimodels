@@ -31,6 +31,7 @@ class Building(PhysicalObject):
         'floor_length',
         'floor_width',
         'interstorey_heights',
+        'storey_masses'
     ]
 
     all_parameters = inputs + [
@@ -42,14 +43,19 @@ class Building(PhysicalObject):
         super(Building, self).__init__()
         self._n_storeys = n_storeys
 
-    def to_dict(self):
+    def to_dict(self, extra=()):
         outputs = OrderedDict()
         skip_list = []
-        for item in self.inputs:
+        full_inputs = self.inputs + list(extra)
+        for item in full_inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
                 if isinstance(value, int):
                     outputs[item] = str(value)
+                elif hasattr(value, "__len__"):
+                    tolist = getattr(value, "tolist", None)
+                    if callable(tolist):
+                        value.tolist()
                 else:
                     outputs[item] = value
         return outputs
@@ -165,20 +171,15 @@ class Section(object):
 class Frame(object):
     _bay_lengths = None
 
+    inputs = [
+        "bay_lengths",
+        "beam_depths",
+    ]
+
     def __init__(self, n_storeys, n_bays):
         self._n_storeys = n_storeys
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
-
-    @property
-    def inputs(self):
-        new_inputs = [
-            "bay_lengths",
-            "beam_depths",
-            "n_seismic_frames",
-            "n_gravity_frames"
-        ]
-        return new_inputs
 
     @property
     def base_types(self):
@@ -306,6 +307,9 @@ class FrameBuilding(Frame, Building):
     _n_seismic_frames = None
     _n_gravity_frames = None
     type = "frame_building"
+    _extra_class_inputs = ["n_seismic_frames",
+                           "n_gravity_frames"]
+    inputs = list(Frame.inputs) + list(Building.inputs) + _extra_class_inputs
 
     def __init__(self, n_storeys, n_bays):
         super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
@@ -334,6 +338,9 @@ class FrameBuilding(Frame, Building):
 
 
 class FrameBuilding2D(Frame, Building):
+    _extra_class_inputs = []
+    inputs = list(Frame.inputs) + list(Building.inputs) + _extra_class_inputs
+
     def __init__(self, n_storeys, n_bays):
         super(FrameBuilding2D, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
 

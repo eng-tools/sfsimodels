@@ -67,6 +67,106 @@ def test_save_and_load_soil():
     assert np.isclose(loaded_soil.g_mod, sl.g_mod)
 
 
+def test_save_and_load_soil_profile():
+    sl1 = models.Soil()
+    sl1_gmod = 30e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+    sl2 = models.Soil()
+    sl2_cohesion = 20e3
+    sl2.cohesion = sl2_cohesion
+    sp = models.SoilProfile()
+    sp.id = 0
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    sp.set_soil_ids_to_layers()
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(sp)
+
+    ecp_output.name = "a single soil"
+    ecp_output.units = "N, kg, m, s"
+    ecp_output.comments = ""
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    a = open("temp.json", "w")
+    a.write(p_str)
+    a.close()
+    objs = sm.loads_json(p_str, verbose=0)
+    loaded_soil = objs['soils'][1]
+    load_soil_from_profile = sp.layer(1)
+    assert np.isclose(loaded_soil.g_mod, sl1.g_mod)
+    assert np.isclose(load_soil_from_profile.g_mod, sl1.g_mod)
+
+
+def test_save_and_load_building():
+    number_of_storeys = 6
+    interstorey_height = 3.4  # m
+    masses = 40.0e3  # kg
+    n_bays = 3
+
+    fb = models.FrameBuilding(number_of_storeys, n_bays)
+    fb.id = 1
+    fb.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
+    fb.floor_length = 18.0  # m
+    fb.floor_width = 16.0  # m
+    fb.storey_masses = masses * np.ones(number_of_storeys)  # kg
+
+    fb.bay_lengths = [6., 6.0, 6.0]
+    fb.set_beam_prop("depth", [0.5, 0.5, 0.5], repeat="up")
+    fb.set_beam_prop("width", [0.4, 0.4, 0.4], repeat="up")
+    fb.set_column_prop("width", [0.5, 0.5, 0.5, 0.5], repeat="up")
+    fb.set_column_prop("depth", [0.5, 0.5, 0.5, 0.5], repeat="up")
+    fb.n_seismic_frames = 3
+    fb.n_gravity_frames = 0
+
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(fb)
+
+    ecp_output.name = "a single soil"
+    ecp_output.units = "N, kg, m, s"
+    ecp_output.comments = ""
+    p_d = ecp_output.to_dict()
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    a = open("temp.json", "w")
+    a.write(p_str)
+    a.close()
+
+
+def test_save_and_load_2d_frame_building():
+    number_of_storeys = 6
+    interstorey_height = 3.4  # m
+    masses = 40.0e3  # kg
+    n_bays = 3
+
+    fb2d = models.FrameBuilding2D(number_of_storeys, n_bays)
+    print(fb2d.inputs)
+    fb2d.id = 1
+    fb2d.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
+    fb2d.floor_length = 18.0  # m
+    fb2d.floor_width = 16.0  # m
+    fb2d.storey_masses = masses * np.ones(number_of_storeys)  # kg
+
+    fb2d.bay_lengths = [6., 6.0, 6.0]
+    fb2d.set_beam_prop("depth", [0.5, 0.5, 0.5], repeat="up")
+    fb2d.set_beam_prop("width", [0.4, 0.4, 0.4], repeat="up")
+    fb2d.set_column_prop("width", [0.5, 0.5, 0.5, 0.5], repeat="up")
+    fb2d.set_column_prop("depth", [0.5, 0.5, 0.5, 0.5], repeat="up")
+
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(fb2d)
+
+    ecp_output.name = "a single soil"
+    ecp_output.units = "N, kg, m, s"
+    ecp_output.comments = ""
+    p_d = ecp_output.to_dict()
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    a = open("temp.json", "w")
+    a.write(p_str)
+    a.close()
+
+    # p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+
+
 def test_full_save_and_load():
     system = models.SoilStructureSystem()
     ltd.load_test_data(system)
@@ -132,4 +232,5 @@ def test_saturation_set_in_soil_profile():
 if __name__ == '__main__':
     # test_load_json()
     # test_full_save_and_load()
-    test_saturation_set_in_soil_profile()
+    # test_save_and_load_soil_profile()
+    test_save_and_load_2d_frame_building()
