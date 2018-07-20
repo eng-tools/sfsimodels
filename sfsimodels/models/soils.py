@@ -198,7 +198,7 @@ class Soil(PhysicalObject):
         The moisture of the soil :math:`(unit_moisture_weight) / (unit_dry_weight)`.
         """
         try:
-            return self._unit_moisture_weight() / self.unit_dry_weight
+            return self._calc_unit_moisture_weight() / self.unit_dry_weight
         except TypeError:
             return None
 
@@ -360,7 +360,7 @@ class Soil(PhysicalObject):
         try:
             unit_moisture_weight = self.unit_moist_weight - self.unit_dry_weight
             unit_moisture_volume = unit_moisture_weight / self._pw
-            saturation = unit_moisture_volume / self._unit_void_volume()
+            saturation = unit_moisture_volume / self._calc_unit_void_volume()
             if saturation is not None and not ct.isclose(saturation, value, rel_tol=self._tolerance):
                 raise ModelError("New saturation (%.3f) is inconsistent "
                                  "with calculated value (%.3f)" % (value, saturation))
@@ -520,13 +520,13 @@ class Soil(PhysicalObject):
 
     def _calc_unit_sat_weight(self):
         try:
-            return self._unit_void_volume() * self._pw + self.unit_dry_weight
+            return self._calc_unit_void_volume() * self._pw + self.unit_dry_weight
         except TypeError:
             return None
 
     def _calc_unit_moist_weight(self):
         try:
-            return self._unit_moisture_weight() + self.unit_dry_weight
+            return self._calc_unit_moisture_weight() + self.unit_dry_weight
         except TypeError:
             return None
 
@@ -534,7 +534,7 @@ class Soil(PhysicalObject):
         try:
             unit_moisture_weight = self.unit_moist_weight - self.unit_dry_weight
             unit_moisture_volume = unit_moisture_weight / self._pw
-            return unit_moisture_volume / self._unit_void_volume()
+            return unit_moisture_volume / self._calc_unit_void_volume()
         except TypeError:
             return None
 
@@ -640,24 +640,24 @@ class Soil(PhysicalObject):
                                                                                                            value))
                 setattr(self, item, value)
 
-    def _unit_void_volume(self):
+    def _calc_unit_void_volume(self):
         """Return the volume of the voids for total volume equal to a unit"""
         try:
             return self.e_curr / (1 + self.e_curr)
         except ValueError:
             return None
 
-    def _unit_solid_volume(self):
+    def _calc_unit_solid_volume(self):
         """Return the volume of the solids for total volume equal to a unit"""
         try:
-            return 1.0 - self._unit_solid_volume()
+            return 1.0 - self._calc_unit_solid_volume()
         except ValueError:
             return None
 
-    def _unit_moisture_weight(self):
+    def _calc_unit_moisture_weight(self):
         """Return the weight of the voids for total volume equal to a unit"""
         try:
-            return self.saturation * self._unit_void_volume() * self._pw
+            return self.saturation * self._calc_unit_void_volume() * self._pw
         except ValueError:
             return None
 
