@@ -13,3 +13,9 @@ def convert_stress_to_mass(q, width, length, gravity):
     """
     mass = q * width * length / gravity
     return mass
+
+
+def clean_float(value):
+    if value is None or value == "":
+        return None
+    return float(value)
