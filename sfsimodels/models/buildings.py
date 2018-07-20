@@ -174,12 +174,30 @@ class Frame(object):
     inputs = [
         "bay_lengths",
         "beam_depths",
+        "beams"
     ]
 
     def __init__(self, n_storeys, n_bays):
         self._n_storeys = n_storeys
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
+
+    def to_dict(self, extra=()):
+        outputs = OrderedDict()
+        skip_list = []
+        full_inputs = self.inputs + list(extra)
+        for item in full_inputs:
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                if isinstance(value, int):
+                    outputs[item] = str(value)
+                elif hasattr(value, "__len__"):
+                    tolist = getattr(value, "tolist", None)
+                    if callable(tolist):
+                        value.tolist()
+                else:
+                    outputs[item] = value
+        return outputs
 
     @property
     def base_types(self):
@@ -348,22 +366,38 @@ class FrameBuilding2D(Frame, Building):
     def base_types(self):
         return super(FrameBuilding2D, self).base_types + ["frame_building2D"]
 
+    def to_dict(self, extra=()):
+        outputs = OrderedDict()
+        skip_list = []
+        full_inputs = self.inputs + list(extra)
+        for item in full_inputs:
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                if isinstance(value, int):
+                    outputs[item] = str(value)
+                elif hasattr(value, "__len__"):
+                    tolist = getattr(value, "tolist", None)
+                    if callable(tolist):
+                        value = value.tolist()
+                        outputs[item] = value
+                    # else:
+                    #     raise ValueError
+                else:
+                    outputs[item] = value
+        return outputs
+
 
 class WallBuilding(Building):
     n_walls = 1
     wall_depth = 0.0  # m
     wall_width = 0.0  # m
     type = "wall_building"
-
-    @property
-    def inputs(self):
-        input_list = super(WallBuilding, self).inputs
-        new_inputs = [
-            "n_walls",
-            "wall_depth",
-            "wall_width"
-        ]
-        return input_list + new_inputs
+    _extra_class_inputs = [
+        "n_walls",
+        "wall_depth",
+        "wall_width"
+    ]
+    inputs = Building.inputs + _extra_class_inputs
 
     @property
     def base_types(self):

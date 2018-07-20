@@ -668,19 +668,15 @@ class CriticalSoil(Soil):
     p_cr0 = 0.0
     lamb_crl = 0.0
     type = "critical_soil"
-
-    def __init__(self):
-        super(CriticalSoil, self).__init__()  # run parent class initialiser function
-
-    @property
-    def inputs(self):
-        input_list = super(CriticalSoil, self).inputs
-        new_inputs = [
+    _extra_class_inputs = [
         "e_cr0",
         "p_cr0",
         "lamb_crl"
         ]
-        return input_list + new_inputs
+    inputs = Soil.inputs + _extra_class_inputs
+
+    def __init__(self):
+        super(CriticalSoil, self).__init__()  # run parent class initialiser function
 
     @property
     def base_types(self):
