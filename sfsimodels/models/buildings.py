@@ -8,6 +8,7 @@ from sfsimodels.models.material import Concrete
 from sfsimodels.exceptions import ModelError
 from sfsimodels import functions as sf
 
+
 class Building(PhysicalObject):
     """
     An object to define Buildings
@@ -140,7 +141,9 @@ class Building(PhysicalObject):
             self.storey_masses = stresses * np.ones(self.n_storeys) * self.floor_area / self._g
 
 
-class Section(object):
+class Section(PhysicalObject):
+    id = None
+    type = "section"
     _depth = None
     _width = None
     inputs = ["depth",
@@ -196,7 +199,8 @@ class Frame(object):
                 value = self.__getattribute__(item)
                 outputs[item] = sf.collect_serial_value(value)
         # TODO: implement logic for only storing novel sections and then save section_ids only
-
+        # TODO: Add Section as an ECPOutput type, can then attach material as a custom type
+        # TODO: Add ability to load json to custom objects using a dictionary of 'types' to Objects.
         return outputs
 
     @property

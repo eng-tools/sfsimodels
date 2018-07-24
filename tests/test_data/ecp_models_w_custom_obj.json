@@ -1,0 +1,63 @@
+{
+    "name": "L1-A",
+    "units": "N, kg, m, s",
+    "doi": "",
+    "sfsimodels_version": "0.5.0",
+    "comments": "Contains a custom object",
+    "models": {
+        "soils": {},
+        "soil_profiles": {},
+        "foundations": {
+            "1": {
+                "id": "1",
+                "name": "A",
+                "type": "raft",
+                "width": 16.0,
+                "length": 1.0,
+                "depth": 1.0,
+                "height": 0.7,
+                "density": 2500.0
+            },
+            "2": {
+                "id": "2",
+                "name": "B",
+                "type": "raft",
+                "width": 16.0,
+                "length": 1.0,
+                "depth": 1.0,
+                "height": 0.7,
+                "density": 2500.0
+            }
+        },
+        "buildings": {
+            "1": {
+                "id": "1",
+                "name": "foundation-only",
+                "type": "structure",
+                "h_eff": 0.0,
+                "mass_eff": 80000.0,
+                "t_fixed": 0.0,
+                "mass_ratio": 1.0
+            },
+            "2": {
+                "id": "2",
+                "name": "foundation-only",
+                "type": "structure",
+                "h_eff": 0.0,
+                "mass_eff": 80000.0,
+                "t_fixed": 0.0,
+                "mass_ratio": 1.0
+            }
+        },
+        "systems": {},
+        "cantilever": {
+            "1": {
+                "id": "1",
+                "type": "cantilever",
+                "length": 6.0,
+                "depth": 0.4,
+                "e_mod": 200000000000
+            }
+        }
+    }
+}

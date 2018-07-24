@@ -24,21 +24,45 @@ def add_to_obj(obj, dictionary, exceptions=[], verbose=0):
             setattr(obj, item, dictionary[item])
 
 
-def load_json(ffp, verbose=0):
+def load_json(ffp, custom=None, meta=False, verbose=0):
     """
     Given a json file it creates a dictionary of sfsi objects
 
     :param ffp: str, Full file path to json file
+    :param custom: dict, used to load custom objects, {model type: custom object}
     :param verbose: int, console output
     :return: dict
     """
     data = json.load(open(ffp))
-    return ecp_dict_to_objects(data, verbose=verbose)
+    if meta:
+        md = {}
+        for item in data:
+            if item != "models":
+                md[item] = data[item]
+        return ecp_dict_to_objects(data, custom, verbose=verbose), md
+    else:
+        return ecp_dict_to_objects(data, custom, verbose=verbose)
 
 
-def loads_json(p_str, verbose=0):
+def loads_json(p_str, custom=None, meta=False, verbose=0):
+    """
+    Given a json string it creates a dictionary of sfsi objects
+
+    :param ffp: str, Full file path to json file
+    :param custom: dict, used to load custom objects, {model type: custom object}
+    :param meta: bool, if true then also return all ecp meta data in separate dict
+    :param verbose: int, console output
+    :return: dict
+    """
     data = json.loads(p_str)
-    return ecp_dict_to_objects(data, verbose=verbose)
+    if meta:
+        md = {}
+        for item in data:
+            if item != "models":
+                md[item] = data[item]
+        return ecp_dict_to_objects(data, custom, verbose=verbose), md
+    else:
+        return ecp_dict_to_objects(data, custom, verbose=verbose)
 
 
 # Deprecated name
@@ -48,21 +72,26 @@ def dicts_to_objects(data, verbose=0):
     ecp_dict_to_objects(data, verbose=verbose)
 
 
-def ecp_dict_to_objects(ecp_dict, verbose=0):
+def ecp_dict_to_objects(ecp_dict, custom=None, verbose=0):
     """
     Given an ecp dictionary, build a dictionary of sfsi objects
 
     :param ecp_dict: dict, engineering consistency project dictionary
+    :param custom: dict, used to load custom objects, {model type: custom object}
     :param verbose: int, console output
     :return: dict
     """
+    if custom is None:
+        custom = {}
 
     data_models = ecp_dict["models"]
     soil_objs = {}
     soil_profile_objs = {}
     foundation_objs = {}
+    section_objs = {}
     building_objs = {}
     system_objs = {}
+    all_custom_objs = {}  # This is double nested
     if "soils" in data_models:
         for m_id in data_models["soils"]:
             new_soil = soils.Soil()
@@ -92,31 +121,72 @@ def ecp_dict_to_objects(ecp_dict, verbose=0):
             add_to_obj(new_foundation, data_models["foundations"][m_id], verbose=verbose)
             foundation_objs[int(data_models["foundations"][m_id]["id"])] = new_foundation
 
+    if "sections" in data_models:
+        for m_id in data_models["section"]:
+            new_section = buildings.Section()
+            add_to_obj(new_section, data_models["section"][m_id], verbose=verbose)
+            section_objs[int(data_models["section"][m_id]["id"])] = new_section
+
     if "buildings" in data_models:
         for m_id in data_models["buildings"]:
             if data_models["buildings"][m_id]["type"] == "structure":
                 new_building = buildings.Structure()
             elif data_models["buildings"][m_id]["type"] == "building":
-                new_building = buildings.Building()
+                n_storeys = len(data_models["buildings"][m_id]['interstorey_heights'])
+                new_building = buildings.Building(n_storeys)
             else:
-                new_building = buildings.Building()
+                n_storeys = len(data_models["buildings"][m_id]['interstorey_heights'])
+                new_building = buildings.Building(n_storeys)
             add_to_obj(new_building, data_models["buildings"][m_id], verbose=verbose)
             building_objs[int(data_models["buildings"][m_id]["id"])] = new_building
-    if "systems" in data_models:
+
+    if "systems" in data_models:  # must be run after other objects are loaded
         for m_id in data_models["systems"]:
             new_system = systems.SoilStructureSystem()
-            add_to_obj(new_system, data_models["systems"][m_id], verbose=verbose)
+
+            # Attach the soil profile
+            soil_profile_id = data_models["systems"][m_id]['soil_profile_id']
+            soil_profile = soil_profile_objs[int(soil_profile_id)]
+            new_system.sp = soil_profile
+
+            # Attach the foundation
+            foundation_id = data_models["systems"][m_id]['foundation_id']
+            foundation = foundation_objs[int(foundation_id)]
+            new_system.fd = foundation
+
+            # Attach the building
+            building_id = data_models["systems"][m_id]['building_id']
+            building = building_objs[int(building_id)]
+            new_system.bd = building
+
+            # Add remaining parameters
+            ignore_list = ["foundation_id", "building_id", "soil_profile_id"]
+            add_to_obj(new_system, data_models["systems"][m_id], exceptions=ignore_list, verbose=verbose)
             system_objs[int(data_models["systems"][m_id]["id"])] = new_system
+
+    # Catch custom types
+    standard_types = ["soils", "soil_profiles", "foundations", "sections", "buildings", "systems"]
+    for m_type in data_models:
+        if m_type not in standard_types and m_type in custom:
+            if m_type not in all_custom_objs:
+                all_custom_objs[m_type] = {}
+            for m_id in data_models[m_type]:
+                if "id" not in data_models[m_type][m_id]:
+                    raise ModelError("object (%s) requires 'id' parameter" % m_type)
+                new_custom_obj = custom[m_type]()  # Note currently no support for custom objects
+                add_to_obj(new_custom_obj, data_models[m_type][m_id], verbose=verbose)
+                all_custom_objs[m_type][int(data_models[m_type][m_id]["id"])] = new_custom_obj
 
     objs = {
         "soils": soil_objs,
         "soil_profiles": soil_profile_objs,
         "foundations": foundation_objs,
+        "sections": section_objs,
         "buildings": building_objs,
         "systems": system_objs,
-
     }
-
+    for m_type in all_custom_objs:
+        objs[m_type] = all_custom_objs[m_type]
     return objs
 
 
@@ -158,7 +228,7 @@ class Output(object):
                 })
 
             self.models["soil_profiles"][an_object.id] = profile_dict
-        elif isinstance(an_object, models.Foundation):
+        elif isinstance(an_object, models.Foundation):  # This is redundant, custom catcher at end works for all
             self.models["foundations"][an_object.id] = an_object.to_dict()
         elif isinstance(an_object, models.Structure):
             self.models["buildings"][an_object.id] = an_object.to_dict()
@@ -172,7 +242,6 @@ class Output(object):
                 if mtype not in self.models:
                     self.models[mtype] = OrderedDict()
                 self.models[mtype][an_object.id] = an_object.to_dict()
-                self.models["systems"][an_object.id] = an_object.to_dict()
             else:
                 raise ModelError("Object does not have attribute 'type', cannot add to output.")
         else:

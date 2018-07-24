@@ -1,4 +1,6 @@
 import os
+from collections import OrderedDict
+
 from tests import load_test_data as ltd
 from sfsimodels import files
 from sfsimodels import checking_tools as ct
@@ -228,9 +230,49 @@ def test_saturation_set_in_soil_profile():
     assert np.isclose(sp.layer(2).saturation, 0.50)
 
 
+def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
+    class Cantilever(object):
+        id = None
+        type = "cantilever"
+        inputs = ["id", "length", "depth", "e_mod"]
+
+        def to_dict(self):
+            outputs = OrderedDict()
+            for item in self.inputs:
+                outputs[item] = getattr(self, item)
+            return outputs
+
+    fp = test_dir + "/test_data/ecp_models_w_custom_obj.json"
+    objs, meta_data = files.load_json(fp, custom={"cantilever": Cantilever}, meta=True, verbose=0)
+    assert ct.isclose(objs["foundations"][1].length, 1.0)
+    assert ct.isclose(objs["cantilever"][1].length, 6.0)
+    ecp_output = files.Output()
+    for m_type in objs:
+        for instance in objs[m_type]:
+            ecp_output.add_to_dict(objs[m_type][instance])
+    ecp_output.name = meta_data["name"]
+    ecp_output.units = meta_data["units"]
+    ecp_output.comments = meta_data["comments"]
+    ecp_output.sfsimodels_version = meta_data["sfsimodels_version"]
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    a = open("temp.json", "w")
+    a.write(p_str)
+    a.close()
+    objs2, md2 = files.loads_json(p_str, custom={"cantilever": Cantilever}, meta=True, verbose=0)
+    for m_type in objs:
+        for instance in objs[m_type]:
+            for parameter in objs[m_type][instance].inputs:
+                p_org = getattr(objs[m_type][int(instance)], parameter)
+                p_2nd = getattr(objs2[m_type][int(instance)], parameter)
+                assert p_org == p_2nd, (parameter, p_org, p_2nd)
+    for item in meta_data:
+        assert meta_data[item] == md2[item], (item, meta_data[item], md2[item])
+
 
 if __name__ == '__main__':
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    test_save_and_load_2d_frame_building()
+    # test_save_and_load_2d_frame_building()
+    test_full_save_and_load()
+    # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

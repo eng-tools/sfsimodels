@@ -1,6 +1,6 @@
 import copy
 from sfsimodels.loader import add_inputs_to_object
-
+import types
 
 class PhysicalObject(object):
     _counter = 0
@@ -17,6 +17,10 @@ class PhysicalObject(object):
     def attributes(self):
         all_attributes = []
         for item in self.__dir__():
+            if item in ["deepcopy", "set", "to_dict"]:
+                continue
+            if isinstance(item, types.MethodType):
+                continue
             if "_" != item[0]:
                 all_attributes.append(item)
         all_attributes.sort()
@@ -31,7 +35,7 @@ class PhysicalObject(object):
 
     def set(self, values):
         """
-        Set the frame object parameters using a dictionary
+        Set the object parameters using a dictionary
         """
         add_inputs_to_object(self, values)
 
