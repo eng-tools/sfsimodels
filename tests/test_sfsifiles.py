@@ -157,7 +157,7 @@ def test_save_and_load_2d_frame_building():
     ecp_output = sm.Output()
     ecp_output.add_to_dict(fb2d)
 
-    ecp_output.name = "a single soil"
+    ecp_output.name = "a single building"
     ecp_output.units = "N, kg, m, s"
     ecp_output.comments = ""
     p_d = ecp_output.to_dict()
@@ -273,6 +273,6 @@ if __name__ == '__main__':
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    # test_save_and_load_2d_frame_building()
-    test_full_save_and_load()
+    test_save_and_load_2d_frame_building()
+    # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

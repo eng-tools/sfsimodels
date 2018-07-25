@@ -181,7 +181,8 @@ class Frame(object):
 
     inputs = [
         "beams",
-        "columns"
+        "columns",
+        "bay_lengths"
     ]
 
     def __init__(self, n_storeys, n_bays):
@@ -193,14 +194,36 @@ class Frame(object):
         outputs = OrderedDict()
         skip_list = []
         # skip_list = ["beams", "columns"]  # TODO: uncomment this
+        skip_list = ["beams"]
         full_inputs = self.inputs + list(extra)
         for item in full_inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
                 outputs[item] = sf.collect_serial_value(value)
-        # TODO: implement logic for only storing novel sections and then save section_ids only
-        # TODO: Add Section as an ECPOutput type, can then attach material as a custom type
-        # TODO: Add ability to load json to custom objects using a dictionary of 'types' to Objects.
+
+        # # Deal with sections
+        # beam_sections = OrderedDict()
+        # beam_section_ids = []
+        # beam_section_count = 1
+        # for ss in range(self.n_storeys):
+        #     beam_section_ids.append([])
+        #     for bb in range(self.n_bays):
+        #         beam_section_ids.append(beam_section_count)
+        #         # build a hash string of the section inputs to check uniqueness
+        #         parts = []
+        #         for item in self.beams[ss][bb].inputs:
+        #             parts.append(item)
+        #             parts.append(getattr(self.beams[ss][bb], item))
+        #         p_str = "-".join(parts)
+        #         if p_str not in beam_sections:
+        #             beam_sections[p_str] = self.beams[ss][bb].to_dict(extra)
+        #             beam_sections[p_str]["id"] = beam_section_count
+        #             beam_section_count += 1
+        #
+        # outputs["beam_section_ids"] = beam_section_ids
+        # outputs["beam_sections"] = OrderedDict()
+        # for i, p_str in enumerate(beam_sections):
+        #     outputs["beam_sections"][beam_sections[p_str]["id"]] = beam_sections[p_str]
         return outputs
 
     @property
@@ -209,7 +232,7 @@ class Frame(object):
 
     def _allocate_beams_and_columns(self):
         self._beams = [[Section() for i in range(self.n_bays)] for ss in range(self.n_storeys)]
-        self._columns = [[Section() for i in range(self.n_cols + 1)] for ss in range(self.n_storeys)]
+        self._columns = [[Section() for i in range(self.n_cols)] for ss in range(self.n_storeys)]
 
     @property
     def beams(self):
@@ -331,7 +354,7 @@ class FrameBuilding(Frame, Building):
     type = "frame_building"
     _extra_class_inputs = ["n_seismic_frames",
                            "n_gravity_frames"]
-    inputs = list(Frame.inputs) + list(Building.inputs) + _extra_class_inputs
+    inputs = list(Building.inputs) + list(Frame.inputs) + _extra_class_inputs
 
     def __init__(self, n_storeys, n_bays):
         super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
@@ -370,14 +393,70 @@ class FrameBuilding2D(Frame, Building):
     def base_types(self):
         return super(FrameBuilding2D, self).base_types + ["frame_building2D"]
 
+    # def to_dict(self, extra=()):
+    #     outputs = OrderedDict()
+    #     skip_list = []
+    #     full_inputs = self.inputs + list(extra)
+    #     for item in full_inputs:
+    #         if item not in skip_list:
+    #             value = self.__getattribute__(item)
+    #             outputs[item] = sf.collect_serial_value(value)
+    #     return outputs
+
     def to_dict(self, extra=()):
         outputs = OrderedDict()
-        skip_list = []
+        skip_list = ["beams", "columns"]
         full_inputs = self.inputs + list(extra)
         for item in full_inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
                 outputs[item] = sf.collect_serial_value(value)
+
+        # Deal with sections
+        column_sections = OrderedDict()
+        column_section_ids = []
+        column_section_count = 0
+        for ss in range(self.n_storeys):
+            column_section_ids.append([])
+            for cc in range(self.n_cols):
+                # build a hash string of the section inputs to check uniqueness
+                parts = []
+                for item in self.columns[ss][cc].inputs:
+                    parts.append(item)
+                    parts.append(str(getattr(self.columns[ss][cc], item)))
+                p_str = "-".join(parts)
+                if p_str not in column_sections:
+                    column_sections[p_str] = self.columns[ss][cc].to_dict(extra)
+                    column_section_count += 1
+                    column_sections[p_str]["id"] = column_section_count
+                column_section_ids[ss].append(column_section_count)
+
+        beam_sections = OrderedDict()
+        beam_section_ids = []
+        beam_section_count = 0
+        for ss in range(self.n_storeys):
+            beam_section_ids.append([])
+            for bb in range(self.n_bays):
+                # build a hash string of the section inputs to check uniqueness
+                parts = []
+                for item in self.beams[ss][bb].inputs:
+                    parts.append(item)
+                    parts.append(str(getattr(self.beams[ss][bb], item)))
+                p_str = "-".join(parts)
+                if p_str not in beam_sections:
+                    beam_sections[p_str] = self.beams[ss][bb].to_dict(extra)
+                    beam_section_count += 1
+                    beam_sections[p_str]["id"] = beam_section_count
+                beam_section_ids[ss].append(beam_section_count)
+
+        outputs["column_section_ids"] = column_section_ids
+        outputs["beam_section_ids"] = beam_section_ids
+        outputs["column_sections"] = OrderedDict()
+        outputs["beam_sections"] = OrderedDict()
+        for i, p_str in enumerate(column_sections):
+            outputs["column_sections"][column_sections[p_str]["id"]] = column_sections[p_str]
+        for i, p_str in enumerate(beam_sections):
+            outputs["beam_sections"][beam_sections[p_str]["id"]] = beam_sections[p_str]
         return outputs
 
 
