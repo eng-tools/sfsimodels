@@ -1,6 +1,8 @@
+from collections import OrderedDict
 import copy
 from sfsimodels.loader import add_inputs_to_object
 import types
+
 
 class PhysicalObject(object):
     _counter = 0
@@ -44,5 +46,38 @@ class PhysicalObject(object):
         return copy.deepcopy(self)
 
     @property
-    def base_types(self):
+    def ancestor_types(self):
         return ["physical_object"]
+
+
+class CustomObject(PhysicalObject):
+    """
+    An object to describe structures.
+    """
+    _id = None
+    name = None
+    base_type = "custom_object"
+    type = "custom_object"
+
+    inputs = [
+        "id",
+        "name",
+        "base_type",
+        "type"
+        ]
+
+    def to_dict(self):
+        outputs = OrderedDict()
+        skip_list = []
+        for item in self.inputs:
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                if isinstance(value, int):
+                    outputs[item] = str(value)
+                else:
+                    outputs[item] = value
+        return outputs
+
+    @property
+    def ancestor_types(self):
+        return ["custom"]

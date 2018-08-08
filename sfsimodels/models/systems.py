@@ -30,16 +30,17 @@ class SoilStructureSystem(object):
         return outputs
 
     def add_obj_to_system(self, obj):
-        if isinstance(obj, SoilProfile):
-            self.sp = obj
-            self._soil_profile_id = obj.id
+        if hasattr(obj, "base_type"):
+            if obj.base_type == "soil":
+                self.sp = obj
+                self._soil_profile_id = obj.id
 
-        elif isinstance(obj, Foundation):
-            self.fd = obj
-            self._foundation_id = obj.id
-        elif isinstance(obj, Structure):
-            self.bd = obj
-            self._building_id = obj.id
+            elif obj.base_type == "foundation":
+                self.fd = obj
+                self._foundation_id = obj.id
+            elif obj.base_type == "building":
+                self.bd = obj
+                self._building_id = obj.id
 
     @property
     def soil_profile_id(self):

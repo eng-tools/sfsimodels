@@ -19,8 +19,8 @@ def build_parameter_descriptions(obj, user_p={}, show_none=True, ignore_list=[])
         raise exceptions.ModelError("Object must contain parameter 'inputs'")
 
     p_dict = {}
-    if hasattr(obj, 'base_types'):
-        bt = obj.base_types
+    if hasattr(obj, 'ancestor_types'):
+        bt = obj.ancestor_types
         for otype in bt:  # cycles from lowest class, so descriptions get overridden
             if otype in vp:
                 for item in vp[otype]:

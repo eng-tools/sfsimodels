@@ -33,8 +33,8 @@ class SeismicHazard(PhysicalObject):
     ]
 
     @property
-    def base_types(self):
-        return super(SeismicHazard, self).base_types + [self.type]
+    def ancestor_types(self):
+        return super(SeismicHazard, self).ancestor_types + [self.type]
 
     @property
     def pga(self):

@@ -397,7 +397,7 @@ def test_reset_all():
     soil = models.Soil()
     ltd.load_soil_test_data(soil)
     soil.reset_all()
-    exception_list = ["stype"]
+    exception_list = ["base_type", "type", "stype"]
     for item in soil.inputs:
         if item not in exception_list:
             assert getattr(soil, item) is None

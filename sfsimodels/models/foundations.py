@@ -19,13 +19,14 @@ class Foundation(PhysicalObject):
     _height = None  # [m], The height of the foundation from base of foundation to ground floor
     _density = None  # [kg/m3], Density of foundation
     _mass = None  # kg
-    ftype = None  # [], Foundation type # redundant, TODO: remove
+    base_type = "foundation"
     type = "foundation"
     _tolerance = 0.0001  # consistency tolerance
 
     inputs = [
         "id",
         "name",
+        "base_type",
         "type",
         "width",
         "length",
@@ -54,8 +55,8 @@ class Foundation(PhysicalObject):
         return outputs
 
     @property
-    def base_types(self):
-        return super(Foundation, self).base_types + ["foundation"]
+    def ancestor_types(self):
+        return super(Foundation, self).ancestor_types + ["foundation"]
 
     @property
     def id(self):
@@ -206,8 +207,8 @@ class RaftFoundation(Foundation):
         return "RaftFoundation id: {0}, name: {1}".format(self.id, self.name)
 
     @property
-    def base_types(self):
-        return super(RaftFoundation, self).base_types + ["raft_foundation"]
+    def ancestor_types(self):
+        return super(RaftFoundation, self).ancestor_types + ["raft"]
 
     @property
     def i_ww(self):
@@ -249,8 +250,8 @@ class PadFoundation(Foundation):
         return "PadFoundation id: {0}, name: {1}".format(self.id, self.name)
 
     @property
-    def base_types(self):
-        return super(PadFoundation, self).base_types + ["pad_foundation"]
+    def ancestor_types(self):
+        return super(PadFoundation, self).ancestor_types + ["pad_foundation"]
 
     @property
     def i_ww(self):

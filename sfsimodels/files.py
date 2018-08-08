@@ -1,5 +1,5 @@
 import json
-from sfsimodels.models import soils, buildings, foundations, material, systems
+from sfsimodels.models import soils, buildings, foundations, material, systems, abstract_models
 from collections import OrderedDict
 from sfsimodels import models
 from sfsimodels.exceptions import deprecation, ModelError
@@ -72,7 +72,7 @@ def dicts_to_objects(data, verbose=0):
     ecp_dict_to_objects(data, verbose=verbose)
 
 
-def ecp_dict_to_objects(ecp_dict, custom=None, verbose=0):
+def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
     """
     Given an ecp dictionary, build a dictionary of sfsi objects
 
@@ -81,22 +81,50 @@ def ecp_dict_to_objects(ecp_dict, custom=None, verbose=0):
     :param verbose: int, console output
     :return: dict
     """
-    if custom is None:
-        custom = {}
+    if custom_map is None:
+        custom_map = {}
+
+    obj_map = {
+        "soil-soil": soils.Soil,
+        "soil-critical_soil": soils.Soil,
+        "soil_profile-soil_profile": soils.SoilProfile,
+        "building-building": buildings.Building,
+        "building-frame_building": buildings.FrameBuilding,
+        "building-frame_building_2D": buildings.FrameBuilding2D,
+        "building-wall_building": buildings.WallBuilding,
+        "building-structure": buildings.Structure,
+        "foundation-foundation": foundations.Foundation,
+        "foundation-raft_foundation": foundations.RaftFoundation,
+        "foundation-raft": foundations.RaftFoundation,  # Deprecated approach for type
+        "foundation-pad_foundation": foundations.PadFoundation,
+        "section-section": buildings.Section,
+        "custom_object-custom_object": abstract_models.CustomObject
+    }
+    # merge and overwrite the object map with custom maps
+    for item in custom_map:
+        obj_map[item] = custom_map[item]
 
     data_models = ecp_dict["models"]
-    soil_objs = {}
-    soil_profile_objs = {}
-    foundation_objs = {}
-    section_objs = {}
-    building_objs = {}
-    system_objs = {}
-    all_custom_objs = {}  # This is double nested
-    if "soils" in data_models:
-        for m_id in data_models["soils"]:
-            new_soil = soils.Soil()
-            add_to_obj(new_soil, data_models["soils"][m_id], verbose=verbose)
-            soil_objs[int(data_models["soils"][m_id]["id"])] = new_soil
+
+    exception_list = ["soil_profiles", "buildings", "systems"]
+    objs = OrderedDict()
+    for mtype in data_models:
+        base_type = mtype[:-1]  # remove the 's'
+        objs[mtype] = OrderedDict()
+        if mtype in exception_list:
+            continue
+        for m_id in data_models[mtype]:
+            obj = data_models[mtype][m_id]
+            if "type" not in obj:
+                obj["type"] = base_type
+            try:
+                obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
+            except KeyError:
+                raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
+                               "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
+            new_instance = obj_class()
+            add_to_obj(new_instance, data_models[mtype][m_id], verbose=verbose)
+            objs[mtype][int(data_models[mtype][m_id]["id"])] = new_instance
 
     if "soil_profiles" in data_models:
         for m_id in data_models["soil_profiles"]:
@@ -104,41 +132,53 @@ def ecp_dict_to_objects(ecp_dict, custom=None, verbose=0):
             new_soil_profile.id = data_models["soil_profiles"][m_id]["id"]
             for j in range(len(data_models["soil_profiles"][m_id]["layers"])):
                 depth = data_models["soil_profiles"][m_id]['layers'][j]["depth"]
-                soil = soil_objs[int(data_models["soil_profiles"][m_id]['layers'][j]["soil_id"])]
+                soil = objs["soils"][int(data_models["soil_profiles"][m_id]['layers'][j]["soil_id"])]
                 new_soil_profile.add_layer(depth, soil)
             add_to_obj(new_soil_profile, data_models["soil_profiles"][m_id], exceptions=["layers"], verbose=verbose)
-            soil_profile_objs[int(data_models["soil_profiles"][m_id]["id"])] = new_soil_profile
+            objs["soil_profiles"][int(data_models["soil_profiles"][m_id]["id"])] = new_soil_profile
 
-    if "foundations" in data_models:
-        for m_id in data_models["foundations"]:
-            if data_models["foundations"][m_id]["type"] == "raft":
-                new_foundation = foundations.RaftFoundation()
-            elif data_models["foundations"][m_id]["type"] == "pad":
-                new_foundation = foundations.PadFoundation()
-            else:
-                new_foundation = foundations.Foundation()
-            new_foundation.id = data_models["foundations"][m_id]["id"]
-            add_to_obj(new_foundation, data_models["foundations"][m_id], verbose=verbose)
-            foundation_objs[int(data_models["foundations"][m_id]["id"])] = new_foundation
-
-    if "sections" in data_models:
-        for m_id in data_models["section"]:
-            new_section = buildings.Section()
-            add_to_obj(new_section, data_models["section"][m_id], verbose=verbose)
-            section_objs[int(data_models["section"][m_id]["id"])] = new_section
+    # if "foundations" in data_models:
+    #     for m_id in data_models["foundations"]:
+    #         if data_models["foundations"][m_id]["type"] == "raft":
+    #             new_foundation = foundations.RaftFoundation()
+    #         elif data_models["foundations"][m_id]["type"] == "pad":
+    #             new_foundation = foundations.PadFoundation()
+    #         else:
+    #             new_foundation = foundations.Foundation()
+    #         new_foundation.id = data_models["foundations"][m_id]["id"]
+    #         add_to_obj(new_foundation, data_models["foundations"][m_id], verbose=verbose)
+    #         foundation_objs[int(data_models["foundations"][m_id]["id"])] = new_foundation
+    #
+    # if "sections" in data_models:
+    #     for m_id in data_models["section"]:
+    #         new_section = buildings.Section()
+    #         add_to_obj(new_section, data_models["section"][m_id], verbose=verbose)
+    #         section_objs[int(data_models["section"][m_id]["id"])] = new_section
 
     if "buildings" in data_models:
         for m_id in data_models["buildings"]:
-            if data_models["buildings"][m_id]["type"] == "structure":
-                new_building = buildings.Structure()
-            elif data_models["buildings"][m_id]["type"] == "building":
-                n_storeys = len(data_models["buildings"][m_id]['interstorey_heights'])
-                new_building = buildings.Building(n_storeys)
+            obj = data_models["buildings"][m_id]
+            if obj["type"] in ["structure"]:
+                new_building = obj_map["%s-%s" % ("building", obj["type"])]()
+            elif "frame_building" in obj["type"]:
+                n_storeys = len(obj['interstorey_heights'])
+                n_bays = len(obj['bay_lengths'])
+                new_building = obj_map["%s-%s" % ("building", obj["type"])](n_storeys, n_bays)
+                for ss in range(n_storeys):
+                    for bb in range(n_bays):
+                        beam_sect_id = str(obj["beam_section_ids"][ss][bb])
+                        sect_dictionary = obj["beam_sections"][beam_sect_id]
+                        add_to_obj(new_building.beams[ss][bb], sect_dictionary, verbose=verbose)
+                    for cc in range(n_bays + 1):
+                        column_sect_id = str(obj["column_section_ids"][ss][cc])
+                        sect_dictionary = obj["column_sections"][column_sect_id]
+                        add_to_obj(new_building.columns[ss][cc], sect_dictionary, verbose=verbose)
+
             else:
-                n_storeys = len(data_models["buildings"][m_id]['interstorey_heights'])
-                new_building = buildings.Building(n_storeys)
+                n_storeys = len(obj['interstorey_heights'])
+                new_building = obj_map["%s-%s" % ("building", obj["type"])](n_storeys)
             add_to_obj(new_building, data_models["buildings"][m_id], verbose=verbose)
-            building_objs[int(data_models["buildings"][m_id]["id"])] = new_building
+            objs["buildings"][int(data_models["buildings"][m_id]["id"])] = new_building
 
     if "systems" in data_models:  # must be run after other objects are loaded
         for m_id in data_models["systems"]:
@@ -146,47 +186,40 @@ def ecp_dict_to_objects(ecp_dict, custom=None, verbose=0):
 
             # Attach the soil profile
             soil_profile_id = data_models["systems"][m_id]['soil_profile_id']
-            soil_profile = soil_profile_objs[int(soil_profile_id)]
+            soil_profile = objs["soil_profiles"][int(soil_profile_id)]
             new_system.sp = soil_profile
 
             # Attach the foundation
             foundation_id = data_models["systems"][m_id]['foundation_id']
-            foundation = foundation_objs[int(foundation_id)]
+            foundation = objs["foundations"][int(foundation_id)]
             new_system.fd = foundation
 
             # Attach the building
             building_id = data_models["systems"][m_id]['building_id']
-            building = building_objs[int(building_id)]
+            building = objs["buildings"][int(building_id)]
             new_system.bd = building
 
             # Add remaining parameters
             ignore_list = ["foundation_id", "building_id", "soil_profile_id"]
             add_to_obj(new_system, data_models["systems"][m_id], exceptions=ignore_list, verbose=verbose)
-            system_objs[int(data_models["systems"][m_id]["id"])] = new_system
+            objs["systems"][int(data_models["systems"][m_id]["id"])] = new_system
 
-    # Catch custom types
-    standard_types = ["soils", "soil_profiles", "foundations", "sections", "buildings", "systems"]
-    for m_type in data_models:
-        if m_type not in standard_types and m_type in custom:
-            if m_type not in all_custom_objs:
-                all_custom_objs[m_type] = {}
-            for m_id in data_models[m_type]:
-                if "id" not in data_models[m_type][m_id]:
-                    raise ModelError("object (%s) requires 'id' parameter" % m_type)
-                new_custom_obj = custom[m_type]()  # Note currently no support for custom objects
-                add_to_obj(new_custom_obj, data_models[m_type][m_id], verbose=verbose)
-                all_custom_objs[m_type][int(data_models[m_type][m_id]["id"])] = new_custom_obj
-
-    objs = {
-        "soils": soil_objs,
-        "soil_profiles": soil_profile_objs,
-        "foundations": foundation_objs,
-        "sections": section_objs,
-        "buildings": building_objs,
-        "systems": system_objs,
-    }
-    for m_type in all_custom_objs:
-        objs[m_type] = all_custom_objs[m_type]
+    # # Catch custom types
+    # standard_types = ["soils", "soil_profiles", "foundations", "sections", "buildings", "systems"]
+    # for m_type in data_models:
+    #     if m_type not in standard_types and m_type in custom:
+    #         if m_type not in all_custom_objs:
+    #             all_custom_objs[m_type] = {}
+    #         for m_id in data_models[m_type]:
+    #             if "id" not in data_models[m_type][m_id]:
+    #                 raise ModelError("object (%s) requires 'id' parameter" % m_type)
+    #             new_custom_obj = custom[m_type]()  # Note currently no support for custom objects
+    #             add_to_obj(new_custom_obj, data_models[m_type][m_id], verbose=verbose)
+    #             all_custom_objs[m_type][int(data_models[m_type][m_id]["id"])] = new_custom_obj
+    #
+    #
+    # for m_type in all_custom_objs:
+    #     objs[m_type] = all_custom_objs[m_type]
     return objs
 
 
@@ -238,7 +271,7 @@ class Output(object):
             self.models["systems"][an_object.id] = an_object.to_dict()
         elif hasattr(an_object, "to_dict"):  # Catch any custom objects
             if hasattr(an_object, "type"):
-                mtype = an_object.type
+                mtype = an_object.type + "s"
                 if mtype not in self.models:
                     self.models[mtype] = OrderedDict()
                 self.models[mtype][an_object.id] = an_object.to_dict()

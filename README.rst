@@ -23,6 +23,30 @@ Attempting to solve the `Liskov Substitution Principle <https://en.wikipedia.org
 problem for combining independently developed source
 code in the fields of structural and geotechnical engineering.
 
+Model inheritance system
+========================
+
+Every object contains a `type`, a `base_type` and a list of `ancestor_types`.
+
+ - `type` is the current type of the class or instance of the class
+ - `base_type` is what class should be considered as for standard operations such as saving and loading.
+ - `ancestor_types` is a list of the `type` of the ancestors of the class
+
+
+Generation of new custom models
+===============================
+
+It is easiest to create a new object by inheriting from `sm.CustomObject`, as this contains the default parameters
+needed for loading and saving the model.
+
+If you chose not to use the default custom object, you must set the object `base_type` parameter to `"custom_object"`.
+
+Loading a custom object
+=======================
+
+pass a dictionary to the `custom_object` parameter in the `sm.load_json` function, where the dictionary contains:
+`custom={"<base_type>-<type>": Object}`.
+
 
 Installation
 ============

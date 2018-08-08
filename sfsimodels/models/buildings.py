@@ -15,7 +15,7 @@ class Building(PhysicalObject):
     """
     _id = None
     name = None
-    physical_type = "building"  # redundant
+    base_type = "building"
     type = "building"
     _floor_length = None
     _floor_width = None
@@ -55,8 +55,8 @@ class Building(PhysicalObject):
         return outputs
 
     @property
-    def base_types(self):
-        return super(Building, self).base_types + ["building"]
+    def ancestor_types(self):
+        return super(Building, self).ancestor_types + ["building"]
 
     @property
     def id(self):
@@ -141,9 +141,10 @@ class Building(PhysicalObject):
             self.storey_masses = stresses * np.ones(self.n_storeys) * self.floor_area / self._g
 
 
-class Section(PhysicalObject):
+class Section(PhysicalObject):  # not used?
     id = None
     type = "section"
+    base_type = "section"
     _depth = None
     _width = None
     inputs = ["depth",
@@ -227,7 +228,7 @@ class Frame(object):
         return outputs
 
     @property
-    def base_types(self):
+    def ancestor_types(self):
         return ["frame"]
 
     def _allocate_beams_and_columns(self):
@@ -257,6 +258,10 @@ class Frame(object):
     @n_bays.setter
     def n_bays(self, value):
         raise ModelError("Can not set n_bays, only on initialisation")
+
+    # @column_sections.setter
+    # def column_sections(self, columns: dict):
+    #     assert len(columns) ==
 
     def set_beam_prop(self, prop, values, repeat="up"):
         """
@@ -362,8 +367,8 @@ class FrameBuilding(Frame, Building):
         # Building.__init__(self, n_storeys, n_bays)
 
     @property
-    def base_types(self):
-        return super(FrameBuilding, self).base_types + ["frame_building"]
+    def ancestor_types(self):
+        return super(FrameBuilding, self).ancestor_types + ["frame_building"]
 
     @property
     def n_seismic_frames(self):
@@ -384,14 +389,15 @@ class FrameBuilding(Frame, Building):
 
 class FrameBuilding2D(Frame, Building):
     _extra_class_inputs = []
+    type = "frame_building_2D"
     inputs = list(Frame.inputs) + list(Building.inputs) + _extra_class_inputs
 
     def __init__(self, n_storeys, n_bays):
         super(FrameBuilding2D, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
 
     @property
-    def base_types(self):
-        return super(FrameBuilding2D, self).base_types + ["frame_building2D"]
+    def ancestor_types(self):
+        return super(FrameBuilding2D, self).ancestor_types + ["frame_building_2D"]
 
     # def to_dict(self, extra=()):
     #     outputs = OrderedDict()
@@ -473,8 +479,8 @@ class WallBuilding(Building):
     inputs = Building.inputs + _extra_class_inputs
 
     @property
-    def base_types(self):
-        return super(WallBuilding, self).base_types + ["wall_building"]
+    def ancestor_types(self):
+        return super(WallBuilding, self).ancestor_types + ["wall_building"]
 
 
 class Structure(PhysicalObject):
@@ -483,6 +489,7 @@ class Structure(PhysicalObject):
     """
     _id = None
     name = None
+    base_type = "building"
     type = "structure"
     _h_eff = None
     _mass_eff = None
@@ -492,12 +499,16 @@ class Structure(PhysicalObject):
     inputs = [
         "id",
         "name",
+        "base_type",
         "type",
         "h_eff",
         "mass_eff",
         "t_fixed",
         "mass_ratio"
     ]
+
+    def __init__(self, g=9.8):
+        self._g = g
 
     def to_dict(self):
         outputs = OrderedDict()
@@ -512,8 +523,8 @@ class Structure(PhysicalObject):
         return outputs
 
     @property
-    def base_types(self):
-        return super(Structure, self).base_types + ["structure"]
+    def ancestor_types(self):
+        return super(Structure, self).ancestor_types + ["structure"]
 
     @property
     def id(self):

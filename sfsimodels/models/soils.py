@@ -15,6 +15,7 @@ class Soil(PhysicalObject):
     """
     _id = None
     name = None
+    base_type = "soil"
     type = "soil"
     stype = "soil"
     # strength parameters
@@ -42,6 +43,8 @@ class Soil(PhysicalObject):
     inputs = [
         "id",
         "name",
+        "base_type",
+        "type",
         "stype",
         "g_mod",
         "bulk_mod",
@@ -74,9 +77,9 @@ class Soil(PhysicalObject):
         return outputs
 
     @property
-    def base_types(self):
-        parent_base_types = super(Soil, self).base_types
-        return parent_base_types + ["soil"]
+    def ancestor_types(self):
+        parent_ancestor_types = super(Soil, self).ancestor_types
+        return parent_ancestor_types + ["soil"]
 
     def override(self, item, value):
         """
@@ -679,8 +682,8 @@ class CriticalSoil(Soil):
         super(CriticalSoil, self).__init__()  # run parent class initialiser function
 
     @property
-    def base_types(self):
-        return super(CriticalSoil, self).base_types + ["critical_soil"]
+    def ancestor_types(self):
+        return super(CriticalSoil, self).ancestor_types + ["critical_soil"]
 
     def e_critical(self, p):
         p = float(p)
@@ -741,8 +744,8 @@ class SoilProfile(PhysicalObject):
         return outputs
 
     @property
-    def base_types(self):
-        return super(SoilProfile, self).base_types + ["soil_profile"]
+    def ancestor_types(self):
+        return super(SoilProfile, self).ancestor_types + ["soil_profile"]
 
     def add_layer(self, depth: float, soil):
 

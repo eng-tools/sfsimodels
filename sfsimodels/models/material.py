@@ -8,7 +8,8 @@ class Concrete(PhysicalObject):
     """
     An object to describe reinforced concrete
     """
-    physical_type = "concrete"
+    base_type = "material"  # not actually available
+    type = "concrete"
 
     def __init__(self, fc=30.0e6, fy=300.0e6, youngs_steel=200e9, piossons_ratio=0.18):
         self.fc = fc  # Pa

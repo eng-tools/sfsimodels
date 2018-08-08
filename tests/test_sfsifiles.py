@@ -149,7 +149,7 @@ def test_save_and_load_2d_frame_building():
     fb2d.storey_masses = masses * np.ones(number_of_storeys)  # kg
 
     fb2d.bay_lengths = [6., 6.0, 6.0]
-    fb2d.set_beam_prop("depth", [0.5, 0.5, 0.5], repeat="up")
+    fb2d.set_beam_prop("depth", [0.5, 0.6, 0.5], repeat="up")
     fb2d.set_beam_prop("width", [0.4, 0.4, 0.4], repeat="up")
     fb2d.set_column_prop("width", [0.5, 0.5, 0.5, 0.5], repeat="up")
     fb2d.set_column_prop("depth", [0.5, 0.5, 0.5, 0.5], repeat="up")
@@ -165,6 +165,12 @@ def test_save_and_load_2d_frame_building():
     a = open("temp.json", "w")
     a.write(p_str)
     a.close()
+
+    objs = sm.loads_json(p_str)
+    building = objs["buildings"][1]
+    assert np.isclose(building.beams[0][0].depth, 0.5)
+    assert np.isclose(building.beams[0][1].depth, 0.6)
+    assert np.isclose(building.columns[0][0].depth, 0.5)
 
     # p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
 
@@ -243,9 +249,9 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
             return outputs
 
     fp = test_dir + "/test_data/ecp_models_w_custom_obj.json"
-    objs, meta_data = files.load_json(fp, custom={"cantilever": Cantilever}, meta=True, verbose=0)
+    objs, meta_data = files.load_json(fp, custom={"cantilever-cantilever": Cantilever}, meta=True, verbose=0)
     assert ct.isclose(objs["foundations"][1].length, 1.0)
-    assert ct.isclose(objs["cantilever"][1].length, 6.0)
+    assert ct.isclose(objs["cantilevers"][1].length, 6.0)
     ecp_output = files.Output()
     for m_type in objs:
         for instance in objs[m_type]:
@@ -258,7 +264,7 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
     a = open("temp.json", "w")
     a.write(p_str)
     a.close()
-    objs2, md2 = files.loads_json(p_str, custom={"cantilever": Cantilever}, meta=True, verbose=0)
+    objs2, md2 = files.loads_json(p_str, custom={"cantilever-cantilever": Cantilever}, meta=True, verbose=0)
     for m_type in objs:
         for instance in objs[m_type]:
             for parameter in objs[m_type][instance].inputs:
@@ -270,6 +276,7 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 
 
 if __name__ == '__main__':
+    # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
