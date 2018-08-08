@@ -720,7 +720,7 @@ class SoilProfile(PhysicalObject):
 
     def __init__(self):
         super(PhysicalObject, self).__init__()  # run parent class initialiser function
-        self._layers = OrderedDict([(0, Soil())])  # [depth to top of layer, Soil object]
+        self._layers = OrderedDict([(0.0, Soil())])  # [depth to top of layer, Soil object]
 
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
@@ -744,7 +744,7 @@ class SoilProfile(PhysicalObject):
     def base_types(self):
         return super(SoilProfile, self).base_types + ["soil_profile"]
 
-    def add_layer(self, depth, soil):
+    def add_layer(self, depth: float, soil):
 
         self._layers[depth] = soil
         self._sort_layers()
@@ -774,7 +774,7 @@ class SoilProfile(PhysicalObject):
         return self._id
 
     @id.setter
-    def id(self, value):
+    def id(self, value: int):
         self._id = int(value)
 
     @property
@@ -782,7 +782,7 @@ class SoilProfile(PhysicalObject):
         return self._gwl
 
     @gwl.setter
-    def gwl(self, value):
+    def gwl(self, value: float):
         self._gwl = float(value)
 
     @property
@@ -790,7 +790,7 @@ class SoilProfile(PhysicalObject):
         return self._height
 
     @height.setter
-    def height(self, value):
+    def height(self, value: float):
         self._height = float(value)
 
     def layer_height(self, layer_int):
@@ -900,7 +900,7 @@ class SoilProfile(PhysicalObject):
         Determine the vertical total stress at depth z, where z can be a number or an array of numbers.
         """
 
-        if isinstance(z, numbers.Real):
+        if not hasattr(z, "__len__"):
             return self.one_vertical_total_stress(z)
         else:
             sigma_v_effs = []
@@ -908,7 +908,7 @@ class SoilProfile(PhysicalObject):
                 sigma_v_effs.append(self.one_vertical_total_stress(value))
             return np.array(sigma_v_effs)
 
-    def one_vertical_total_stress(self, z_c):
+    def one_vertical_total_stress(self, z_c: float):
         """
         Determine the vertical total stress at a single depth z_c.
         """
