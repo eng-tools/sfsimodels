@@ -223,7 +223,7 @@ class RaftFoundation(Foundation):
 
     def __init__(self):
         super(RaftFoundation, self).__init__()
-        self.inputs += self.inputs + self._extra_class_inputs
+        self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):

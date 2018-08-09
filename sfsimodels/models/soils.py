@@ -682,16 +682,53 @@ class CriticalSoil(Soil):
 
     @property
     def ancestor_types(self):
-        return super(CriticalSoil, self).ancestor_types + ["critical_soil"]
+        return super(CriticalSoil, self).ancestor_types + [self.type]
 
     def e_critical(self, p):
         p = float(p)
         return self.e_cr0 - self.lamb_crl * np.log(p / self.p_cr0)
 
 
-class SoilLayer(Soil):
+class StressDependentSoil(Soil):
+    _g0_mod = None
+    _p_atm = 10100.0  # kPa
+    type = "stress_dependent_soil"
+    _extra_class_inputs = ["g0_mod", "p_atm"]
+
+    def __init__(self):
+        super(StressDependentSoil, self).__init__()
+        self.inputs = self.inputs + self._extra_class_inputs
+
+    @property
+    def ancestor_types(self):
+        return super(StressDependentSoil, self).ancestor_types + [self.type]
+
+    @property
+    def g0_mod(self):
+        return self._g0_mod
+
+    @g0_mod.setter
+    def g0_mod(self, value):
+        value = clean_float(value)
+        self._g0_mod = value
+
+    @property
+    def p_atm(self):
+        return self._p_atm
+
+    @p_atm.setter
+    def p_atm(self, value):
+        value = clean_float(value)
+        self._p_atm = value
+
+    def g_mod_at_eff_stress(self, sigma_v_eff):
+        return self.g0_mod * self.p_atm * (sigma_v_eff / self.p_atm) ** 0.5
+
+
+class SoilLayer(Soil):  # not used
 
     def __init__(self, depth=0.0, height=1000, top_total_stress=0.0, top_pore_pressure=0.0):
+        super(SoilLayer, self).__init__()
         self.height = height  # m  from top of layer to bottom of layer
         self.depth = depth  # m from ground surface to top of layer
         self.top_total_stress = top_total_stress  # m total vertical stress at the top
