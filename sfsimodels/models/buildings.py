@@ -25,24 +25,24 @@ class Building(PhysicalObject):
     _n_storeys = None
     _g = 9.81  # m/s2  # gravity
 
-    inputs = [
-        "id",
-        "name",
-        "type",
-        'floor_length',
-        'floor_width',
-        'interstorey_heights',
-        'storey_masses'
-    ]
-
-    all_parameters = inputs + [
-        "n_storeys"
-    ]
-
     def __init__(self, n_storeys, verbose=0, **kwargs):
         print(**kwargs)
         super(Building, self).__init__()
         self._n_storeys = n_storeys
+        if not hasattr(self, "inputs"):
+            self.inputs = []
+        self.inputs += [
+                "id",
+                "name",
+                "type",
+                'floor_length',
+                'floor_width',
+                'interstorey_heights',
+                'storey_masses'
+            ]
+        self.all_parameters = self.inputs + [
+            "n_storeys"
+        ]
 
     def to_dict(self, extra=()):
         outputs = OrderedDict()
@@ -147,8 +147,10 @@ class Section(PhysicalObject):  # not used?
     base_type = "section"
     _depth = None
     _width = None
-    inputs = ["depth",
-              "width"]
+
+    def __init__(self):
+        self.inputs = ["depth",
+                       "width"]
 
     def to_dict(self, extra=()):
         outputs = OrderedDict()
@@ -180,13 +182,14 @@ class Section(PhysicalObject):  # not used?
 class Frame(object):
     _bay_lengths = None
 
-    inputs = [
-        "beams",
-        "columns",
-        "bay_lengths"
-    ]
-
     def __init__(self, n_storeys, n_bays):
+        if not hasattr(self, "inputs"):
+            self.inputs = []
+        self.inputs += [
+            "beams",
+            "columns",
+            "bay_lengths"
+        ]
         self._n_storeys = n_storeys
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
@@ -359,10 +362,12 @@ class FrameBuilding(Frame, Building):
     type = "frame_building"
     _extra_class_inputs = ["n_seismic_frames",
                            "n_gravity_frames"]
-    inputs = list(Building.inputs) + list(Frame.inputs) + _extra_class_inputs
 
     def __init__(self, n_storeys, n_bays):
-        super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
+        Frame.__init__(self, n_storeys, n_bays)
+        Building.__init__(self, n_storeys)
+        # super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
+        self.inputs = self.inputs + self._extra_class_inputs
         # Frame.__init__(self, n_storeys, n_bays)
         # Building.__init__(self, n_storeys, n_bays)
 
@@ -390,10 +395,12 @@ class FrameBuilding(Frame, Building):
 class FrameBuilding2D(Frame, Building):
     _extra_class_inputs = []
     type = "frame_building_2D"
-    inputs = list(Frame.inputs) + list(Building.inputs) + _extra_class_inputs
 
     def __init__(self, n_storeys, n_bays):
-        super(FrameBuilding2D, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
+        Frame.__init__(self, n_storeys, n_bays)
+        Building.__init__(self, n_storeys)
+        # super(FrameBuilding2D, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
+        self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
@@ -476,7 +483,10 @@ class WallBuilding(Building):
         "wall_depth",
         "wall_width"
     ]
-    inputs = Building.inputs + _extra_class_inputs
+
+    def __init__(self, n_storeys):
+        super(WallBuilding, self).__init__(n_storeys)  # run parent class initialiser function
+        self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):

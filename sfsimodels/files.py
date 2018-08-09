@@ -124,6 +124,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                                "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
             new_instance = obj_class()
             add_to_obj(new_instance, data_models[mtype][m_id], verbose=verbose)
+            # print(mtype, m_id)
             objs[mtype][int(data_models[mtype][m_id]["id"])] = new_instance
 
     if "soil_profiles" in data_models:

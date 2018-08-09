@@ -25,7 +25,7 @@ def collect_serial_value(value):
     if isinstance(value, str):
         return value
     elif isinstance(value, int):
-        return str(value)
+        return value
     elif hasattr(value, "to_dict"):
         return value.to_dict()
     elif hasattr(value, "__len__"):

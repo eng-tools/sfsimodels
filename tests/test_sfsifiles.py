@@ -141,7 +141,6 @@ def test_save_and_load_2d_frame_building():
     n_bays = 3
 
     fb2d = models.FrameBuilding2D(number_of_storeys, n_bays)
-    print(fb2d.inputs)
     fb2d.id = 1
     fb2d.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb2d.floor_length = 18.0  # m
@@ -153,6 +152,8 @@ def test_save_and_load_2d_frame_building():
     fb2d.set_beam_prop("width", [0.4, 0.4, 0.4], repeat="up")
     fb2d.set_column_prop("width", [0.5, 0.5, 0.5, 0.5], repeat="up")
     fb2d.set_column_prop("depth", [0.5, 0.5, 0.5, 0.5], repeat="up")
+    fb2d.beams[0][0].a_custom_property = 11
+    fb2d.beams[0][0].inputs += ["a_custom_property"]
 
     ecp_output = sm.Output()
     ecp_output.add_to_dict(fb2d)
@@ -170,9 +171,10 @@ def test_save_and_load_2d_frame_building():
     building = objs["buildings"][1]
     assert np.isclose(building.beams[0][0].depth, 0.5)
     assert np.isclose(building.beams[0][1].depth, 0.6)
+
+    assert building.beams[0][0].a_custom_property == 11, building.beams[0][0].a_custom_property
     assert np.isclose(building.columns[0][0].depth, 0.5)
 
-    # p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
 
 
 def test_full_save_and_load():
@@ -280,6 +282,7 @@ if __name__ == '__main__':
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    test_save_and_load_2d_frame_building()
+    # test_save_and_load_2d_frame_building()
+    test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

@@ -23,7 +23,7 @@ class Foundation(PhysicalObject):
     type = "foundation"
     _tolerance = 0.0001  # consistency tolerance
 
-    inputs = [
+    _extra_class_inputs = [
         "id",
         "name",
         "base_type",
@@ -41,6 +41,20 @@ class Foundation(PhysicalObject):
 
     def __format__(self, format_spec):
         return "Foundation"
+
+    def __init__(self):
+        self.inputs = [
+        "id",
+        "name",
+        "base_type",
+        "type",
+        "width",
+        "length",
+        "depth",
+        "height",
+        "density",
+        "mass"
+    ]
 
     def to_dict(self):
         outputs = OrderedDict()
@@ -202,9 +216,14 @@ class RaftFoundation(Foundation):
     """
     ftype = "raft"
     type = "raft_foundation"
+    _extra_class_inputs = []
 
     def __str__(self):
         return "RaftFoundation id: {0}, name: {1}".format(self.id, self.name)
+
+    def __init__(self):
+        super(RaftFoundation, self).__init__()
+        self.inputs += self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
@@ -226,14 +245,6 @@ class RaftFoundation(Foundation):
         """
         return self.length * self.width ** 3 / 12
 
-    @property
-    def inputs(self):
-        input_list = super(RaftFoundation, self).inputs
-        new_inputs = [
-
-        ]
-        return input_list + new_inputs
-
 
 class PadFoundation(Foundation):
     """
@@ -245,9 +256,19 @@ class PadFoundation(Foundation):
     n_pads_w = 3  # Number of pads in width direction
     pad_length = 1.0  # m  # TODO: make parameters protected
     pad_width = 1.0  # m
+    _extra_class_inputs = [
+        "n_pads_l",
+        "n_pads_w",
+        "pad_length",
+        "pad_width",
+    ]
 
     def __str__(self):
         return "PadFoundation id: {0}, name: {1}".format(self.id, self.name)
+
+    def __init__(self):
+        super(PadFoundation, self).__init__()
+        self.inputs += self._extra_class_inputs
 
     @property
     def ancestor_types(self):
@@ -320,21 +341,6 @@ class PadFoundation(Foundation):
         :return:
         """
         return self.n_pads * self.pad_area
-
-    @property
-    def inputs(self):
-        """
-        A list of possible inputs for defining the object
-        :return:
-        """
-        input_list = super(PadFoundation, self).inputs
-        new_inputs = [
-            "n_pads_l",
-            "n_pads_w",
-            "pad_length",
-            "pad_width",
-        ]
-        return input_list + new_inputs
 
     def pad_position_l(self, i):
         """

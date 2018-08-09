@@ -40,31 +40,30 @@ class Soil(PhysicalObject):
     _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
 
-    inputs = [
-        "id",
-        "name",
-        "base_type",
-        "type",
-        "stype",
-        "g_mod",
-        "bulk_mod",
-        "poissons_ratio",
-        "phi",
-        "dilation_angle",
-        "e_min",
-        "e_max",
-        "e_curr",
-        "relative_density",
-        "specific_gravity",
-        "unit_dry_weight",
-        "unit_sat_weight",
-        "saturation",
-        "cohesion",
-        "permeability"
-    ]
-
     def __init__(self):
         self.stack = []
+        self.inputs = [
+            "id",
+            "name",
+            "base_type",
+            "type",
+            "stype",
+            "g_mod",
+            "bulk_mod",
+            "poissons_ratio",
+            "phi",
+            "dilation_angle",
+            "e_min",
+            "e_max",
+            "e_curr",
+            "relative_density",
+            "specific_gravity",
+            "unit_dry_weight",
+            "unit_sat_weight",
+            "saturation",
+            "cohesion",
+            "permeability"
+        ]
 
     def to_dict(self):
         """
@@ -676,10 +675,10 @@ class CriticalSoil(Soil):
         "p_cr0",
         "lamb_crl"
         ]
-    inputs = Soil.inputs + _extra_class_inputs
 
     def __init__(self):
         super(CriticalSoil, self).__init__()  # run parent class initialiser function
+        self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
