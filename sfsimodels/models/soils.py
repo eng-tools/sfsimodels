@@ -31,6 +31,7 @@ class Soil(PhysicalObject):
     _unit_dry_weight = None
     _unit_sat_weight = None
     _unit_moist_weight = None
+    _unit_bouy_weight = None
     _saturation = None
     _pw = 9800  # N/m3  # specific weight of water
     _tolerance = 0.0001  # consistency tolerance
@@ -221,6 +222,11 @@ class Soil(PhysicalObject):
     def unit_moist_weight(self):
         """The unit moist weight of the soil (accounts for saturation level)"""
         return self._unit_moist_weight
+
+    @property
+    def unit_bouy_weight(self):
+        """The unit moist weight of the soil (accounts for saturation level)"""
+        return self._unit_sat_weight - self._pw
 
     @property
     def permeability(self):
