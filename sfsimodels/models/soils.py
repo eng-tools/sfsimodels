@@ -31,9 +31,7 @@ class Soil(PhysicalObject):
     _unit_dry_weight = None
     _unit_sat_weight = None
     _unit_moist_weight = None
-    _unit_bouy_weight = None
     _saturation = None
-    _pw = 9800  # N/m3  # specific weight of water
     _tolerance = 0.0001  # consistency tolerance
     _permeability = None
     # deformation parameters
@@ -41,7 +39,8 @@ class Soil(PhysicalObject):
     _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
 
-    def __init__(self):
+    def __init__(self, pw=9800):
+        self._pw = pw  # specific weight of water
         self.stack = []
         self.inputs = [
             "id",
@@ -226,7 +225,10 @@ class Soil(PhysicalObject):
     @property
     def unit_bouy_weight(self):
         """The unit moist weight of the soil (accounts for saturation level)"""
-        return self._unit_sat_weight - self._pw
+        try:
+            return self._unit_sat_weight - self._pw
+        except TypeError:
+            return None
 
     @property
     def permeability(self):
