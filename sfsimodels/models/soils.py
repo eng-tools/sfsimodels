@@ -38,6 +38,7 @@ class Soil(PhysicalObject):
     _g_mod = None  # Shear modulus [Pa]
     _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
+    _plasticity_index = None
 
     def __init__(self, pw=9800):
         self._pw = pw  # specific weight of water
@@ -193,6 +194,11 @@ class Soil(PhysicalObject):
     def saturation(self):
         """The current saturation of the soil"""
         return self._saturation
+
+    @property
+    def plasticity_index(self):
+        """The plasticity index of the soil"""
+        return self._plasticity_index
 
     @property
     def moisture_content(self):
@@ -527,6 +533,11 @@ class Soil(PhysicalObject):
         except ModelError as e:
             self._poissons_ratio = old_value
             raise ModelError(e)
+
+    @plasticity_index.setter
+    def plasticity_index(self, value):
+        self._add_to_stack("plasticity_index", value)
+        self._plasticity_index = value
 
     def _calc_unit_sat_weight(self):
         try:
