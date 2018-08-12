@@ -43,7 +43,7 @@ class Soil(PhysicalObject):
     def __init__(self, pw=9800):
         self._pw = pw  # specific weight of water
         self.stack = []
-        self.inputs = [
+        self.inputs = [  # TODO: should run init method of parent then take inputs properly
             "id",
             "name",
             "base_type",

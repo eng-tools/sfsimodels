@@ -43,6 +43,7 @@ class Foundation(PhysicalObject):
         return "Foundation"
 
     def __init__(self):
+        super(Foundation, self).__init__()
         self.inputs = [
         "id",
         "name",
@@ -223,7 +224,9 @@ class RaftFoundation(Foundation):
 
     def __init__(self):
         super(RaftFoundation, self).__init__()
+        # TODO: this should be a parent class method, but check if input already in inputs
         self.inputs = self.inputs + self._extra_class_inputs
+
 
     @property
     def ancestor_types(self):

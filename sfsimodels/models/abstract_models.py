@@ -2,6 +2,7 @@ from collections import OrderedDict
 import copy
 from sfsimodels.loader import add_inputs_to_object
 import types
+from sfsimodels.exceptions import ModelError
 
 
 class PhysicalObject(object):
@@ -59,12 +60,13 @@ class CustomObject(PhysicalObject):
     base_type = "custom_object"
     type = "custom_object"
 
-    inputs = [
-        "id",
-        "name",
-        "base_type",
-        "type"
-        ]
+    def __init__(self):
+        self.inputs = [
+            "id",
+            "name",
+            "base_type",
+            "type"
+            ]
 
     def to_dict(self):
         outputs = OrderedDict()
@@ -81,3 +83,19 @@ class CustomObject(PhysicalObject):
     @property
     def ancestor_types(self):
         return ["custom"]
+
+    def add_from_same(self, obj, inputs_from="obj", update_inputs=True):
+        if inputs_from == "obj":
+            if hasattr(obj, "inputs"):
+                inputs_list = obj.inputs
+            else:
+                raise ModelError("obj does not contain attribute: 'inputs'")
+        else:
+            inputs_list = self.inputs
+        for item in inputs_list:
+            if hasattr(obj, item):
+                setattr(self, item, getattr(obj, item))
+                if update_inputs and item not in self.inputs:
+                    self.inputs.append(item)
+
+
