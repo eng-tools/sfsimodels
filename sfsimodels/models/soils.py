@@ -63,6 +63,7 @@ class Soil(PhysicalObject):
             "unit_sat_weight",
             "saturation",
             "cohesion",
+            "plasticity_index",
             "permeability"
         ]
 

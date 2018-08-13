@@ -1,11 +1,12 @@
 __author__ = 'maximmillen'
 
 
-pp = {}
+pp = {}  # TODO: switch to read description from docstring
 
 # generic
 pp["physical_object"] = {}
 pp["physical_object"]["type"] = ["Object type", ""]
+pp["physical_object"]["base_type"] = ["Object type for saving and loading", ""]
 pp["physical_object"]["name"] = ["Name to identify object", ""]
 pp["physical_object"]["id"] = ["Id number", ""]
 
@@ -18,15 +19,16 @@ pp["soil"]["poissons_ratio"] = ["Soil Poissons ratio", "Pa"]
 pp["soil"]["phi"] = ["Soil friction angle", "deg"]
 pp["soil"]["cohesion"] = ["Cohesive strength of soil", "Pa"]
 pp["soil"]["dilation_angle"] = ["Soil dilation angle", "deg"]
-pp["soil"]["e_min"] = ["Minimum void ratio", ""]
-pp["soil"]["e_max"] = ["Maximum void ratio", ""]
-pp["soil"]["e_curr"] = ["Current void ratio", ""]
-pp["soil"]["relative_density"] = ["Relative density", ""]
-pp["soil"]["specific_gravity"] = ["Specific gravity of soil", ""]
+pp["soil"]["e_min"] = ["Minimum void ratio", "-"]
+pp["soil"]["e_max"] = ["Maximum void ratio", "-"]
+pp["soil"]["e_curr"] = ["Current void ratio", "-"]
+pp["soil"]["relative_density"] = ["Relative density", "-"]
+pp["soil"]["specific_gravity"] = ["Specific gravity of soil", "-"]
 pp["soil"]["unit_dry_weight"] = ["Dry unit weight of soil", "N/m3"]
 pp["soil"]["unit_sat_weight"] = ["Saturated unit weight of soil", "N/m3"]
-pp["soil"]["saturation"] = ["Saturation ratio of soil", ""]
-pp["soil"]["permeability"] = ["Permeability of soil", ""]
+pp["soil"]["saturation"] = ["Saturation ratio of soil", "-"]
+pp["soil"]["plasticity_index"] = ["Plasticity index of the soil", "-"]
+pp["soil"]["permeability"] = ["Permeability of soil", "-"]
 
 pp["critical_soil"] = {}
 pp["critical_soil"]["e_cr0"] = ["", ""]
@@ -64,11 +66,19 @@ pp["structure"]["mass_eff"] = ["Structure effective mass", "T"]
 pp["structure"]["t_fixed"] = ["Structure effective period", "s"]
 pp["structure"]["mass_ratio"] = ["Ratio of horizontal seismic mass to vertical mass", ""]
 
-pp["frame_building"] = {}
-pp["frame_building"]["bay_lengths"] = ["Length between columns", "m"]
-pp["frame_building"]["beam_depths"] = ["Depth of beams", "m"]
-pp["frame_building"]["n_seismic_frames"] = ["Number of seismic frames", ""]
-pp["frame_building"]["n_gravity_frames"] = ["Number of gravity frames", ""]
+pp["building"] = {}
+pp["building"]["floor_length"] = ["Length of floor area in direction of interest", "m"]
+pp["building"]["floor_width"] = ["Length of floor area out-of-plane", "m"]
+pp["building"]["interstorey_heights"] = ["Distance between storeys", "m"]
+pp["building"]["storey_masses"] = ["Mass of each storey", "kg"]
+
+pp["frame_building_2D"] = {}
+pp["frame_building_2D"]["beams"] = ["Array of beam sections", "m"]
+pp["frame_building_2D"]["columns"] = ["Array of column sections", "m"]
+pp["frame_building_2D"]["bay_lengths"] = ["Length between columns", "m"]
+pp["frame_building_2D"]["beam_depths"] = ["Depth of beams", "m"]
+# pp["frame_building"]["n_seismic_frames"] = ["Number of seismic frames", ""]
+# pp["frame_building"]["n_gravity_frames"] = ["Number of gravity frames", ""]
 
 # hazard
 pp["seismic_hazard"] = {}

@@ -404,7 +404,7 @@ class FrameBuilding2D(Frame, Building):
 
     @property
     def ancestor_types(self):
-        return super(FrameBuilding2D, self).ancestor_types + ["frame_building_2D"]
+        return ["physical_object", "frame", "building"] + ["frame_building_2D"]  # TODO: improve this logic
 
     # def to_dict(self, extra=()):
     #     outputs = OrderedDict()

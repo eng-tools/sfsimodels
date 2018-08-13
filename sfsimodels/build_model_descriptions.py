@@ -14,7 +14,7 @@ def build_parameter_descriptions(obj, user_p={}, show_none=True, ignore_list=[])
     :param show_none: if false, only shows descriptions of parameters that are not None
     :return:
     """
-    para = [obj.__class__.__name__ + " inputs:"]
+    para = [obj.__class__.__name__ + " inputs:,,"]
     if not hasattr(obj, 'inputs'):
         raise exceptions.ModelError("Object must contain parameter 'inputs'")
 
@@ -49,12 +49,12 @@ def all_descriptions():
     :return:
     """
     para = []
-    para += build_parameter_descriptions(models.Soil())
-    para += build_parameter_descriptions(models.SoilProfile())
-    para += build_parameter_descriptions(models.Foundation())
-    para += build_parameter_descriptions(models.PadFoundation())
-    para += build_parameter_descriptions(models.Structure())
-    para += build_parameter_descriptions(models.FrameBuilding(1, 1))
+    para += build_parameter_descriptions(models.Soil()) + [",,\n"]
+    para += build_parameter_descriptions(models.SoilProfile()) + [",,\n"]
+    para += build_parameter_descriptions(models.Foundation()) + [",,\n"]
+    para += build_parameter_descriptions(models.PadFoundation()) + [",,\n"]
+    para += build_parameter_descriptions(models.Structure()) + [",,\n"]
+    para += build_parameter_descriptions(models.FrameBuilding2D(1, 1))
 
     return para
 
@@ -62,9 +62,10 @@ def all_descriptions():
 if __name__ == '__main__':
     # all_descriptions()
     para = []
-    para += build_parameter_descriptions(models.Soil())
-    para += build_parameter_descriptions(models.SoilProfile())
-    para += build_parameter_descriptions(models.Foundation())
-    # para += build_parameter_descriptions(models.PadFoundation())
-    para += build_parameter_descriptions(models.Structure())
+    para += build_parameter_descriptions(models.Soil()) + [",,\n"]
+    para += build_parameter_descriptions(models.SoilProfile()) + [",,\n"]
+    para += build_parameter_descriptions(models.Foundation()) + [",,\n"]
+    para += build_parameter_descriptions(models.PadFoundation()) + [",,\n"]
+    para += build_parameter_descriptions(models.Structure()) + [",,\n"]
+    para += build_parameter_descriptions(models.FrameBuilding2D(1, 1))
     print("\n".join(para))
