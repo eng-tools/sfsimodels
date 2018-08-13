@@ -1,0 +1,87 @@
+{
+    "ACC": {
+        "1": {
+            "x": 164,
+            "X-CODE": "NFF",
+            "z": 390,
+            "Z-CODE": "M",
+            "y": 410.9,
+            "Y-CODE": "L2C",
+            "Orientation": "X"
+        },
+        "2": {
+            "x": 164,
+            "X-CODE": "NFF",
+            "z": 390,
+            "Z-CODE": "M",
+            "y": 474.5,
+            "Y-CODE": "S",
+            "Orientation": "X"
+        },
+        "3": {
+            "x": 436,
+            "X-CODE": "UB2",
+            "z": 390,
+            "Z-CODE": "M",
+            "y": 410.9,
+            "Y-CODE": "L2C",
+            "Orientation": "X"
+        }
+    },
+    "DISP": {
+        "1": {
+            "x": 164,
+            "X-CODE": "NFF",
+            "z": 390,
+            "Z-CODE": "M",
+            "y": 474.5,
+            "Y-CODE": "S",
+            "Orientation": "Y"
+        },
+        "2": {
+            "x": 300,
+            "X-CODE": "UNB2",
+            "z": 353.6,
+            "Z-CODE": "MF",
+            "y": 410.9,
+            "Y-CODE": "L2C",
+            "Orientation": "Y"
+        },
+        "3": {
+            "x": 300,
+            "X-CODE": "UNB2",
+            "z": 426.4,
+            "Z-CODE": "MEB",
+            "y": 438.2,
+            "Y-CODE": "L2T",
+            "Orientation": "Y"
+        },
+        "4": {
+            "x": 300,
+            "X-CODE": "UNB2",
+            "z": 390,
+            "Z-CODE": "M",
+            "y": 474.5,
+            "Y-CODE": "S",
+            "Orientation": "Y"
+        }
+    },
+    "PPT": {
+        "1": {
+            "x": 436,
+            "X-CODE": "UB2",
+            "z": 390,
+            "Z-CODE": "M",
+            "y": 0,
+            "Y-CODE": "B"
+        },
+        "2": {
+            "x": 436,
+            "X-CODE": "UB2",
+            "z": 390,
+            "Z-CODE": "M",
+            "y": 191.82,
+            "Y-CODE": "L3C"
+        }
+    }
+}

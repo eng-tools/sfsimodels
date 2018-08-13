@@ -405,7 +405,7 @@ def test_reset_all():
 
 def test_can_compute_layer_depth():
     test_dir = os.path.dirname(__file__)
-    fp = test_dir + "/test_data/ecp_models.json"
+    fp = test_dir + "/unit_test_data/ecp_models.json"
     objs = files.load_json(fp)
     soil_profile = objs["soil_profiles"][1]
     assert isinstance(soil_profile, models.SoilProfile)

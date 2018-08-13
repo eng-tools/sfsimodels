@@ -13,7 +13,7 @@ test_dir = os.path.dirname(__file__)
 
 
 def test_load_json():
-    fp = test_dir + "/test_data/ecp_models.json"
+    fp = test_dir + "/unit_test_data/ecp_models.json"
     objs = files.load_json(fp, verbose=0)
     assert ct.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
     assert ct.isclose(objs["foundations"][1].length, 1.0)
@@ -250,7 +250,7 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
                 outputs[item] = getattr(self, item)
             return outputs
 
-    fp = test_dir + "/test_data/ecp_models_w_custom_obj.json"
+    fp = test_dir + "/unit_test_data/ecp_models_w_custom_obj.json"
     objs, meta_data = files.load_json(fp, custom={"cantilever-cantilever": Cantilever}, meta=True, verbose=0)
     assert ct.isclose(objs["foundations"][1].length, 1.0)
     assert ct.isclose(objs["cantilevers"][1].length, 6.0)
