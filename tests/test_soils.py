@@ -324,7 +324,7 @@ def test_inputs_soil():
 
 
 def test_e_critical():
-    crit_sl = models.CriticalSoil()
+    crit_sl = models.CriticalSoil(pw=9800)
     crit_sl.e_cr0 = 0.79  # Jin et al. 2015
     crit_sl.p_cr0 = 10  # Jin et al. 2015
     crit_sl.lamb_crl = 0.015  # Jin et al. 2015
@@ -519,11 +519,12 @@ def test_get_soil_at_depth_in_soil_profile():
 
 
 if __name__ == '__main__':
+    test_e_critical()
     # test_poissons_ratio_again()
     # test_reset_all()
     # test_override_fake_key()
     # test_can_compute_layer_depth()
-    test_get_layer_index_by_depth()
+    # test_get_layer_index_by_depth()
     # test_get_soil_at_depth_in_soil_profile()
     # test_soil_profile_vertical_effective_stress()
     # test_e_max_to_saturated_weight_setter()
