@@ -690,14 +690,10 @@ class CriticalSoil(Soil):
     p_cr0 = 0.0
     lamb_crl = 0.0
     type = "critical_soil"
-    _extra_class_inputs = [
-        "e_cr0",
-        "p_cr0",
-        "lamb_crl"
-        ]
 
     def __init__(self, pw=9800):
         super(CriticalSoil, self).__init__(pw=pw)  # run parent class initialiser function
+        self._extra_class_inputs = ["e_cr0", "p_cr0", "lamb_crl"]
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property
@@ -713,10 +709,10 @@ class StressDependentSoil(Soil):
     _g0_mod = None
     _p_atm = 10100.0  # kPa
     type = "stress_dependent_soil"
-    _extra_class_inputs = ["g0_mod", "p_atm"]
 
     def __init__(self, pw=9800):
         super(StressDependentSoil, self).__init__(pw=pw)
+        self._extra_class_inputs = ["g0_mod", "p_atm"]
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property
