@@ -31,7 +31,7 @@ class Building(PhysicalObject):
         self._n_storeys = n_storeys
         if not hasattr(self, "inputs"):
             self.inputs = []
-        self.inputs += [
+        self._extra_class_variables = [
                 "id",
                 "name",
                 "type",
@@ -40,6 +40,7 @@ class Building(PhysicalObject):
                 'interstorey_heights',
                 'storey_masses'
             ]
+        self.inputs += self._extra_class_variables
         self.all_parameters = self.inputs + [
             "n_storeys"
         ]
@@ -185,11 +186,12 @@ class Frame(object):
     def __init__(self, n_storeys, n_bays):
         if not hasattr(self, "inputs"):
             self.inputs = []
-        self.inputs += [
+        self._extra_class_variables = [
             "beams",
             "columns",
             "bay_lengths"
         ]
+        self.inputs += self._extra_class_variables
         self._n_storeys = n_storeys
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
@@ -360,13 +362,13 @@ class FrameBuilding(Frame, Building):
     _n_seismic_frames = None
     _n_gravity_frames = None
     type = "frame_building"
-    _extra_class_inputs = ["n_seismic_frames",
-                           "n_gravity_frames"]
 
     def __init__(self, n_storeys, n_bays):
         Frame.__init__(self, n_storeys, n_bays)
         Building.__init__(self, n_storeys)
         # super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
+        self._extra_class_inputs = ["n_seismic_frames",
+                           "n_gravity_frames"]
         self.inputs = self.inputs + self._extra_class_inputs
         # Frame.__init__(self, n_storeys, n_bays)
         # Building.__init__(self, n_storeys, n_bays)
@@ -478,15 +480,15 @@ class WallBuilding(Building):
     wall_depth = 0.0  # m
     wall_width = 0.0  # m
     type = "wall_building"
-    _extra_class_inputs = [
-        "n_walls",
-        "wall_depth",
-        "wall_width"
-    ]
 
     def __init__(self, n_storeys):
         super(WallBuilding, self).__init__(n_storeys)  # run parent class initialiser function
-        self.inputs = self.inputs + self._extra_class_inputs
+        self._extra_class_inputs = [
+            "n_walls",
+            "wall_depth",
+            "wall_width"
+        ]
+        self.inputs += self._extra_class_inputs
 
     @property
     def ancestor_types(self):
