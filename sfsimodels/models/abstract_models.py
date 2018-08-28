@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import copy
-from sfsimodels.loader import add_inputs_to_object
+# from sfsimodels.loader import add_inputs_to_object
 import types
 from sfsimodels.exceptions import ModelError
 
@@ -40,7 +40,10 @@ class PhysicalObject(object):
         """
         Set the object parameters using a dictionary
         """
-        add_inputs_to_object(self, values)
+        if hasattr(self, "inputs"):
+            for item in self.inputs:
+                if hasattr(self, item):
+                    setattr(self, item, values[item])
 
     def deepcopy(self):
         """ Make a clone of the object """
