@@ -43,7 +43,7 @@ class Soil(PhysicalObject):
     def __init__(self, pw=9800):
         self._pw = pw  # specific weight of water
         self.stack = []
-        self.inputs = [  # TODO: should run init method of parent then take inputs properly
+        self._extra_class_inputs = [
             "id",
             "name",
             "base_type",
@@ -66,6 +66,9 @@ class Soil(PhysicalObject):
             "plasticity_index",
             "permeability"
         ]
+        if not hasattr(self, "inputs"):
+            self.inputs = []
+        self.inputs += self._extra_class_inputs
 
     def to_dict(self):
         """

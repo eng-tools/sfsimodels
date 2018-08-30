@@ -98,7 +98,8 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
         "foundation-raft": foundations.RaftFoundation,  # Deprecated approach for type
         "foundation-pad_foundation": foundations.PadFoundation,
         "section-section": buildings.Section,
-        "custom_object-custom_object": abstract_models.CustomObject
+        "custom_object-custom_object": abstract_models.CustomObject,
+        "system-system": systems.SoilStructureSystem
     }
     # merge and overwrite the object map with custom maps
     for item in custom_map:
@@ -128,8 +129,18 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
             objs[mtype][int(data_models[mtype][m_id]["id"])] = new_instance
 
     if "soil_profiles" in data_models:
+        mtype = "soil_profiles"
+        base_type = "soil_profile"
         for m_id in data_models["soil_profiles"]:
-            new_soil_profile = soils.SoilProfile()
+            obj = data_models["soil_profiles"][m_id]
+            if "type" not in obj:
+                obj["type"] = base_type
+            try:
+                obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
+            except KeyError:
+                raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
+                               "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
+            new_soil_profile = obj_class()
             new_soil_profile.id = data_models["soil_profiles"][m_id]["id"]
             for j in range(len(data_models["soil_profiles"][m_id]["layers"])):
                 depth = data_models["soil_profiles"][m_id]['layers'][j]["depth"]
@@ -159,6 +170,8 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
     if "buildings" in data_models:
         for m_id in data_models["buildings"]:
             obj = data_models["buildings"][m_id]
+            if "type" not in obj:
+                obj["type"] = base_type
             if obj["type"] in ["structure"]:
                 new_building = obj_map["%s-%s" % ("building", obj["type"])]()
             elif "frame_building" in obj["type"]:
@@ -182,8 +195,18 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
             objs["buildings"][int(data_models["buildings"][m_id]["id"])] = new_building
 
     if "systems" in data_models:  # must be run after other objects are loaded
+        mtype = "systems"
+        base_type = "system"
         for m_id in data_models["systems"]:
-            new_system = systems.SoilStructureSystem()
+            obj = data_models[mtype][m_id]
+            if "type" not in obj:
+                obj["type"] = base_type
+            try:
+                obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
+            except KeyError:
+                raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
+                               "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
+            new_system = obj_class()
 
             # Attach the soil profile
             soil_profile_id = data_models["systems"][m_id]['soil_profile_id']
