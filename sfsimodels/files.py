@@ -262,7 +262,7 @@ class Output(object):
                             ("systems", OrderedDict()),
                             ])
 
-    def add_to_dict(self, an_object, extras={}):
+    def add_to_dict(self, an_object, extras=None):
         """
         Convert models to json serialisable output
 

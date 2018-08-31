@@ -1,6 +1,51 @@
 from collections import OrderedDict
 from sfsimodels.models import SoilProfile, Foundation, Building, Structure
 from sfsimodels.exceptions import ModelError
+from sfsimodels import functions as sf
+
+
+# class SoilSystem(object):
+#     id = None
+#     name = None
+#     type = "soil_system"
+#     _sp = SoilProfile()
+#     _soil_profile_id = None
+#
+#     def __init__(self):
+#         self.inputs = ["id", "name", "soil_profile_id"]
+#
+#     def to_dict(self):
+#         outputs = OrderedDict()
+#         skip_list = []
+#         for item in self.inputs:
+#             if item not in skip_list:
+#                 value = self.__getattribute__(item)
+#                 if "_id" in item and value is None:
+#                     raise ModelError("Cannot export system with %s set to None" % item)
+#                 if item not in skip_list:
+#                     value = self.__getattribute__(item)
+#                     outputs[item] = sf.collect_serial_value(value)
+#         return outputs
+#
+#     def add_obj_to_system(self, obj):
+#         if hasattr(obj, "base_type"):
+#             if obj.base_type == "soil":
+#                 self.sp = obj
+#                 self._soil_profile_id = obj.id
+#
+#             elif obj.base_type == "foundation":
+#                 self.fd = obj
+#                 self._foundation_id = obj.id
+#             elif obj.base_type == "building":
+#                 self.bd = obj
+#                 self._building_id = obj.id
+#
+#     @property
+#     def soil_profile_id(self):
+#         if self._soil_profile_id is None:
+#             if self._sp.id is not None:
+#                 self._soil_profile_id = self._sp.id
+#         return self._soil_profile_id
 
 
 class SoilStructureSystem(object):
@@ -24,10 +69,9 @@ class SoilStructureSystem(object):
                 value = self.__getattribute__(item)
                 if "_id" in item and value is None:
                     raise ModelError("Cannot export system with %s set to None" % item)
-                if isinstance(value, int):
-                    outputs[item] = str(value)
-                else:
-                    outputs[item] = value
+                if item not in skip_list:
+                    value = self.__getattribute__(item)
+                    outputs[item] = sf.collect_serial_value(value)
         return outputs
 
     def add_obj_to_system(self, obj):

@@ -84,6 +84,18 @@ class CustomObject(PhysicalObject):
         return outputs
 
     @property
+    def id(self):
+        """
+        Object id
+        :return:
+        """
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        self._id = value
+
+    @property
     def ancestor_types(self):
         return ["custom"]
 

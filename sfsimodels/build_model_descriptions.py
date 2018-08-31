@@ -1,22 +1,29 @@
 from sfsimodels import models
 from sfsimodels import properties
 from sfsimodels import exceptions
-
+from collections import OrderedDict
 vp = properties.pp
 
 
-def build_parameter_descriptions(obj, user_p={}, show_none=True, ignore_list=[]):
+def build_parameter_descriptions(obj, user_p=None, output="csv", show_none=True, ignore=None, plist=None):
     """
     Creates a list of the decription of all the inputs of an object
 
     :param obj: object, that has parameters
     :param user_p: dict, user defined parameter descriptions
     :param show_none: if false, only shows descriptions of parameters that are not None
+    :param ignore: list of parameters to not build
     :return:
     """
-    para = [obj.__class__.__name__ + " inputs:,,"]
-    if not hasattr(obj, 'inputs'):
-        raise exceptions.ModelError("Object must contain parameter 'inputs'")
+    if user_p is None:
+        user_p = {}
+    if ignore is None:
+        ignore = []
+    para = [[obj.__class__.__name__ + " inputs:", "", ""]]
+    if plist is None:
+        if not hasattr(obj, 'inputs'):
+            raise exceptions.ModelError("Object must contain parameter 'inputs' or set plist as an input")
+        plist = obj.inputs
 
     p_dict = {}
     if hasattr(obj, 'ancestor_types'):
@@ -30,16 +37,28 @@ def build_parameter_descriptions(obj, user_p={}, show_none=True, ignore_list=[])
     else:
         p_dict = user_p
 
-    for item in obj.inputs:
+    for item in plist:
         if show_none is False and getattr(obj, item) is None:
             continue
-        if item in ignore_list:
+        if item in ignore:
             continue
         if item in p_dict:
-            para.append(",".join([item, p_dict[item][1], p_dict[item][0]]))
+            para.append([item, p_dict[item][1], p_dict[item][0]])
         else:
-            para.append(item)
-    return para
+            para.append([item, "", ""])
+    if output == "csv":
+        out_obj = []
+        for i in range(len(para)):
+            out_obj.append(",".join(para[i]))
+    elif output == "list":
+        out_obj = para
+    elif output == "dict":
+        out_obj = OrderedDict()
+        for i in range(len(para)):
+            out_obj[para[i][0]] = {"description": para[i][2], "units": para[i][1]}
+    else:
+        raise ValueError("output must be either: 'csv', 'dict' or 'list'.")
+    return out_obj
 
 
 def all_descriptions():
