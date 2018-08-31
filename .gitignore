@@ -10,3 +10,4 @@ venv/
 .pytest_cache/
 # Sphinx documentation
 docs/_build/
+examples/.ipynb_checkpoints/
