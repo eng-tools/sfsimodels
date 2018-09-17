@@ -23,6 +23,8 @@ Attempting to solve the `Liskov Substitution Principle <https://en.wikipedia.org
 problem for combining independently developed source
 code in the fields of structural and geotechnical engineering.
 
+Models represent states of physical objects, currently can not represent dynamic/changing states.
+
 Model inheritance system
 ========================
 

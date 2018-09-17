@@ -710,7 +710,7 @@ class CriticalSoil(Soil):
 
 class StressDependentSoil(Soil):
     _g0_mod = None
-    _p_atm = 10100.0  # kPa
+    _p_atm = 10100.0  # Pa
     type = "stress_dependent_soil"
 
     def __init__(self, pw=9800):
