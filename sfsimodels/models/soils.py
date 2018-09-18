@@ -195,6 +195,11 @@ class Soil(PhysicalObject):
         return self._specific_gravity
 
     @property
+    def pw(self):
+        """Specific weight of water"""
+        return self._pw
+
+    @property
     def saturation(self):
         """The current saturation of the soil"""
         return self._saturation
