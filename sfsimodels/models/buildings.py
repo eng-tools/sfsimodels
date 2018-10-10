@@ -495,6 +495,9 @@ class WallBuilding(Building):
         return super(WallBuilding, self).ancestor_types + ["wall_building"]
 
 
+class BuildingWall(WallBuilding):  # new name
+    pass
+
 class Structure(PhysicalObject):
     """
     An object to describe structures.

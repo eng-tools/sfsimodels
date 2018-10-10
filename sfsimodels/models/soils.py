@@ -877,8 +877,19 @@ class SoilProfile(PhysicalObject):
     def layers(self):
         return self._layers
 
-    def remove_layer(self, depth):
-        del self._layers[depth]
+    def remove_layer_at_depth(self, depth):
+        try:
+            del self._layers[depth]
+        except KeyError:
+            raise KeyError("Depth: {0} not found in {1}".format(depth, list(self.layers.keys())))
+
+    def remove_layer(self, layer_int):
+        key = list(self._layers.keys())[layer_int - 1]
+        del self._layers[key]
+
+    def replace_layer(self, layer_int, soil):
+        key = list(self._layers.keys())[layer_int - 1]
+        self._layers[key] = soil
 
     def layer(self, index):
         index = int(index)

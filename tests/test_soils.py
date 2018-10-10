@@ -339,7 +339,6 @@ def test_stress_dependent_soil_g_mod():
     assert isclose(soil_2.g_mod_at_m_eff_stress(m_eff), 11567783.9266, rel_tol=0.0001)
 
 
-
 def test_inputs_soil():
     sl = models.Soil()
     assert "g_mod" in sl.inputs
@@ -468,6 +467,46 @@ def test_get_layer_index_by_depth():
     assert sp.get_layer_index_by_depth(1) == 1
     assert sp.get_layer_index_by_depth(3) == 2
     assert sp.get_layer_index_by_depth(4) == 2
+
+
+def test_can_remove_layers():
+    sl1 = models.Soil()
+    sl2 = models.Soil()
+    sl3 = models.Soil()
+    sp = models.SoilProfile()
+    sp.add_layer(0.0, sl1)
+    sp.add_layer(3.0, sl2)
+    sp.add_layer(5.0, sl3)
+    assert sp.get_layer_index_by_depth(0) == 1
+    assert sp.get_layer_index_by_depth(3.5) == 2
+    assert sp.get_layer_index_by_depth(5.5) == 3
+    sp.remove_layer(2)
+    assert sp.get_layer_index_by_depth(3.5) == 1
+    assert sp.get_layer_index_by_depth(5.5) == 2
+    sp.add_layer(3.0, sl2)
+    assert sp.get_layer_index_by_depth(3.5) == 2
+    assert sp.get_layer_index_by_depth(5.5) == 3
+    sp.remove_layer_at_depth(3.0)
+    assert sp.get_layer_index_by_depth(3.5) == 1
+    assert sp.get_layer_index_by_depth(5.5) == 2
+    sp.add_layer(3.0, sl2)
+    with pytest.raises(KeyError) as e:
+        sp.remove_layer_at_depth(3.3)
+    assert str(e.value) == "'Depth: 3.3 not found in [0.0, 3.0, 5.0]'"
+
+
+def test_can_replace_layers():
+    sl1 = models.Soil()
+    sl2 = models.Soil()
+    sl2.g_mod = 2.0
+    sl3 = models.Soil()
+    sl3.g_mod = 3.0
+    sp = models.SoilProfile()
+    sp.add_layer(0.0, sl1)
+    sp.add_layer(3.0, sl2)
+    assert isclose(sp.layer(2).g_mod, 2.0)
+    sp.replace_layer(2, sl3)
+    assert isclose(sp.layer(2).g_mod, 3.0)
 
 
 def test_set_soil_ids_in_soil_profile():
