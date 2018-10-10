@@ -3,6 +3,7 @@ import os
 
 from sfsimodels import files
 from sfsimodels import models
+import sfsimodels as sm
 import numpy as np
 from sfsimodels.checking_tools import isclose
 from sfsimodels import exceptions
@@ -313,18 +314,43 @@ def test_hydrostatic_pressure():
     assert isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rel_tol=0.0001)
 
 
+def test_stress_dependent_soil_g_mod():
+    soil_1 = models.Soil()
+    soil_1.phi = 33.
+    soil_1.unit_dry_weight = 18000
+    soil_1.specific_gravity = 2.65
+    soil_2 = sm.SoilStressDependent()
+    soil_2.phi = 33.
+    soil_2.cohesion = 50000
+    soil_2.unit_dry_weight = 18000
+    soil_2.g0_mod = 500.
+    soil_profile = models.SoilProfile()
+    soil_profile.add_layer(0, soil_1)
+    soil_profile.add_layer(5., soil_2)
+    z_c = 5.0
+    gwl = 4.0
+    soil_profile.gwl = gwl
+
+    assert isclose(soil_1.unit_sat_weight, 21007.5471698, rel_tol=0.0001)
+    assert isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rel_tol=0.0001)
+    v_eff = soil_profile.vertical_effective_stress(z_c)
+    assert isclose(soil_2.g_mod_at_v_eff_stress(v_eff), 11567783.9266, rel_tol=0.0001)
+    m_eff = v_eff * (1 + 2 * (1 - np.sin(soil_2.phi_r))) / 3
+    assert isclose(soil_2.g_mod_at_m_eff_stress(m_eff), 11567783.9266, rel_tol=0.0001)
+
+
 
 def test_inputs_soil():
     sl = models.Soil()
     assert "g_mod" in sl.inputs
     assert "e_cr0" not in sl.inputs
-    crit_sl = models.CriticalSoil()
+    crit_sl = models.SoilCritical()
     assert "g_mod" in crit_sl.inputs
     assert "e_cr0" in crit_sl.inputs
 
 
 def test_e_critical():
-    crit_sl = models.CriticalSoil(pw=9800)
+    crit_sl = models.SoilCritical(pw=9800)
     crit_sl.e_cr0 = 0.79  # Jin et al. 2015
     crit_sl.p_cr0 = 10  # Jin et al. 2015
     crit_sl.lamb_crl = 0.015  # Jin et al. 2015
@@ -442,8 +468,6 @@ def test_get_layer_index_by_depth():
     assert sp.get_layer_index_by_depth(1) == 1
     assert sp.get_layer_index_by_depth(3) == 2
     assert sp.get_layer_index_by_depth(4) == 2
-
-
 
 
 def test_set_soil_ids_in_soil_profile():

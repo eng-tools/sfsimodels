@@ -692,7 +692,7 @@ class Soil(PhysicalObject):
             return None
 
 
-class CriticalSoil(Soil):
+class SoilCritical(Soil):
     # critical state parameters
     e_cr0 = 0.0
     p_cr0 = 0.0
@@ -700,32 +700,32 @@ class CriticalSoil(Soil):
     type = "critical_soil"
 
     def __init__(self, pw=9800):
-        super(CriticalSoil, self).__init__(pw=pw)  # run parent class initialiser function
+        super(SoilCritical, self).__init__(pw=pw)  # run parent class initialiser function
         self._extra_class_inputs = ["e_cr0", "p_cr0", "lamb_crl"]
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
-        return super(CriticalSoil, self).ancestor_types + [self.type]
+        return super(SoilCritical, self).ancestor_types + [self.type]
 
     def e_critical(self, p):
         p = float(p)
         return self.e_cr0 - self.lamb_crl * np.log(p / self.p_cr0)
 
 
-class StressDependentSoil(Soil):
+class SoilStressDependent(Soil):
     _g0_mod = None
     _p_atm = 10100.0  # Pa
     type = "stress_dependent_soil"
 
     def __init__(self, pw=9800):
-        super(StressDependentSoil, self).__init__(pw=pw)
+        super(SoilStressDependent, self).__init__(pw=pw)
         self._extra_class_inputs = ["g0_mod", "p_atm"]
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
-        return super(StressDependentSoil, self).ancestor_types + [self.type]
+        return super(SoilStressDependent, self).ancestor_types + [self.type]
 
     @property
     def g0_mod(self):
@@ -745,8 +745,12 @@ class StressDependentSoil(Soil):
         value = clean_float(value)
         self._p_atm = value
 
-    def g_mod_at_eff_stress(self, sigma_v_eff):
-        return self.g0_mod * self.p_atm * (sigma_v_eff / self.p_atm) ** 0.5
+    def g_mod_at_v_eff_stress(self, sigma_v_eff):
+        k0 = 1 - np.sin(self.phi_r)
+        return self.g0_mod * self.p_atm * (sigma_v_eff * (1 + 2 * k0) / 3 / self.p_atm) ** 0.5
+
+    def g_mod_at_m_eff_stress(self, sigma_m_eff):
+        return self.g0_mod * self.p_atm * (sigma_m_eff / self.p_atm) ** 0.5
 
 
 class SoilLayer(Soil):  # not used
