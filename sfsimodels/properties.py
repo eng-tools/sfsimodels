@@ -30,10 +30,10 @@ pp["soil"]["saturation"] = ["Saturation ratio of soil", "-"]
 pp["soil"]["plasticity_index"] = ["Plasticity index of the soil", "-"]
 pp["soil"]["permeability"] = ["Permeability of soil", "-"]
 
-pp["critical_soil"] = {}
-pp["critical_soil"]["e_cr0"] = ["", ""]
-pp["critical_soil"]["p_cr0"] = ["", ""]
-pp["critical_soil"]["lamb_crl"] = ["", ""]
+pp["soil_critical"] = {}
+pp["soil_critical"]["e_cr0"] = ["", ""]
+pp["soil_critical"]["p_cr0"] = ["", ""]
+pp["soil_critical"]["lamb_crl"] = ["", ""]
 
 # soil profile
 pp["soil_profile"] = {}

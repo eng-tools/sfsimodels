@@ -697,7 +697,7 @@ class SoilCritical(Soil):
     e_cr0 = 0.0
     p_cr0 = 0.0
     lamb_crl = 0.0
-    type = "critical_soil"
+    type = "soil_critical"
 
     def __init__(self, pw=9800):
         super(SoilCritical, self).__init__(pw=pw)  # run parent class initialiser function
@@ -715,8 +715,8 @@ class SoilCritical(Soil):
 
 class SoilStressDependent(Soil):
     _g0_mod = None
-    _p_atm = 10100.0  # Pa
-    type = "stress_dependent_soil"
+    _p_atm = 101000.0  # Pa
+    type = "soil_stress_dependent"
 
     def __init__(self, pw=9800):
         super(SoilStressDependent, self).__init__(pw=pw)

@@ -86,7 +86,8 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
 
     obj_map = {
         "soil-soil": soils.Soil,
-        "soil-critical_soil": soils.Soil,
+        "soil-soil_critical": soils.SoilCritical,
+        "soil-soil_stress_dependent": soils.SoilStressDependent,
         "soil_profile-soil_profile": soils.SoilProfile,
         "building-building": buildings.Building,
         "building-frame_building": buildings.FrameBuilding,

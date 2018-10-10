@@ -334,9 +334,9 @@ def test_stress_dependent_soil_g_mod():
     assert isclose(soil_1.unit_sat_weight, 21007.5471698, rel_tol=0.0001)
     assert isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rel_tol=0.0001)
     v_eff = soil_profile.vertical_effective_stress(z_c)
-    assert isclose(soil_2.g_mod_at_v_eff_stress(v_eff), 11567783.9266, rel_tol=0.0001)
+    assert isclose(soil_2.g_mod_at_v_eff_stress(v_eff), 36580544.6888, rel_tol=0.0001)
     m_eff = v_eff * (1 + 2 * (1 - np.sin(soil_2.phi_r))) / 3
-    assert isclose(soil_2.g_mod_at_m_eff_stress(m_eff), 11567783.9266, rel_tol=0.0001)
+    assert isclose(soil_2.g_mod_at_m_eff_stress(m_eff), 36580544.6888, rel_tol=0.0001)
 
 
 def test_inputs_soil():
