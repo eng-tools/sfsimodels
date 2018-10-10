@@ -53,6 +53,22 @@ class PhysicalObject(object):
     def ancestor_types(self):
         return ["physical_object"]
 
+    def add_from_same(self, obj, inputs_from="obj", update_inputs=True):
+        if not hasattr(self, "inputs"):
+            raise ModelError("self does not contain attribute: 'inputs'")
+        if inputs_from == "obj":
+            if hasattr(obj, "inputs"):
+                inputs_list = obj.inputs
+            else:
+                raise ModelError("obj does not contain attribute: 'inputs'")
+        else:
+            inputs_list = self.inputs
+        for item in inputs_list:
+            if hasattr(obj, item):
+                setattr(self, item, getattr(obj, item))
+                if update_inputs and item not in self.inputs:
+                    self.inputs.append(item)
+
 
 class CustomObject(PhysicalObject):
     """
@@ -98,19 +114,3 @@ class CustomObject(PhysicalObject):
     @property
     def ancestor_types(self):
         return ["custom"]
-
-    def add_from_same(self, obj, inputs_from="obj", update_inputs=True):
-        if inputs_from == "obj":
-            if hasattr(obj, "inputs"):
-                inputs_list = obj.inputs
-            else:
-                raise ModelError("obj does not contain attribute: 'inputs'")
-        else:
-            inputs_list = self.inputs
-        for item in inputs_list:
-            if hasattr(obj, item):
-                setattr(self, item, getattr(obj, item))
-                if update_inputs and item not in self.inputs:
-                    self.inputs.append(item)
-
-
