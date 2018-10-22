@@ -1,9 +1,9 @@
 from sfsimodels.models.abstract_models import PhysicalObject, CustomObject
 from sfsimodels.models.hazards import SeismicHazard
-from sfsimodels.models.foundations import Foundation, PadFoundation, RaftFoundation
+from sfsimodels.models.foundations import Foundation, FoundationPad, FoundationRaft
 from sfsimodels.models.soils import Soil, SoilCritical, SoilProfile, SoilStressDependent
 from sfsimodels.models.buildings import Building, BuildingFrame, BuildingWall, BuildingSDOF, BuildingFrame2D, Section
-from sfsimodels.models.buildings import FrameBuilding, WallBuilding, Structure, FrameBuilding2D  # deprecated objects
+
 from sfsimodels.models import material
 from sfsimodels.models.systems import SoilStructureSystem
 from sfsimodels.models.time import TimeSeries
@@ -14,3 +14,5 @@ from sfsimodels.exceptions import DesignError, AnalysisError, ModelError, ModelW
 from sfsimodels import sensors
 
 # from sfsimodels.build_model_descriptions import print_all_parameters
+from sfsimodels.models.foundations import PadFoundation, RaftFoundation  # deprecated objects
+from sfsimodels.models.buildings import FrameBuilding, WallBuilding, Structure, FrameBuilding2D  # deprecated objects

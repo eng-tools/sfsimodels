@@ -3,7 +3,7 @@ from sfsimodels.checking_tools import isclose
 
 
 def test_raft_foundation():
-    fd = models.RaftFoundation()
+    fd = models.FoundationRaft()
     fd.length = 4
     fd.width = 6
     assert fd.area == 24
@@ -19,7 +19,7 @@ def test_raft_foundation():
 
 
 def test_pad_foundation():
-    fd = models.PadFoundation()
+    fd = models.FoundationPad()
     fd.length = 15
     fd.pad_length = 3
     fd.n_pads_l = 4
@@ -37,7 +37,7 @@ def test_pad_foundation():
 
 
 def test_pad_density_setter():
-    fd = models.PadFoundation()
+    fd = models.FoundationPad()
     fd.length = 15
     fd.pad_length = 3
     fd.n_pads_l = 2
@@ -55,13 +55,13 @@ def test_pad_density_setter():
 
 
 def test_zero_height_raft():
-    fd = models.RaftFoundation()
+    fd = models.FoundationRaft()
     fd.length = 4
     fd.width = 6
     fd.height = 0.0
     fd.density = 3
     assert isclose(fd.mass, 0.0, rel_tol=0.0001)
-    fd2 = models.RaftFoundation()
+    fd2 = models.FoundationRaft()
     fd2.length = 4
     fd2.width = 6
     fd2.height = 0.0
@@ -70,7 +70,7 @@ def test_zero_height_raft():
 
 
 def test_load_nan():
-    fd = models.RaftFoundation()
+    fd = models.FoundationRaft()
     fd.g_mod = ""
     fd.bulk_mod = ""
     fd.g_mod = None
@@ -78,7 +78,7 @@ def test_load_nan():
         setattr(fd, item, "")
         setattr(fd, item, None)
 
-    pd = models.PadFoundation()
+    pd = models.FoundationPad()
     pd.g_mod = ""
     pd.bulk_mod = ""
     pd.g_mod = None

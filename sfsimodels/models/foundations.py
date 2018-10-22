@@ -5,6 +5,7 @@ import numpy as np
 from sfsimodels.exceptions import ModelError
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels import checking_tools as ct
+from sfsimodels.exceptions import deprecation
 
 
 class Foundation(PhysicalObject):
@@ -211,26 +212,24 @@ class Foundation(PhysicalObject):
             return None
 
 
-class RaftFoundation(Foundation):
+class FoundationRaft(Foundation):
     """
     An extension to the Foundation Object to describe Raft foundations
     """
     ftype = "raft"
-    type = "raft_foundation"
+    type = "foundation_raft"
     _extra_class_inputs = []
 
     def __str__(self):
-        return "RaftFoundation id: {0}, name: {1}".format(self.id, self.name)
+        return "FoundationRaft id: {0}, name: {1}".format(self.id, self.name)
 
     def __init__(self):
-        super(RaftFoundation, self).__init__()
-        # TODO: this should be a parent class method, but check if input already in inputs
+        super(FoundationRaft, self).__init__()
         self.inputs = self.inputs + self._extra_class_inputs
-
 
     @property
     def ancestor_types(self):
-        return super(RaftFoundation, self).ancestor_types + ["raft"]
+        return super(FoundationRaft, self).ancestor_types + ["foundation_raft"]
 
     @property
     def i_ww(self):
@@ -249,12 +248,12 @@ class RaftFoundation(Foundation):
         return self.length * self.width ** 3 / 12
 
 
-class PadFoundation(Foundation):
+class FoundationPad(Foundation):
     """
     An extension to the Foundation Object to describe Pad foundations
     """
     ftype = "pad"
-    type = "pad_foundation"
+    type = "foundation_pad"
     n_pads_l = 4  # Number of pads in length direction
     n_pads_w = 3  # Number of pads in width direction
     pad_length = 1.0  # m  # TODO: make parameters protected
@@ -270,12 +269,12 @@ class PadFoundation(Foundation):
         return "PadFoundation id: {0}, name: {1}".format(self.id, self.name)
 
     def __init__(self):
-        super(PadFoundation, self).__init__()
+        super(FoundationPad, self).__init__()
         self.inputs += self._extra_class_inputs
 
     @property
     def ancestor_types(self):
-        return super(PadFoundation, self).ancestor_types + ["pad_foundation"]
+        return super(FoundationPad, self).ancestor_types + ["foundation_pad"]
 
     @property
     def i_ww(self):
@@ -368,3 +367,15 @@ class PadFoundation(Foundation):
         if i >= self.n_pads_w:
             raise ModelError("pad index out-of-bounds")
         return (self.width - self.pad_width) / (self.n_pads_w - 1) * i + self.pad_width / 2
+
+
+class PadFoundation(FoundationPad):
+    def __init__(self):
+        deprecation("PadFoundation class is deprecated, use FoundationPad.")
+        super(PadFoundation, self).__init__()
+
+
+class RaftFoundation(FoundationRaft):
+    def __init__(self):
+        deprecation("RaftFoundation class is deprecated, use FoundationRaft.")
+        super(RaftFoundation, self).__init__()

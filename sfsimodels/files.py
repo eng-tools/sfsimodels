@@ -5,7 +5,7 @@ from sfsimodels import models
 from sfsimodels.exceptions import deprecation, ModelError
 
 
-standard_types = ["soil", "soil_profile", "foundation", "building", "system", "section", "custom_type"]
+standard_types = ["soil", "soil_profile", "foundation", "building", "section", "system", "custom_type"]
 
 
 def add_to_obj(obj, dictionary, exceptions=None, verbose=0):
@@ -83,7 +83,9 @@ deprecated_types = OrderedDict([
     ("structure", "sdof"),
     ("frame_building", "building_frame"),
     ("frame_building_2D", "building_frame2D"),
-    ("wall_building", "building_wall")
+    ("wall_building", "building_wall"),
+    ("pad_foundation", "foundation_pad"),
+    ("raft_foundation", "foundation_raft")
 ])
 
 
@@ -113,9 +115,9 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
         "building-structure": buildings.BuildingSDOF,
         "building-sdof": buildings.BuildingSDOF,
         "foundation-foundation": foundations.Foundation,
-        "foundation-raft_foundation": foundations.RaftFoundation,
-        "foundation-raft": foundations.RaftFoundation,  # Deprecated approach for type
-        "foundation-pad_foundation": foundations.PadFoundation,
+        "foundation-foundation_raft": foundations.FoundationRaft,
+        "foundation-raft": foundations.FoundationRaft,  # Deprecated approach for type, remove in v1
+        "foundation-foundation_pad": foundations.FoundationPad,
         "section-section": buildings.Section,
         "custom_object-custom_object": abstract_models.CustomObject,
         "system-system": systems.SoilStructureSystem,  # deprecated type
@@ -275,7 +277,7 @@ class Output(object):
     comments = ""
 
     def __init__(self):
-        self.models = OrderedDict()
+        self.unordered_models = OrderedDict()
 
     def add_to_dict(self, an_object, extras=None):
         """
@@ -296,23 +298,23 @@ class Output(object):
                 mtype = "custom_type"
         else:
             raise ModelError("Object does not have attribute 'base_type' or 'type', cannot add to output.")
-        if mtype not in self.models:  # Catch any custom objects
-            self.models[mtype] = OrderedDict()
+        if mtype not in self.unordered_models:  # Catch any custom objects
+            self.unordered_models[mtype] = OrderedDict()
         if mtype == "soil_profile":
-            if "soil" not in self.models:
-                self.models["soil"] = OrderedDict()
+            if "soil" not in self.unordered_models:
+                self.unordered_models["soil"] = OrderedDict()
             profile_dict = an_object.to_dict()
             profile_dict["layers"] = []
             for layer in an_object.layers:
-                self.models["soil"][an_object.layers[layer].id] = an_object.layers[layer].to_dict()
+                self.unordered_models["soil"][an_object.layers[layer].id] = an_object.layers[layer].to_dict()
                 profile_dict["layers"].append({
                     "soil_id": str(an_object.layers[layer].id),
                     "depth": float(layer)
                 })
 
-            self.models["soil_profile"][an_object.id] = profile_dict
+            self.unordered_models["soil_profile"][an_object.id] = profile_dict
         elif hasattr(an_object, "to_dict"):
-            self.models[mtype][an_object.id] = an_object.to_dict()
+            self.unordered_models[mtype][an_object.id] = an_object.to_dict()
         else:
             raise ModelError("Object does not have method 'to_dict', cannot add to output.")
 
@@ -325,10 +327,22 @@ class Output(object):
         :param serialisable_dict:
         :return:
         """
-        if mtype not in self.models:
-            self.models[mtype] = OrderedDict()
-        self.models[mtype][m_id] = serialisable_dict
+        if mtype not in self.unordered_models:
+            self.unordered_models[mtype] = OrderedDict()
+        self.unordered_models[mtype][m_id] = serialisable_dict
 
+    @property
+    def models(self):
+        models_dict = OrderedDict()
+        collected = []
+        for item in standard_types:
+            if item in self.unordered_models:
+                models_dict[item] = self.unordered_models[item]
+                collected.append(item)
+        for item in self.unordered_models:
+            if item not in collected:
+                models_dict[item] = self.unordered_models[item]
+        return models_dict
 
     @staticmethod
     def parameters():
@@ -336,6 +350,6 @@ class Output(object):
 
     def to_dict(self):
         outputs = OrderedDict()
-        for item in self.parameters():  # TODO: reorder models
+        for item in self.parameters():
             outputs[item] = self.__getattribute__(item)
         return outputs

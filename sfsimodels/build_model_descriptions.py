@@ -71,7 +71,7 @@ def all_descriptions():
     para += build_parameter_descriptions(models.Soil()) + [",,\n"]
     para += build_parameter_descriptions(models.SoilProfile()) + [",,\n"]
     para += build_parameter_descriptions(models.Foundation()) + [",,\n"]
-    para += build_parameter_descriptions(models.PadFoundation()) + [",,\n"]
+    para += build_parameter_descriptions(models.FoundationPad()) + [",,\n"]
     para += build_parameter_descriptions(models.BuildingSDOF()) + [",,\n"]
     para += build_parameter_descriptions(models.BuildingFrame2D(1, 1))
 
