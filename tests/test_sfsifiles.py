@@ -152,8 +152,8 @@ def test_save_and_load_2d_frame_building():
     fb2d.set_beam_prop("width", [0.4, 0.4, 0.4], repeat="up")
     fb2d.set_column_prop("width", [0.5, 0.5, 0.5, 0.5], repeat="up")
     fb2d.set_column_prop("depth", [0.5, 0.5, 0.5, 0.5], repeat="up")
-    fb2d.beams[0][0].a_custom_property = 11
-    fb2d.beams[0][0].inputs += ["a_custom_property"]
+    fb2d.beams[0][0].set_section_prop('a_custom_property', 11)
+    fb2d.beams[0][0].add_inputs_to_section(["a_custom_property"])
 
     ecp_output = sm.Output()
     ecp_output.add_to_dict(fb2d)
@@ -169,11 +169,11 @@ def test_save_and_load_2d_frame_building():
 
     objs = sm.loads_json(p_str)
     building = objs["buildings"][1]
-    assert np.isclose(building.beams[0][0].depth, 0.5)
-    assert np.isclose(building.beams[0][1].depth, 0.6)
+    assert np.isclose(building.beams[0][0].sections[0].depth, 0.5)
+    assert np.isclose(building.beams[0][1].sections[0].depth, 0.6)
 
-    assert building.beams[0][0].a_custom_property == 11, building.beams[0][0].a_custom_property
-    assert np.isclose(building.columns[0][0].depth, 0.5)
+    assert building.beams[0][0].s[0].a_custom_property == 11, building.beams[0][0].sections[0].a_custom_property
+    assert np.isclose(building.columns[0][0].sections[0].depth, 0.5)
 
 
 def test_full_save_and_load():
@@ -278,12 +278,13 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 
 
 if __name__ == '__main__':
+    test_save_and_load_building()
     # test_load_and_save_structure()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
     # test_save_and_load_2d_frame_building()
-    test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
+    # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

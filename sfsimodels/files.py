@@ -216,13 +216,32 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                     new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys, n_bays)
                     for ss in range(n_storeys):
                         for bb in range(n_bays):
-                            beam_sect_id = str(obj["beam_section_ids"][ss][bb])
-                            sect_dictionary = obj["beam_sections"][beam_sect_id]
-                            add_to_obj(new_building.beams[ss][bb], sect_dictionary, verbose=verbose)
+                            sect_is = obj["beam_section_ids"][ss][bb]
+                            if hasattr(sect_is, "__len__"):
+                                n_sections = len(sect_is)
+                                new_building.beams[ss][bb].split_into_multiple([1] * n_sections)  # TODO: should be lengths
+                                for sect_i in range(len(sect_is)):
+                                    beam_sect_id = str(obj["beam_section_ids"][ss][bb][sect_i])
+                                    sect_dictionary = obj["beam_sections"][beam_sect_id]
+                                    add_to_obj(new_building.beams[ss][bb].sections[sect_i], sect_dictionary, verbose=verbose)
+                            else:  # deprecated loading
+                                beam_sect_id = str(obj["beam_section_ids"][ss][bb])
+                                sect_dictionary = obj["beam_sections"][beam_sect_id]
+                                add_to_obj(new_building.beams[ss][bb].section[0], sect_dictionary, verbose=verbose)
                         for cc in range(n_bays + 1):
-                            column_sect_id = str(obj["column_section_ids"][ss][cc])
-                            sect_dictionary = obj["column_sections"][column_sect_id]
-                            add_to_obj(new_building.columns[ss][cc], sect_dictionary, verbose=verbose)
+                            sect_is = obj["column_section_ids"][ss][cc]
+                            if hasattr(sect_is, "__len__"):
+                                n_sections = len(sect_is)
+                                # TODO: should be lengths
+                                new_building.columns[ss][cc].split_into_multiple([1] * n_sections)
+                                for sect_i in range(len(sect_is)):
+                                    column_sect_id = str(obj["column_section_ids"][ss][cc][sect_i])
+                                    sect_dictionary = obj["column_sections"][column_sect_id]
+                                    add_to_obj(new_building.columns[ss][cc].sections[sect_i], sect_dictionary, verbose=verbose)
+                            else:
+                                column_sect_id = str(obj["column_section_ids"][ss][cc])
+                                sect_dictionary = obj["column_sections"][column_sect_id]
+                                add_to_obj(new_building.columns[ss][cc].section[0], sect_dictionary, verbose=verbose)
 
                 else:
                     n_storeys = len(obj['interstorey_heights'])

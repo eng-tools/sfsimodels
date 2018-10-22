@@ -180,6 +180,46 @@ class Section(PhysicalObject):  # not used?
         self._width = value
 
 
+class Element(PhysicalObject):
+    section_lengths = None
+
+    def __init__(self):
+        self.sections = [Section()]
+
+    @property
+    def s(self):
+        return self.sections
+
+    def set_section_prop(self, prop, prop_value, sections=None):
+        if sections is None:
+            sections = range(len(self.sections))
+        for sect_i in sections:
+            setattr(self.sections[sect_i], prop, prop_value)
+
+    def add_inputs_to_section(self, props, sections=None):
+        if sections is None:
+            sections = range(len(self.sections))
+        for sect_i in sections:
+            self.sections[sect_i].inputs += props
+
+    def split_into_multiple(self, lengths):
+        section = self.sections[0]
+        self.section_lengths = []
+        self.sections = []
+        for length in lengths:
+            self.section_lengths.append(length)
+            self.sections.append(section.deepcopy())
+
+    def get_section_prop(self, prop, section_i=0):
+        return getattr(self.sections[section_i], prop)
+
+    def to_dict(self, extra=()):
+        output = []
+        for i in range(len(self.sections)):
+            output.append(self.sections[i].to_dict(extra=extra))
+        return []
+
+
 class Frame(object):
     _bay_lengths = None
 
@@ -200,7 +240,7 @@ class Frame(object):
         outputs = OrderedDict()
         skip_list = []
         # skip_list = ["beams", "columns"]  # TODO: uncomment this
-        skip_list = ["beams"]
+        # skip_list = ["beams"]
         full_inputs = self.inputs + list(extra)
         for item in full_inputs:
             if item not in skip_list:
@@ -237,8 +277,8 @@ class Frame(object):
         return ["frame"]
 
     def _allocate_beams_and_columns(self):
-        self._beams = [[Section() for i in range(self.n_bays)] for ss in range(self.n_storeys)]
-        self._columns = [[Section() for i in range(self.n_cols)] for ss in range(self.n_storeys)]
+        self._beams = [[Element() for i in range(self.n_bays)] for ss in range(self.n_storeys)]
+        self._columns = [[Element() for i in range(self.n_cols)] for ss in range(self.n_storeys)]
 
     @property
     def beams(self):
@@ -286,7 +326,7 @@ class Frame(object):
             raise ModelError("beam depths does not match number of bays (%i)." % self.n_bays)
         for ss in range(self.n_storeys):
             for i in range(self.n_bays):
-                setattr(self._beams[ss][i], prop, values[0][i])
+                self._beams[ss][i].set_section_prop(prop, values[0][i])
 
     def set_column_prop(self, prop, values, repeat="up"):
         """
@@ -306,7 +346,7 @@ class Frame(object):
             raise ModelError("column props does not match n_cols (%i)." % self.n_cols)
         for ss in range(self.n_storeys):
             for i in range(self.n_cols):
-                setattr(self._columns[ss][i], prop, values[0][i])
+                self._columns[ss][i].set_section_prop(prop, values[0][i])
 
     def beams_at_storey(self, storey):
         return self._beams[storey - 1]
@@ -317,7 +357,7 @@ class Frame(object):
         for ss in range(self.n_storeys):
             beam_depths.append([])
             for i in range(self.n_bays):
-                beam_depths[ss].append(self.beams[ss][i].depth)
+                beam_depths[ss].append(self.beams[ss][i].get_section_prop("depth"))
         return np.array(beam_depths)
 
     @property
@@ -326,7 +366,7 @@ class Frame(object):
         for ss in range(self.n_storeys):
             beam_widths.append([])
             for i in range(self.n_bays):
-                beam_widths[ss].append(self.beams[ss][i].width)
+                beam_widths[ss].append(self.beams[ss][i].get_section_prop("width"))
         return np.array(beam_widths)
 
     @property
@@ -335,7 +375,7 @@ class Frame(object):
         for ss in range(self.n_storeys):
             column_depths.append([])
             for i in range(self.n_cols):
-                column_depths[ss].append(self.columns[ss][i].width)
+                column_depths[ss].append(self.columns[ss][i].get_section_prop("depth"))
         return np.array(column_depths)
 
     @property
@@ -344,7 +384,7 @@ class Frame(object):
         for ss in range(self.n_storeys):
             column_widths.append([])
             for i in range(self.n_cols):
-                column_widths[ss].append(self.columns[ss][i].width)
+                column_widths[ss].append(self.columns[ss][i].get_section_prop("width"))
         return np.array(column_widths)
 
     @property
@@ -442,15 +482,17 @@ class BuildingFrame2D(Frame, Building):
             for cc in range(self.n_cols):
                 # build a hash string of the section inputs to check uniqueness
                 parts = []
-                for item in self.columns[ss][cc].inputs:
-                    parts.append(item)
-                    parts.append(str(getattr(self.columns[ss][cc], item)))
-                p_str = "-".join(parts)
-                if p_str not in column_sections:
-                    column_sections[p_str] = self.columns[ss][cc].to_dict(extra)
-                    column_section_count += 1
-                    column_sections[p_str]["id"] = column_section_count
-                column_section_ids[ss].append(column_section_count)
+                column_section_ids[ss].append([])
+                for sect_i in range(len(self.columns[ss][cc].sections)):
+                    for item in self.columns[ss][cc].sections[sect_i].inputs:
+                        parts.append(item)
+                        parts.append(str(self.columns[ss][cc].get_section_prop(item, section_i=sect_i)))
+                    p_str = "-".join(parts)
+                    if p_str not in column_sections:
+                        column_sections[p_str] = self.columns[ss][cc].sections[sect_i].to_dict(extra)
+                        column_section_count += 1
+                        column_sections[p_str]["id"] = column_section_count
+                    column_section_ids[ss][cc].append(column_section_count)
 
         beam_sections = OrderedDict()
         beam_section_ids = []
@@ -460,15 +502,17 @@ class BuildingFrame2D(Frame, Building):
             for bb in range(self.n_bays):
                 # build a hash string of the section inputs to check uniqueness
                 parts = []
-                for item in self.beams[ss][bb].inputs:
-                    parts.append(item)
-                    parts.append(str(getattr(self.beams[ss][bb], item)))
-                p_str = "-".join(parts)
-                if p_str not in beam_sections:
-                    beam_sections[p_str] = self.beams[ss][bb].to_dict(extra)
-                    beam_section_count += 1
-                    beam_sections[p_str]["id"] = beam_section_count
-                beam_section_ids[ss].append(beam_section_count)
+                beam_section_ids[ss].append([])
+                for sect_i in range(len(self.beams[ss][bb].sections)):
+                    for item in self.beams[ss][bb].sections[sect_i].inputs:
+                        parts.append(item)
+                        parts.append(str(self.beams[ss][bb].get_section_prop(item, section_i=sect_i)))
+                    p_str = "-".join(parts)
+                    if p_str not in beam_sections:
+                        beam_sections[p_str] = self.beams[ss][bb].sections[sect_i].to_dict(extra)
+                        beam_section_count += 1
+                        beam_sections[p_str]["id"] = beam_section_count
+                    beam_section_ids[ss][bb].append(beam_section_count)
 
         outputs["column_section_ids"] = column_section_ids
         outputs["beam_section_ids"] = beam_section_ids
