@@ -23,7 +23,7 @@ def test_load_json():
 
 
 def test_load_and_save_structure():
-    structure = models.Structure()
+    structure = models.BuildingSDOF()
     structure.id = 1
     structure.name = "sample building"
     structure.h_eff = 10.0
@@ -38,7 +38,7 @@ def test_load_and_save_structure():
 
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
     objs = files.loads_json(p_str)
-    assert ct.isclose(structure.mass_eff, objs['buildings'][1].mass_eff)
+    assert ct.isclose(structure.mass_eff, objs['building'][1].mass_eff)
 
 
 def test_save_and_load_soil():
@@ -106,7 +106,7 @@ def test_save_and_load_building():
     masses = 40.0e3  # kg
     n_bays = 3
 
-    fb = models.FrameBuilding(number_of_storeys, n_bays)
+    fb = models.BuildingFrame(number_of_storeys, n_bays)
     fb.id = 1
     fb.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb.floor_length = 18.0  # m
@@ -140,7 +140,7 @@ def test_save_and_load_2d_frame_building():
     masses = 40.0e3  # kg
     n_bays = 3
 
-    fb2d = models.FrameBuilding2D(number_of_storeys, n_bays)
+    fb2d = models.BuildingFrame2D(number_of_storeys, n_bays)
     fb2d.id = 1
     fb2d.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb2d.floor_length = 18.0  # m
@@ -174,7 +174,6 @@ def test_save_and_load_2d_frame_building():
 
     assert building.beams[0][0].a_custom_property == 11, building.beams[0][0].a_custom_property
     assert np.isclose(building.columns[0][0].depth, 0.5)
-
 
 
 def test_full_save_and_load():
@@ -241,6 +240,7 @@ def test_saturation_set_in_soil_profile():
 def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
     class Cantilever(object):
         id = None
+        base_type = "cantilever"
         type = "cantilever"
         inputs = ["id", "length", "depth", "e_mod"]
 
@@ -251,9 +251,9 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
             return outputs
 
     fp = test_dir + "/unit_test_data/ecp_models_w_custom_obj.json"
-    objs, meta_data = files.load_json(fp, custom={"cantilever-cantilever": Cantilever}, meta=True, verbose=0)
-    assert ct.isclose(objs["foundations"][1].length, 1.0)
-    assert ct.isclose(objs["cantilevers"][1].length, 6.0)
+    objs, meta_data = files.load_json_and_meta(fp, custom={"cantilever-cantilever": Cantilever}, verbose=0)
+    assert ct.isclose(objs["foundation"][1].length, 1.0)
+    assert ct.isclose(objs["cantilever"][1].length, 6.0)
     ecp_output = files.Output()
     for m_type in objs:
         for instance in objs[m_type]:
@@ -278,6 +278,7 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 
 
 if __name__ == '__main__':
+    # test_load_and_save_structure()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()
     # test_full_save_and_load()

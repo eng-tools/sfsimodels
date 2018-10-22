@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from sfsimodels.models import SoilProfile, Foundation, Building, Structure
+from sfsimodels.models import SoilProfile, Foundation, Building, BuildingSDOF
 from sfsimodels.exceptions import ModelError
 from sfsimodels import functions as sf
 
@@ -51,8 +51,10 @@ from sfsimodels import functions as sf
 class SoilStructureSystem(object):
     id = None
     name = None
+    base_type = "system"
+    type = "sfs"
     _sp = SoilProfile()
-    _bd = Structure()
+    _bd = BuildingSDOF()
     _fd = Foundation()
     _soil_profile_id = None
     _building_id = None

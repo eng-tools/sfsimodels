@@ -50,7 +50,7 @@
             }
         },
         "systems": {},
-        "cantilevers": {
+        "cantilever": {
             "1": {
                 "id": "1",
                 "type": "cantilever",

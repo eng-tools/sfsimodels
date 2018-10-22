@@ -108,7 +108,7 @@ def load_building_test_data(bd):
 
 def load_frame_building_test_data(fb):
     """
-    Sample data for the FrameBuilding object
+    Sample data for the BuildingFrame object
     :param fb:
     :return:
     """

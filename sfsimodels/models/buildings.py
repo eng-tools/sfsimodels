@@ -5,7 +5,7 @@ import numpy as np
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models import SeismicHazard, Foundation, Soil
 from sfsimodels.models.material import Concrete
-from sfsimodels.exceptions import ModelError
+from sfsimodels.exceptions import ModelError, deprecation
 from sfsimodels import functions as sf
 
 
@@ -358,15 +358,15 @@ class Frame(object):
         self._bay_lengths = np.array(bay_lengths)
 
 
-class FrameBuilding(Frame, Building):
+class BuildingFrame(Frame, Building):
     _n_seismic_frames = None
     _n_gravity_frames = None
-    type = "frame_building"
+    type = "building_frame"
 
     def __init__(self, n_storeys, n_bays):
         Frame.__init__(self, n_storeys, n_bays)
         Building.__init__(self, n_storeys)
-        # super(FrameBuilding, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
+        # super(BuildingFrame, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
         self._extra_class_inputs = ["n_seismic_frames",
                            "n_gravity_frames"]
         self.inputs = self.inputs + self._extra_class_inputs
@@ -375,7 +375,7 @@ class FrameBuilding(Frame, Building):
 
     @property
     def ancestor_types(self):
-        return super(FrameBuilding, self).ancestor_types + ["frame_building"]
+        return super(BuildingFrame, self).ancestor_types + ["building_frame"]
 
     @property
     def n_seismic_frames(self):
@@ -394,9 +394,15 @@ class FrameBuilding(Frame, Building):
         self._n_gravity_frames = value
 
 
-class FrameBuilding2D(Frame, Building):
+class FrameBuilding(BuildingFrame):
+    def __init__(self, n_storeys, n_bays):
+        deprecation("FrameBuilding is deprecated, use BuildingFrame.")
+        super(FrameBuilding, self).__init__(n_storeys, n_bays)
+
+
+class BuildingFrame2D(Frame, Building):
     _extra_class_inputs = []
-    type = "frame_building_2D"
+    type = "building_frame2D"
 
     def __init__(self, n_storeys, n_bays):
         Frame.__init__(self, n_storeys, n_bays)
@@ -406,7 +412,7 @@ class FrameBuilding2D(Frame, Building):
 
     @property
     def ancestor_types(self):
-        return ["physical_object", "frame", "building"] + ["frame_building_2D"]  # TODO: improve this logic
+        return ["physical_object", "frame", "building"] + ["building_frame2D"]  # TODO: improve this logic
 
     # def to_dict(self, extra=()):
     #     outputs = OrderedDict()
@@ -475,14 +481,20 @@ class FrameBuilding2D(Frame, Building):
         return outputs
 
 
-class WallBuilding(Building):
+class FrameBuilding2D(BuildingFrame2D):
+    def __init__(self, n_storeys, n_bays):
+        deprecation("FrameBuilding2D class is deprecated, use BuildingFrame2D.")
+        super(FrameBuilding2D, self).__init__(n_storeys, n_bays)
+
+
+class BuildingWall(Building):  # new name
     n_walls = 1
     wall_depth = 0.0  # m
     wall_width = 0.0  # m
-    type = "wall_building"
+    type = "building_wall"
 
     def __init__(self, n_storeys):
-        super(WallBuilding, self).__init__(n_storeys)  # run parent class initialiser function
+        super(BuildingWall, self).__init__(n_storeys)  # run parent class initialiser function
         self._extra_class_inputs = [
             "n_walls",
             "wall_depth",
@@ -492,37 +504,39 @@ class WallBuilding(Building):
 
     @property
     def ancestor_types(self):
-        return super(WallBuilding, self).ancestor_types + ["wall_building"]
+        return super(BuildingWall, self).ancestor_types + ["building_wall"]
 
 
-class BuildingWall(WallBuilding):  # new name
-    pass
+class WallBuilding(BuildingWall):
+    def __init__(self, n_storeys):
+        deprecation("WallBuilding class is deprecated, use BuildingWall.")
+        super(WallBuilding, self).__init__(n_storeys)
 
-class Structure(PhysicalObject):
+
+class BuildingSDOF(PhysicalObject):
     """
     An object to describe structures.
     """
     _id = None
     name = None
     base_type = "building"
-    type = "structure"
+    type = "sdof"
     _h_eff = None
     _mass_eff = None
     _t_fixed = None
     _mass_ratio = None
 
-    inputs = [
-        "id",
-        "name",
-        "base_type",
-        "type",
-        "h_eff",
-        "mass_eff",
-        "t_fixed",
-        "mass_ratio"
-    ]
-
     def __init__(self, g=9.8):
+        self.inputs = [
+            "id",
+            "name",
+            "base_type",
+            "type",
+            "h_eff",
+            "mass_eff",
+            "t_fixed",
+            "mass_ratio"
+        ]
         self._g = g
 
     def to_dict(self):
@@ -539,7 +553,7 @@ class Structure(PhysicalObject):
 
     @property
     def ancestor_types(self):
-        return super(Structure, self).ancestor_types + ["structure"]
+        return super(BuildingSDOF, self).ancestor_types + ["sdof"]
 
     @property
     def id(self):
@@ -598,8 +612,14 @@ class Structure(PhysicalObject):
         return self.mass_eff / self.mass_ratio * self._g
 
 
+class Structure(BuildingSDOF):
+    def __init__(self, g=9.8):
+        deprecation("Structure class is deprecated, use BuildingSDOF.")
+        super(Structure, self).__init__(g=g)
+
+
 class SoilStructureSystem(PhysicalObject):
-    bd = Structure()
+    bd = BuildingSDOF()
     fd = Foundation()
     sp = Soil()
     hz = SeismicHazard()
@@ -609,6 +629,6 @@ class SoilStructureSystem(PhysicalObject):
 
 
 if __name__ == '__main__':
-    print(FrameBuilding2D.__mro__)
-    a = FrameBuilding2D(1, 2)
+    print(BuildingFrame2D.__mro__)
+    a = BuildingFrame2D(1, 2)
     print(a.n_bays)

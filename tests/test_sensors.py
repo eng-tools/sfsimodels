@@ -12,7 +12,6 @@ def test_get_depth_from_sensor_code():
     sensor_number = 2
     code = sensors.get_sensor_code_by_number(si, mtype, sensor_number)
     assert code == "ACCX-NFF-S-M"
-    print(code)
     depth = sensors.get_depth_by_code(si, code)
     assert depth == 0.0
 
@@ -27,14 +26,12 @@ def test_get_sensor_code_by_number():
     mtype = "ACC"
     sensor_number = 2
     code = sensors.get_sensor_code_by_number(si, mtype, sensor_number)
-    print(code)
     assert code == "ACCX-NFF-S-M"
 
     mtype = "DISP"
     sensor_number = 4
     code = sensors.get_sensor_code_by_number(si, mtype, sensor_number)
     assert code == "DISPY-UNB2-S-M"
-    print(code)
 
 
 def test_get_sensor_code_by_number_out_of_bounds():

@@ -5,7 +5,10 @@ from sfsimodels import models
 from sfsimodels.exceptions import deprecation, ModelError
 
 
-def add_to_obj(obj, dictionary, exceptions=[], verbose=0):
+standard_types = ["soil", "soil_profile", "foundation", "building", "system", "section", "custom_type"]
+
+
+def add_to_obj(obj, dictionary, exceptions=None, verbose=0):
     """
     Cycles through a dictionary and adds the key-value pairs to an object.
 
@@ -15,6 +18,8 @@ def add_to_obj(obj, dictionary, exceptions=[], verbose=0):
     :param verbose:
     :return:
     """
+    if exceptions is None:
+        exceptions = []
     for item in dictionary:
         if item in exceptions:
             continue
@@ -24,7 +29,7 @@ def add_to_obj(obj, dictionary, exceptions=[], verbose=0):
             setattr(obj, item, dictionary[item])
 
 
-def load_json(ffp, custom=None, meta=False, verbose=0):
+def load_json(ffp, custom=None, verbose=0):
     """
     Given a json file it creates a dictionary of sfsi objects
 
@@ -34,14 +39,16 @@ def load_json(ffp, custom=None, meta=False, verbose=0):
     :return: dict
     """
     data = json.load(open(ffp))
-    if meta:
-        md = {}
-        for item in data:
-            if item != "models":
-                md[item] = data[item]
-        return ecp_dict_to_objects(data, custom, verbose=verbose), md
-    else:
-        return ecp_dict_to_objects(data, custom, verbose=verbose)
+    return ecp_dict_to_objects(data, custom, verbose=verbose)
+
+
+def load_json_and_meta(ffp, custom=None, verbose=0):
+    data = json.load(open(ffp))
+    md = {}
+    for item in data:
+        if item != "models":
+            md[item] = data[item]
+    return ecp_dict_to_objects(data, custom, verbose=verbose), md
 
 
 def loads_json(p_str, custom=None, meta=False, verbose=0):
@@ -72,6 +79,14 @@ def dicts_to_objects(data, verbose=0):
     ecp_dict_to_objects(data, verbose=verbose)
 
 
+deprecated_types = OrderedDict([
+    ("structure", "sdof"),
+    ("frame_building", "building_frame"),
+    ("frame_building_2D", "building_frame2D"),
+    ("wall_building", "building_wall")
+])
+
+
 def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
     """
     Given an ecp dictionary, build a dictionary of sfsi objects
@@ -90,31 +105,49 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
         "soil-soil_stress_dependent": soils.SoilStressDependent,
         "soil_profile-soil_profile": soils.SoilProfile,
         "building-building": buildings.Building,
-        "building-frame_building": buildings.FrameBuilding,
-        "building-frame_building_2D": buildings.FrameBuilding2D,
-        "building-wall_building": buildings.WallBuilding,
-        "building-structure": buildings.Structure,
+        "building-frame_building": buildings.BuildingFrame,
+        # "building-frame_building_2D": buildings.BuildingFrame2D,  # deprecated type
+        "building-building_frame2D": buildings.BuildingFrame2D,
+        # "building-wall_building": buildings.BuildingWall,  # deprecated type
+        "building-building_wall": buildings.BuildingWall,
+        "building-structure": buildings.BuildingSDOF,
+        "building-sdof": buildings.BuildingSDOF,
         "foundation-foundation": foundations.Foundation,
         "foundation-raft_foundation": foundations.RaftFoundation,
         "foundation-raft": foundations.RaftFoundation,  # Deprecated approach for type
         "foundation-pad_foundation": foundations.PadFoundation,
         "section-section": buildings.Section,
         "custom_object-custom_object": abstract_models.CustomObject,
-        "system-system": systems.SoilStructureSystem
+        "system-system": systems.SoilStructureSystem,  # deprecated type
+        "system-sfs": systems.SoilStructureSystem
     }
+
     # merge and overwrite the object map with custom maps
     for item in custom_map:
         obj_map[item] = custom_map[item]
 
     data_models = ecp_dict["models"]
 
-    exception_list = ["soil_profiles", "buildings", "systems"]
+    exception_list = ["soil_profile", "building", "system"]
     objs = OrderedDict()
+    collected = set([])
+    # Set base type properly
+    mtypes = list(data_models)
+    for mtype in mtypes:
+        base_type = mtype
+        if base_type[:-1] in standard_types:  # support the loading of old plural based ecp files
+            base_type = base_type[:-1]
+            data_models[base_type] = data_models[mtype]
+            del data_models[mtype]
+        for m_id in data_models[base_type]:
+            data_models[base_type][m_id]["base_type"] = base_type
+
     for mtype in data_models:
-        base_type = mtype[:-1]  # remove the 's'
-        objs[mtype] = OrderedDict()
-        if mtype in exception_list:
+        base_type = mtype
+        if base_type in exception_list:
             continue
+        collected.add(base_type)
+        objs[base_type] = OrderedDict()
         for m_id in data_models[mtype]:
             obj = data_models[mtype][m_id]
             if "type" not in obj:
@@ -122,129 +155,115 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
             try:
                 obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
             except KeyError:
-                raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
-                               "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
+                if obj["type"] in deprecated_types:
+                    try:
+                        obj_class = obj_map["%s-%s" % (base_type, deprecated_types[obj["type"]])]
+                    except KeyError:
+                        raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
+                                       "add '%s-%s' to custom dict" % (base_type, m_id, base_type, base_type, obj["type"]))
+                else:
+                    raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
+                                   "add '%s-%s' to custom dict" % (base_type, m_id, base_type, base_type, obj["type"]))
             new_instance = obj_class()
             add_to_obj(new_instance, data_models[mtype][m_id], verbose=verbose)
             # print(mtype, m_id)
-            objs[mtype][int(data_models[mtype][m_id]["id"])] = new_instance
+            objs[base_type][int(data_models[mtype][m_id]["id"])] = new_instance
 
-    if "soil_profiles" in data_models:
-        mtype = "soil_profiles"
-        base_type = "soil_profile"
-        for m_id in data_models["soil_profiles"]:
-            obj = data_models["soil_profiles"][m_id]
-            if "type" not in obj:
-                obj["type"] = base_type
-            try:
-                obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
-            except KeyError:
-                raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
-                               "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
-            new_soil_profile = obj_class()
-            new_soil_profile.id = data_models["soil_profiles"][m_id]["id"]
-            for j in range(len(data_models["soil_profiles"][m_id]["layers"])):
-                depth = data_models["soil_profiles"][m_id]['layers'][j]["depth"]
-                soil = objs["soils"][int(data_models["soil_profiles"][m_id]['layers'][j]["soil_id"])]
-                new_soil_profile.add_layer(depth, soil)
-            add_to_obj(new_soil_profile, data_models["soil_profiles"][m_id], exceptions=["layers"], verbose=verbose)
-            objs["soil_profiles"][int(data_models["soil_profiles"][m_id]["id"])] = new_soil_profile
+    # Deal with all the exceptions
+    for mtype in data_models:
+        base_type = mtype
 
-    # if "foundations" in data_models:
-    #     for m_id in data_models["foundations"]:
-    #         if data_models["foundations"][m_id]["type"] == "raft":
-    #             new_foundation = foundations.RaftFoundation()
-    #         elif data_models["foundations"][m_id]["type"] == "pad":
-    #             new_foundation = foundations.PadFoundation()
-    #         else:
-    #             new_foundation = foundations.Foundation()
-    #         new_foundation.id = data_models["foundations"][m_id]["id"]
-    #         add_to_obj(new_foundation, data_models["foundations"][m_id], verbose=verbose)
-    #         foundation_objs[int(data_models["foundations"][m_id]["id"])] = new_foundation
-    #
-    # if "sections" in data_models:
-    #     for m_id in data_models["section"]:
-    #         new_section = buildings.Section()
-    #         add_to_obj(new_section, data_models["section"][m_id], verbose=verbose)
-    #         section_objs[int(data_models["section"][m_id]["id"])] = new_section
+        if base_type in collected:
+            continue
+        if base_type not in objs:
+            objs[base_type] = OrderedDict()
 
-    if "buildings" in data_models:
-        for m_id in data_models["buildings"]:
-            obj = data_models["buildings"][m_id]
-            if "type" not in obj:
-                obj["type"] = base_type
-            if obj["type"] in ["structure"]:
-                new_building = obj_map["%s-%s" % ("building", obj["type"])]()
-            elif "frame_building" in obj["type"]:
-                n_storeys = len(obj['interstorey_heights'])
-                n_bays = len(obj['bay_lengths'])
-                new_building = obj_map["%s-%s" % ("building", obj["type"])](n_storeys, n_bays)
-                for ss in range(n_storeys):
-                    for bb in range(n_bays):
-                        beam_sect_id = str(obj["beam_section_ids"][ss][bb])
-                        sect_dictionary = obj["beam_sections"][beam_sect_id]
-                        add_to_obj(new_building.beams[ss][bb], sect_dictionary, verbose=verbose)
-                    for cc in range(n_bays + 1):
-                        column_sect_id = str(obj["column_section_ids"][ss][cc])
-                        sect_dictionary = obj["column_sections"][column_sect_id]
-                        add_to_obj(new_building.columns[ss][cc], sect_dictionary, verbose=verbose)
+        if base_type == "soil_profile":
+            if "soil" not in objs:
+                objs["soil"] = OrderedDict()
+            for m_id in data_models[mtype]:
+                obj = data_models[mtype][m_id]
+                if "type" not in obj:
+                    obj["type"] = base_type
+                try:
+                    obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
+                except KeyError:
+                    raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
+                                   "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
+                new_soil_profile = obj_class()
+                new_soil_profile.id = data_models[mtype][m_id]["id"]
+                for j in range(len(data_models[mtype][m_id]["layers"])):
+                    depth = data_models[mtype][m_id]['layers'][j]["depth"]
+                    soil = objs["soil"][int(data_models[mtype][m_id]['layers'][j]["soil_id"])]
+                    new_soil_profile.add_layer(depth, soil)
+                add_to_obj(new_soil_profile, data_models[mtype][m_id], exceptions=["layers"], verbose=verbose)
+                objs[base_type][int(data_models[mtype][m_id]["id"])] = new_soil_profile
 
-            else:
-                n_storeys = len(obj['interstorey_heights'])
-                new_building = obj_map["%s-%s" % ("building", obj["type"])](n_storeys)
-            add_to_obj(new_building, data_models["buildings"][m_id], verbose=verbose)
-            objs["buildings"][int(data_models["buildings"][m_id]["id"])] = new_building
+        if base_type == "building":
+            for m_id in data_models[mtype]:
+                obj = data_models[mtype][m_id]
+                if obj["type"] in deprecated_types:
+                    obj["type"] = deprecated_types[obj["type"]]
+                if "type" not in obj:
+                    obj["type"] = base_type
+                if obj["type"] in ["sdof"]:
+                    new_building = obj_map["%s-%s" % (base_type, obj["type"])]()
+                elif "building_frame" in obj["type"]:
+                    n_storeys = len(obj['interstorey_heights'])
+                    n_bays = len(obj['bay_lengths'])
+                    new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys, n_bays)
+                    for ss in range(n_storeys):
+                        for bb in range(n_bays):
+                            beam_sect_id = str(obj["beam_section_ids"][ss][bb])
+                            sect_dictionary = obj["beam_sections"][beam_sect_id]
+                            add_to_obj(new_building.beams[ss][bb], sect_dictionary, verbose=verbose)
+                        for cc in range(n_bays + 1):
+                            column_sect_id = str(obj["column_section_ids"][ss][cc])
+                            sect_dictionary = obj["column_sections"][column_sect_id]
+                            add_to_obj(new_building.columns[ss][cc], sect_dictionary, verbose=verbose)
 
-    if "systems" in data_models:  # must be run after other objects are loaded
-        mtype = "systems"
-        base_type = "system"
-        for m_id in data_models["systems"]:
-            obj = data_models[mtype][m_id]
-            if "type" not in obj:
-                obj["type"] = base_type
-            try:
-                obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
-            except KeyError:
-                raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
-                               "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
-            new_system = obj_class()
+                else:
+                    n_storeys = len(obj['interstorey_heights'])
+                    new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys)
+                add_to_obj(new_building, data_models[mtype][m_id], verbose=verbose)
+                objs[base_type][int(data_models[mtype][m_id]["id"])] = new_building
 
-            # Attach the soil profile
-            soil_profile_id = data_models["systems"][m_id]['soil_profile_id']
-            soil_profile = objs["soil_profiles"][int(soil_profile_id)]
-            new_system.sp = soil_profile
+        if base_type == "system":  # must be run after other objects are loaded
+            for m_id in data_models[mtype]:
+                obj = data_models[mtype][m_id]
+                if "type" not in obj:
+                    obj["type"] = base_type
+                try:
+                    obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
+                except KeyError:
+                    raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
+                                   "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
+                new_system = obj_class()
 
-            # Attach the foundation
-            foundation_id = data_models["systems"][m_id]['foundation_id']
-            foundation = objs["foundations"][int(foundation_id)]
-            new_system.fd = foundation
+                # Attach the soil profile
+                soil_profile_id = data_models[mtype][m_id]['soil_profile_id']
+                soil_profile = objs["soil_profile"][int(soil_profile_id)]
+                new_system.sp = soil_profile
 
-            # Attach the building
-            building_id = data_models["systems"][m_id]['building_id']
-            building = objs["buildings"][int(building_id)]
-            new_system.bd = building
+                # Attach the foundation
+                foundation_id = data_models[mtype][m_id]['foundation_id']
+                foundation = objs["foundation"][int(foundation_id)]
+                new_system.fd = foundation
 
-            # Add remaining parameters
-            ignore_list = ["foundation_id", "building_id", "soil_profile_id"]
-            add_to_obj(new_system, data_models["systems"][m_id], exceptions=ignore_list, verbose=verbose)
-            objs["systems"][int(data_models["systems"][m_id]["id"])] = new_system
+                # Attach the building
+                building_id = data_models[mtype][m_id]['building_id']
+                building = objs["building"][int(building_id)]
+                new_system.bd = building
 
-    # # Catch custom types
-    # standard_types = ["soils", "soil_profiles", "foundations", "sections", "buildings", "systems"]
-    # for m_type in data_models:
-    #     if m_type not in standard_types and m_type in custom:
-    #         if m_type not in all_custom_objs:
-    #             all_custom_objs[m_type] = {}
-    #         for m_id in data_models[m_type]:
-    #             if "id" not in data_models[m_type][m_id]:
-    #                 raise ModelError("object (%s) requires 'id' parameter" % m_type)
-    #             new_custom_obj = custom[m_type]()  # Note currently no support for custom objects
-    #             add_to_obj(new_custom_obj, data_models[m_type][m_id], verbose=verbose)
-    #             all_custom_objs[m_type][int(data_models[m_type][m_id]["id"])] = new_custom_obj
-    #
-    #
-    # for m_type in all_custom_objs:
-    #     objs[m_type] = all_custom_objs[m_type]
+                # Add remaining parameters
+                ignore_list = ["foundation_id", "building_id", "soil_profile_id"]
+                add_to_obj(new_system, data_models[mtype][m_id], exceptions=ignore_list, verbose=verbose)
+                objs[base_type][int(data_models[mtype][m_id]["id"])] = new_system
+
+    all_bts = list(objs)
+    for base_type in all_bts:  # Support for old style ecp file
+        if base_type in standard_types:
+            objs[base_type + "s"] = objs[base_type]
     return objs
 
 
@@ -256,12 +275,7 @@ class Output(object):
     comments = ""
 
     def __init__(self):
-        self.models = OrderedDict([("soils", OrderedDict()),
-                            ("soil_profiles", OrderedDict()),
-                            ("foundations", OrderedDict()),
-                            ("buildings", OrderedDict()),
-                            ("systems", OrderedDict()),
-                            ])
+        self.models = OrderedDict()
 
     def add_to_dict(self, an_object, extras=None):
         """
@@ -273,35 +287,32 @@ class Output(object):
         """
         if an_object.id is None:
             raise ModelError("id must be set on object before adding to output.")
-        if isinstance(an_object, models.Soil):
-            self.models["soils"][an_object.id] = an_object.to_dict()
-        elif isinstance(an_object, models.SoilProfile):
+        if hasattr(an_object, "base_type"):
+            mtype = an_object.base_type
+        elif hasattr(an_object, "type"):
+            if an_object.type in standard_types:
+                mtype = an_object.type
+            else:
+                mtype = "custom_type"
+        else:
+            raise ModelError("Object does not have attribute 'base_type' or 'type', cannot add to output.")
+        if mtype not in self.models:  # Catch any custom objects
+            self.models[mtype] = OrderedDict()
+        if mtype == "soil_profile":
+            if "soil" not in self.models:
+                self.models["soil"] = OrderedDict()
             profile_dict = an_object.to_dict()
             profile_dict["layers"] = []
             for layer in an_object.layers:
-                self.models["soils"][an_object.layers[layer].id] = an_object.layers[layer].to_dict()
+                self.models["soil"][an_object.layers[layer].id] = an_object.layers[layer].to_dict()
                 profile_dict["layers"].append({
                     "soil_id": str(an_object.layers[layer].id),
                     "depth": float(layer)
                 })
 
-            self.models["soil_profiles"][an_object.id] = profile_dict
-        elif isinstance(an_object, models.Foundation):  # This is redundant, custom catcher at end works for all
-            self.models["foundations"][an_object.id] = an_object.to_dict()
-        elif isinstance(an_object, models.Structure):
-            self.models["buildings"][an_object.id] = an_object.to_dict()
-        elif isinstance(an_object, models.Building):
-            self.models["buildings"][an_object.id] = an_object.to_dict()
-        elif isinstance(an_object, models.SoilStructureSystem):
-            self.models["systems"][an_object.id] = an_object.to_dict()
-        elif hasattr(an_object, "to_dict"):  # Catch any custom objects
-            if hasattr(an_object, "type"):
-                mtype = an_object.type + "s"
-                if mtype not in self.models:
-                    self.models[mtype] = OrderedDict()
-                self.models[mtype][an_object.id] = an_object.to_dict()
-            else:
-                raise ModelError("Object does not have attribute 'type', cannot add to output.")
+            self.models["soil_profile"][an_object.id] = profile_dict
+        elif hasattr(an_object, "to_dict"):
+            self.models[mtype][an_object.id] = an_object.to_dict()
         else:
             raise ModelError("Object does not have method 'to_dict', cannot add to output.")
 
@@ -325,6 +336,6 @@ class Output(object):
 
     def to_dict(self):
         outputs = OrderedDict()
-        for item in self.parameters():
+        for item in self.parameters():  # TODO: reorder models
             outputs[item] = self.__getattribute__(item)
         return outputs
