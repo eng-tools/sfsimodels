@@ -277,8 +277,17 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
         assert meta_data[item] == md2[item], (item, meta_data[item], md2[item])
 
 
+def test_load_frame_w_hinges():
+    fp = test_dir + "/unit_test_data/building_1011_ecp.json"
+    objs = files.load_json(fp, verbose=0)
+    assert ct.isclose(objs["building"][1].floor_length, 13.05)
+    assert ct.isclose(objs["building"][1].beams[0][0].s[0].diametertop, 0.014)
+    assert ct.isclose(objs["building"][1].beams[1][0].s[0].diametertop, 0.014)
+    assert ct.isclose(objs["building"][1].columns[1][0].s[0].nbar_hplusx, 2)
+
+
 if __name__ == '__main__':
-    test_save_and_load_building()
+    test_load_frame_w_hinges()
     # test_load_and_save_structure()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()

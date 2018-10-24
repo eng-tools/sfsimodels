@@ -1,0 +1,391 @@
+{
+	"name": "L1-A",
+	"units": "N, kg, m, s",
+	"doi": "",
+	"sfsimodels_version": "0.5.0",
+	"comments": "",
+	"models": {
+		"buildings": {
+			"1": {
+				"bay_lengths": [
+					4.35,
+					4.35,
+					4.35
+				],
+				"id": "1",
+				"name": null,
+				"type": "building_frame2D",
+				"floor_length": 13.05,
+				"floor_width": 4,
+				"interstorey_heights": [
+					3.2,
+					2.9,
+					2.9
+				],
+				"storey_masses": [
+					20.61,
+					20.61,
+					20.61
+				],
+				"column_section_ids": [
+					[
+						1,
+						1,
+						1,
+						1
+					],
+					[
+						1,
+						1,
+						1,
+						1
+					],
+					[
+						1,
+						1,
+						1,
+						1
+					]
+				],
+				"beam_section_ids": [
+					[
+						[
+							1,
+							2
+						],
+						[
+							3,
+							4
+						],
+						[
+							5,
+							6
+						]
+					],
+					[
+						[
+							7,
+							8
+						],
+						[
+							9,
+							10
+						],
+						[
+							11,
+							12
+						]
+					],
+					[
+						[
+							13,
+							14
+						],
+						[
+							15,
+							16
+						],
+						[
+							17,
+							18
+						]
+					]
+				],
+				"column_sections": {
+					"1": {
+						"depth": 0.3,
+						"width": 0.25,
+						"l_gf": 3.2,
+						"l_higher": 2.9,
+						"cover": 0.03,
+						"filong": 0.012,
+						"nbar_hplusx": 2,
+						"nbar_hminusx": 2,
+						"nwparallel_to_h": 2,
+						"nlayintx": 0,
+						"fiw": 0.006,
+						"sw": 0.15,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"young_cm": 23239167,
+						"shear_mod": 9682986,
+						"id": 1
+					}
+				},
+				"beam_sections": {
+					"1": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 3,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 1,
+						"name": "B1BC1C2N-S1"
+					},
+					"2": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 2,
+						"name": "B1BC1C2S-S1"
+					},
+					"3": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 3,
+						"name": "B1BC2C3N-S1"
+					},
+					"4": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 4,
+						"name": "B1BC2C3S-S1"
+					},
+					"5": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 5,
+						"name": "B1BC3C4N-S1"
+					},
+					"6": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 3,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 6,
+						"name": "B1BC3C4S-S1"
+					},
+					"7": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 3,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 7,
+						"name": "B1BC1C2N-S2"
+					},
+					"8": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 8,
+						"name": "B1BC1C2S-S2"
+					},
+					"9": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 9,
+						"name": "B1BC2C3N-S2"
+					},
+					"10": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 10,
+						"name": "B1BC2C3S-S2"
+					},
+					"11": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 11,
+						"name": "B1BC3C4N-S2"
+					},
+					"12": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 3,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 12,
+						"name": "B1BC3C4S-S2"
+					},
+					"13": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 2,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 13,
+						"name": "B1BC1C2N-S3"
+					},
+					"14": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 14,
+						"name": "B1BC1C2S-S3"
+					},
+					"15": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 15,
+						"name": "B1BC2C3N-S3"
+					},
+					"16": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 16,
+						"name": "B1BC2C3S-S3"
+					},
+					"17": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 4,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 17,
+						"name": "B1BC3C4N-S3"
+					},
+					"18": {
+						"depth": 0.45,
+						"width": 0.25,
+						"diametertop": 0.014,
+						"nbarstop": 2,
+						"diameterbot": 0.014,
+						"nbarsbot": 2,
+						"fylong": 566.25,
+						"fyw": 566.25,
+						"fcm": 12,
+						"Ecm": 23239167,
+						"G": 9682986,
+						"id": 18,
+						"name": "B1BC3C4S-S3"
+					}
+				}
+			}
+		}
+	}
+}

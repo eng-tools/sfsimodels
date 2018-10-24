@@ -241,7 +241,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                             else:
                                 column_sect_id = str(obj["column_section_ids"][ss][cc])
                                 sect_dictionary = obj["column_sections"][column_sect_id]
-                                add_to_obj(new_building.columns[ss][cc].section[0], sect_dictionary, verbose=verbose)
+                                add_to_obj(new_building.columns[ss][cc].sections[0], sect_dictionary, verbose=verbose)
 
                 else:
                     n_storeys = len(obj['interstorey_heights'])
