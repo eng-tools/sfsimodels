@@ -492,8 +492,11 @@ class BuildingFrame2D(Frame, Building):
                     if p_str not in column_sections:
                         column_sections[p_str] = self.columns[ss][cc].sections[sect_i].to_dict(extra)
                         column_section_count += 1
-                        column_sections[p_str]["id"] = column_section_count
-                    column_section_ids[ss][cc].append(column_section_count)
+                        col_sect_id = column_section_count
+                        column_sections[p_str]["id"] = col_sect_id
+                    else:
+                        col_sect_id = column_sections[p_str]["id"]
+                    column_section_ids[ss][cc].append(col_sect_id)
 
         beam_sections = OrderedDict()
         beam_section_ids = []
@@ -516,8 +519,11 @@ class BuildingFrame2D(Frame, Building):
                     if p_str not in beam_sections:
                         beam_sections[p_str] = self.beams[ss][bb].sections[sect_i].to_dict(extra)
                         beam_section_count += 1
-                        beam_sections[p_str]["id"] = beam_section_count
-                    beam_section_ids[ss][bb].append(beam_section_count)
+                        beam_sect_id = beam_section_count
+                        beam_sections[p_str]["id"] = beam_sect_id
+                    else:
+                        beam_sect_id = beam_sections[p_str]["id"]
+                    beam_section_ids[ss][bb].append(beam_sect_id)
 
         outputs["column_section_ids"] = column_section_ids
         outputs["beam_section_ids"] = beam_section_ids

@@ -280,11 +280,17 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 def test_load_frame_w_hinges():
     # Define special class for section
     class CustomBeamSection(sm.Section):
+        diametertop = None
+        fylong = None
+        filongtop = None
+
         def __init__(self):
             super(CustomBeamSection, self).__init__()
             self._extra_class_variables = [
                 "diametertop",
-                "fylong"
+                "fylong",
+                "filongtop",
+                "myplus_section"
             ]
             self.inputs += self._extra_class_variables
 
@@ -299,14 +305,20 @@ def test_load_frame_w_hinges():
     objs = files.load_json(fp, verbose=0, custom={"building-building_frame2D": CustomBuildingFrame2D})
     bd = objs["building"][1]
     assert ct.isclose(bd.floor_length, 13.05)
-    assert ct.isclose(bd.beams[0][0].s[0].diametertop, 0.014)
-    assert ct.isclose(bd.beams[1][0].s[0].diametertop, 0.014)
+    assert ct.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
+    assert ct.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
+    assert bd.beams[1][0].s[0].diametertop is None
     assert ct.isclose(bd.columns[1][0].s[0].nbar_hplusx, 2)
     assert "diametertop" in bd.beams[0][0].s[0].inputs
     ecp_output = files.Output()
     ecp_output.add_to_dict(bd)
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
-    assert '"diametertop"' in p_str
+    assert '"filongtop"' in p_str
+    objs = files.loads_json(p_str)
+    bd = objs["building"][1]
+    assert ct.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
+    assert ct.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
+
 
 
 
