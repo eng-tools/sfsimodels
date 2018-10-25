@@ -278,12 +278,34 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 
 
 def test_load_frame_w_hinges():
+    # Define special class for section
+    class CustomBeamSection(sm.Section):
+        def __init__(self):
+            super(CustomBeamSection, self).__init__()
+            self._extra_class_variables = [
+                "diametertop",
+            ]
+            self.inputs += self._extra_class_variables
+
+    # Attach the section class as the default for the building
+    class CustomBuildingFrame2D(sm.BuildingFrame2D):
+        _custom_beam_section = CustomBeamSection
+        _custom_column_section = None
+
     fp = test_dir + "/unit_test_data/building_1011_ecp.json"
-    objs = files.load_json(fp, verbose=0)
-    assert ct.isclose(objs["building"][1].floor_length, 13.05)
-    assert ct.isclose(objs["building"][1].beams[0][0].s[0].diametertop, 0.014)
-    assert ct.isclose(objs["building"][1].beams[1][0].s[0].diametertop, 0.014)
-    assert ct.isclose(objs["building"][1].columns[1][0].s[0].nbar_hplusx, 2)
+
+    # Override the base_type-type for building-building_frame2D with the custom model
+    objs = files.load_json(fp, verbose=0, custom={"building-building_frame2D": CustomBuildingFrame2D})
+    bd = objs["building"][1]
+    assert ct.isclose(bd.floor_length, 13.05)
+    assert ct.isclose(bd.beams[0][0].s[0].diametertop, 0.014)
+    assert ct.isclose(bd.beams[1][0].s[0].diametertop, 0.014)
+    assert ct.isclose(bd.columns[1][0].s[0].nbar_hplusx, 2)
+    assert "diametertop" in bd.beams[0][0].s[0].inputs
+
+
+
+
 
 
 if __name__ == '__main__':

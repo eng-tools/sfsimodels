@@ -34,6 +34,7 @@ class Building(PhysicalObject):
         self._extra_class_variables = [
                 "id",
                 "name",
+                "base_type",
                 "type",
                 'floor_length',
                 'floor_width',
@@ -183,8 +184,11 @@ class Section(PhysicalObject):  # not used?
 class Element(PhysicalObject):
     section_lengths = None
 
-    def __init__(self):
-        self.sections = [Section()]
+    def __init__(self, section_class=None):
+        if section_class is None:
+            self.sections = [Section()]
+        else:
+            self.sections = [section_class()]
 
     @property
     def s(self):
@@ -222,6 +226,8 @@ class Element(PhysicalObject):
 
 class Frame(object):
     _bay_lengths = None
+    _custom_beam_section = None
+    _custom_column_section = None
 
     def __init__(self, n_storeys, n_bays):
         if not hasattr(self, "inputs"):
@@ -277,8 +283,8 @@ class Frame(object):
         return ["frame"]
 
     def _allocate_beams_and_columns(self):
-        self._beams = [[Element() for i in range(self.n_bays)] for ss in range(self.n_storeys)]
-        self._columns = [[Element() for i in range(self.n_cols)] for ss in range(self.n_storeys)]
+        self._beams = [[Element(self._custom_beam_section) for i in range(self.n_bays)] for ss in range(self.n_storeys)]
+        self._columns = [[Element(self._custom_column_section) for i in range(self.n_cols)] for ss in range(self.n_storeys)]
 
     @property
     def beams(self):
