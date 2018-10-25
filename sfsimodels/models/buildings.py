@@ -46,7 +46,7 @@ class Building(PhysicalObject):
             "n_storeys"
         ]
 
-    def to_dict(self, extra=()):
+    def to_dict(self, extra=(), **kwargs):
         outputs = OrderedDict()
         skip_list = []
         full_inputs = self.inputs + list(extra)
@@ -154,7 +154,7 @@ class Section(PhysicalObject):  # not used?
         self.inputs = ["depth",
                        "width"]
 
-    def to_dict(self, extra=()):
+    def to_dict(self, extra=(), **kwargs):
         outputs = OrderedDict()
         skip_list = []
         full_inputs = self.inputs + list(extra)
@@ -217,7 +217,7 @@ class Element(PhysicalObject):
     def get_section_prop(self, prop, section_i=0):
         return getattr(self.sections[section_i], prop)
 
-    def to_dict(self, extra=()):
+    def to_dict(self, extra=(), **kwargs):
         output = []
         for i in range(len(self.sections)):
             output.append(self.sections[i].to_dict(extra=extra))
@@ -242,7 +242,7 @@ class Frame(object):
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
 
-    def to_dict(self, extra=()):
+    def to_dict(self, extra=(), **kwargs):
         outputs = OrderedDict()
         skip_list = []
         # skip_list = ["beams", "columns"]  # TODO: uncomment this
@@ -460,17 +460,7 @@ class BuildingFrame2D(Frame, Building):
     def ancestor_types(self):
         return ["physical_object", "frame", "building"] + ["building_frame2D"]  # TODO: improve this logic
 
-    # def to_dict(self, extra=()):
-    #     outputs = OrderedDict()
-    #     skip_list = []
-    #     full_inputs = self.inputs + list(extra)
-    #     for item in full_inputs:
-    #         if item not in skip_list:
-    #             value = self.__getattribute__(item)
-    #             outputs[item] = sf.collect_serial_value(value)
-    #     return outputs
-
-    def to_dict(self, extra=()):
+    def to_dict(self, extra=(), compression=True, **kwargs):
         outputs = OrderedDict()
         skip_list = ["beams", "columns"]
         full_inputs = self.inputs + list(extra)
@@ -486,14 +476,19 @@ class BuildingFrame2D(Frame, Building):
         for ss in range(self.n_storeys):
             column_section_ids.append([])
             for cc in range(self.n_cols):
-                # build a hash string of the section inputs to check uniqueness
-                parts = []
+
                 column_section_ids[ss].append([])
                 for sect_i in range(len(self.columns[ss][cc].sections)):
-                    for item in self.columns[ss][cc].sections[sect_i].inputs:
-                        parts.append(item)
-                        parts.append(str(self.columns[ss][cc].get_section_prop(item, section_i=sect_i)))
-                    p_str = "-".join(parts)
+                    if compression:  # build a hash string of the section inputs to check uniqueness
+                        parts = []
+                        for item in self.columns[ss][cc].sections[sect_i].inputs:
+                            if item == "id" or item == "name":
+                                continue
+                            parts.append(item)
+                            parts.append(str(self.columns[ss][cc].get_section_prop(item, section_i=sect_i)))
+                        p_str = "-".join(parts)
+                    else:
+                        p_str = str(sect_i)
                     if p_str not in column_sections:
                         column_sections[p_str] = self.columns[ss][cc].sections[sect_i].to_dict(extra)
                         column_section_count += 1
@@ -506,14 +501,18 @@ class BuildingFrame2D(Frame, Building):
         for ss in range(self.n_storeys):
             beam_section_ids.append([])
             for bb in range(self.n_bays):
-                # build a hash string of the section inputs to check uniqueness
-                parts = []
                 beam_section_ids[ss].append([])
                 for sect_i in range(len(self.beams[ss][bb].sections)):
-                    for item in self.beams[ss][bb].sections[sect_i].inputs:
-                        parts.append(item)
-                        parts.append(str(self.beams[ss][bb].get_section_prop(item, section_i=sect_i)))
-                    p_str = "-".join(parts)
+                    if compression:  # build a hash string of the section inputs to check uniqueness
+                        parts = []
+                        for item in self.beams[ss][bb].sections[sect_i].inputs:
+                            if item == "id" or item == "name":
+                                continue
+                            parts.append(item)
+                            parts.append(str(self.beams[ss][bb].get_section_prop(item, section_i=sect_i)))
+                        p_str = "-".join(parts)
+                    else:
+                        p_str = str(sect_i)
                     if p_str not in beam_sections:
                         beam_sections[p_str] = self.beams[ss][bb].sections[sect_i].to_dict(extra)
                         beam_section_count += 1
@@ -589,7 +588,7 @@ class BuildingSDOF(PhysicalObject):
         ]
         self._g = g
 
-    def to_dict(self):
+    def to_dict(self, **kwargs):
         outputs = OrderedDict()
         skip_list = []
         for item in self.inputs:

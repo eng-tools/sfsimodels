@@ -244,7 +244,7 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
         type = "cantilever"
         inputs = ["id", "length", "depth", "e_mod"]
 
-        def to_dict(self):
+        def to_dict(self, **kwargs):
             outputs = OrderedDict()
             for item in self.inputs:
                 outputs[item] = getattr(self, item)
@@ -284,6 +284,7 @@ def test_load_frame_w_hinges():
             super(CustomBeamSection, self).__init__()
             self._extra_class_variables = [
                 "diametertop",
+                "fylong"
             ]
             self.inputs += self._extra_class_variables
 
@@ -302,6 +303,11 @@ def test_load_frame_w_hinges():
     assert ct.isclose(bd.beams[1][0].s[0].diametertop, 0.014)
     assert ct.isclose(bd.columns[1][0].s[0].nbar_hplusx, 2)
     assert "diametertop" in bd.beams[0][0].s[0].inputs
+    ecp_output = files.Output()
+    ecp_output.add_to_dict(bd)
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    assert '"diametertop"' in p_str
+
 
 
 

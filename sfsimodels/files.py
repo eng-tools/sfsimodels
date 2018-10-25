@@ -294,6 +294,7 @@ class Output(object):
     doi = ""
     sfsimodels_version = ""
     comments = ""
+    compression = True
 
     def __init__(self):
         self.unordered_models = OrderedDict()
@@ -333,7 +334,7 @@ class Output(object):
 
             self.unordered_models["soil_profile"][an_object.id] = profile_dict
         elif hasattr(an_object, "to_dict"):
-            self.unordered_models[mtype][an_object.id] = an_object.to_dict()
+            self.unordered_models[mtype][an_object.id] = an_object.to_dict(compression=self.compression)
         else:
             raise ModelError("Object does not have method 'to_dict', cannot add to output.")
 

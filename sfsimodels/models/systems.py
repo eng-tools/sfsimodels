@@ -63,7 +63,7 @@ class SoilStructureSystem(object):
     def __init__(self):
         self.inputs = ["id", "name", "soil_profile_id", "building_id", "foundation_id"]
 
-    def to_dict(self):
+    def to_dict(self, **kwargs):
         outputs = OrderedDict()
         skip_list = []
         for item in self.inputs:

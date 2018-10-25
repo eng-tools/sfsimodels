@@ -58,17 +58,17 @@ class Foundation(PhysicalObject):
         "mass"
     ]
 
-    def to_dict(self):
-        outputs = OrderedDict()
-        skip_list = []
-        for item in self.inputs:
-            if item not in skip_list:
-                value = self.__getattribute__(item)
-                if isinstance(value, int):
-                    outputs[item] = str(value)
-                else:
-                    outputs[item] = value
-        return outputs
+    # def to_dict(self, **kwargs):
+    #     outputs = OrderedDict()
+    #     skip_list = []
+    #     for item in self.inputs:
+    #         if item not in skip_list:
+    #             value = self.__getattribute__(item)
+    #             if isinstance(value, int):
+    #                 outputs[item] = str(value)
+    #             else:
+    #                 outputs[item] = value
+    #     return outputs
 
     @property
     def ancestor_types(self):

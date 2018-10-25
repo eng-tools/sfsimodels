@@ -70,7 +70,7 @@ class Soil(PhysicalObject):
             self.inputs = []
         self.inputs += self._extra_class_inputs
 
-    def to_dict(self):
+    def to_dict(self, **kwargs):
         """
         Passes all of the inputs and the values to an ordered dictionary
         :return:
@@ -792,7 +792,7 @@ class SoilProfile(PhysicalObject):
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
 
-    def to_dict(self):
+    def to_dict(self, **kwargs):
         outputs = OrderedDict()
         skip_list = ["layers"]
         for item in self.inputs:

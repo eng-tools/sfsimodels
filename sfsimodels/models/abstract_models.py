@@ -69,6 +69,19 @@ class PhysicalObject(object):
                 if update_inputs and item not in self.inputs:
                     self.inputs.append(item)
 
+    def to_dict(self, **kwargs):
+        outputs = OrderedDict()
+        if hasattr(self, "inputs"):
+            skip_list = []
+            for item in self.inputs:
+                if item not in skip_list:
+                    value = self.__getattribute__(item)
+                    if isinstance(value, int):
+                        outputs[item] = str(value)
+                    else:
+                        outputs[item] = value
+        return outputs
+
 
 class CustomObject(PhysicalObject):
     """
@@ -86,18 +99,6 @@ class CustomObject(PhysicalObject):
             "base_type",
             "type"
             ]
-
-    def to_dict(self):
-        outputs = OrderedDict()
-        skip_list = []
-        for item in self.inputs:
-            if item not in skip_list:
-                value = self.__getattribute__(item)
-                if isinstance(value, int):
-                    outputs[item] = str(value)
-                else:
-                    outputs[item] = value
-        return outputs
 
     @property
     def id(self):
