@@ -3,6 +3,7 @@ import copy
 # from sfsimodels.loader import add_inputs_to_object
 import types
 from sfsimodels.exceptions import ModelError
+from sfsimodels import functions as sf
 
 
 class PhysicalObject(object):
@@ -69,17 +70,17 @@ class PhysicalObject(object):
                 if update_inputs and item not in self.inputs:
                     self.inputs.append(item)
 
-    def to_dict(self, **kwargs):
+    def to_dict(self, extra=(), **kwargs):
         outputs = OrderedDict()
+        skip_list = []
         if hasattr(self, "inputs"):
-            skip_list = []
-            for item in self.inputs:
-                if item not in skip_list:
-                    value = self.__getattribute__(item)
-                    if isinstance(value, int):
-                        outputs[item] = str(value)
-                    else:
-                        outputs[item] = value
+            full_inputs = list(self.inputs) + list(extra)
+        else:
+            full_inputs = list(extra)
+        for item in full_inputs:
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                outputs[item] = sf.collect_serial_value(value)
         return outputs
 
 

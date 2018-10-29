@@ -70,16 +70,6 @@ class Soil(PhysicalObject):
             self.inputs = []
         self.inputs += self._extra_class_inputs
 
-    def to_dict(self, **kwargs):
-        """
-        Passes all of the inputs and the values to an ordered dictionary
-        :return:
-        """
-        outputs = OrderedDict()
-        for item in self.inputs:
-            outputs[item] = self.__getattribute__(item)
-        return outputs
-
     @property
     def ancestor_types(self):
         parent_ancestor_types = super(Soil, self).ancestor_types

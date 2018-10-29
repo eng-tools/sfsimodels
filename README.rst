@@ -112,3 +112,8 @@ Documentation
 =============
 
 At http://sfsimodels.readthedocs.io/en/latest/
+
+
+Known bugs
+==========
+
