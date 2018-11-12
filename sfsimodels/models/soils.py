@@ -39,6 +39,7 @@ class Soil(PhysicalObject):
     _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
     _plasticity_index = None
+    _gravity = 9.8
 
     def __init__(self, pw=9800):
         self._pw = pw  # specific weight of water
@@ -232,6 +233,29 @@ class Soil(PhysicalObject):
         """The unit moist weight of the soil (accounts for saturation level)"""
         try:
             return self._unit_sat_weight - self._pw
+        except TypeError:
+            return None
+
+    @property
+    def unit_dry_mass(self):
+        try:
+            return self._unit_dry_weight / self._gravity
+        except TypeError:
+            return None
+
+    @property
+    def unit_sat_mass(self):
+        try:
+            return self._unit_sat_weight / self._gravity
+        except TypeError:
+            return None
+
+    def calc_shear_vel(self, saturated=True):
+        try:
+            if saturated:
+                return np.sqrt(self.g_mod / self.unit_sat_mass)
+            else:
+                return np.sqrt(self.g_mod / self.unit_dry_mass)
         except TypeError:
             return None
 
@@ -742,6 +766,16 @@ class SoilStressDependent(Soil):
     def g_mod_at_m_eff_stress(self, sigma_m_eff):
         return self.g0_mod * self.p_atm * (sigma_m_eff / self.p_atm) ** 0.5
 
+    def calc_shear_vel_at_v_eff_stress(self, saturated, sigma_v_eff):
+        try:
+            g_mod = self.g_mod_at_v_eff_stress(sigma_v_eff)
+            if saturated:
+                return np.sqrt(g_mod / self.unit_sat_mass)
+            else:
+                return np.sqrt(g_mod / self.unit_dry_mass)
+        except TypeError:
+            return None
+
 
 class SoilLayer(Soil):  # not used
 
@@ -1026,6 +1060,56 @@ class SoilProfile(PhysicalObject):
 
     def vertical_effective_stress(self, y_c):  # deprecated function
         return self.vert_eff_stress(y_c)
+
+    def shear_vel_at_depth(self, y_c):
+        sl = self.get_soil_at_depth(y_c)
+        if y_c <= self.gwl:
+            saturation = False
+        else:
+            saturation = True
+        if hasattr(sl, "calc_shear_vel_at_v_eff_stress"):
+            v_eff = self.vertical_effective_stress(y_c)
+            vs = sl.calc_shear_vel_at_v_eff_stress(saturation, v_eff)
+        else:
+            vs = sl.calc_shear_vel(saturation)
+        return vs
+
+
+def discretize_soil_profile(sp, incs=None, target=1.0):
+
+    if incs is None:
+        incs = np.ones(sp.n_layers) * target
+    dd = {}
+    dd["thickness"] = []
+    dd["unit_mass"] = []
+    dd["shear_vel"] = []
+    cum_thickness = 0
+    for i in range(sp.n_layers):
+        sl = sp.layer(i + 1)
+        thickness = sp.layer_height(i + 1)
+        n_slices = int(thickness / incs[i])
+        slice_thickness = float(thickness) / n_slices
+        for j in range(n_slices):
+            cum_thickness += slice_thickness
+            if cum_thickness >= sp.gwl:
+                rho = sl.unit_sat_mass
+                saturation = True
+            else:
+                rho = sl.unit_dry_mass
+                saturation = False
+            if hasattr(sl, "calc_shear_vel_at_v_eff_stress"):
+                v_eff = sp.vertical_effective_stress(cum_thickness)
+                vs = sl.calc_shear_vel_at_v_eff_stress(saturation, v_eff)
+            else:
+                vs = sl.calc_shear_vel(saturation)
+            dd["shear_vel"].append(vs)
+            dd["unit_mass"].append(rho)
+            dd["thickness"].append(slice_thickness)
+    for item in dd:
+        dd[item] = np.array(dd[item])
+    return dd
+
+
 
 
 # TODO: extend to have LiquefiableSoil
