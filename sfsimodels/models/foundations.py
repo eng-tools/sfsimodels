@@ -200,7 +200,7 @@ class Foundation(PhysicalObject):
             return None
 
 
-class FoundationRaft(Foundation):
+class RaftFoundation(Foundation):
     """
     An extension to the Foundation Object to describe Raft foundations
     """
@@ -212,12 +212,12 @@ class FoundationRaft(Foundation):
         return "FoundationRaft id: {0}, name: {1}".format(self.id, self.name)
 
     def __init__(self):
-        super(FoundationRaft, self).__init__()
+        super(RaftFoundation, self).__init__()
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
-        return super(FoundationRaft, self).ancestor_types + ["foundation_raft"]
+        return super(RaftFoundation, self).ancestor_types + ["foundation_raft"]
 
     @property
     def i_ww(self):
@@ -236,7 +236,7 @@ class FoundationRaft(Foundation):
         return self.length * self.width ** 3 / 12
 
 
-class FoundationPad(Foundation):
+class PadFoundation(Foundation):
     """
     An extension to the Foundation Object to describe Pad foundations
     """
@@ -257,12 +257,12 @@ class FoundationPad(Foundation):
         return "PadFoundation id: {0}, name: {1}".format(self.id, self.name)
 
     def __init__(self):
-        super(FoundationPad, self).__init__()
+        super(PadFoundation, self).__init__()
         self.inputs += self._extra_class_inputs
 
     @property
     def ancestor_types(self):
-        return super(FoundationPad, self).ancestor_types + ["foundation_pad"]
+        return super(PadFoundation, self).ancestor_types + ["foundation_pad"]
 
     @property
     def i_ww(self):
@@ -357,13 +357,13 @@ class FoundationPad(Foundation):
         return (self.width - self.pad_width) / (self.n_pads_w - 1) * i + self.pad_width / 2
 
 
-class PadFoundation(FoundationPad):
+class FoundationPad(PadFoundation):
     def __init__(self):
-        deprecation("PadFoundation class is deprecated, use FoundationPad.")
-        super(PadFoundation, self).__init__()
+        deprecation("FoundationPad class is deprecated, use PadFoundation.")
+        super(FoundationPad, self).__init__()
 
 
-class RaftFoundation(FoundationRaft):
+class FoundationRaft(RaftFoundation):
     def __init__(self):
-        deprecation("RaftFoundation class is deprecated, use FoundationRaft.")
-        super(RaftFoundation, self).__init__()
+        deprecation("Foundation class is deprecated, use RaftFoundation.")
+        super(FoundationRaft, self).__init__()

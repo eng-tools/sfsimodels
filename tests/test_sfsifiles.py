@@ -23,7 +23,7 @@ def test_load_json():
 
 
 def test_load_and_save_structure():
-    structure = models.BuildingSDOF()
+    structure = models.SDOFBuilding()
     structure.id = 1
     structure.name = "sample building"
     structure.h_eff = 10.0
@@ -106,7 +106,7 @@ def test_save_and_load_building():
     masses = 40.0e3  # kg
     n_bays = 3
 
-    fb = models.BuildingFrame(number_of_storeys, n_bays)
+    fb = models.FrameBuilding(number_of_storeys, n_bays)
     fb.id = 1
     fb.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb.floor_length = 18.0  # m
@@ -140,7 +140,7 @@ def test_save_and_load_2d_frame_building():
     masses = 40.0e3  # kg
     n_bays = 3
 
-    fb2d = models.BuildingFrame2D(number_of_storeys, n_bays)
+    fb2d = models.FrameBuilding2D(number_of_storeys, n_bays)
     fb2d.id = 1
     fb2d.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb2d.floor_length = 18.0  # m
@@ -295,7 +295,7 @@ def test_load_frame_w_hinges():
             self.inputs += self._extra_class_variables
 
     # Attach the section class as the default for the building
-    class CustomBuildingFrame2D(sm.BuildingFrame2D):
+    class CustomBuildingFrame2D(sm.FrameBuilding2D):
         _custom_beam_section = CustomBeamSection
         _custom_column_section = None
 
@@ -320,20 +320,14 @@ def test_load_frame_w_hinges():
     assert ct.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
 
 
-
-
-
-
-
-
 if __name__ == '__main__':
-    test_load_frame_w_hinges()
+    # test_save_and_load_building()
     # test_load_and_save_structure()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    # test_save_and_load_2d_frame_building()
+    test_save_and_load_2d_frame_building()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

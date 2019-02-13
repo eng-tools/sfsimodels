@@ -4,8 +4,8 @@ from sfsimodels import models as dm
 
 def test_model_inputs():
     p_models = [dm.SeismicHazard(),
-                dm.BuildingFrame(1, 2),
-                dm.BuildingWall(1),
+                dm.FrameBuilding(1, 2),
+                dm.WallBuilding(1),
                 dm.Soil(),
                 dm.material.Concrete()]
     for model in p_models:

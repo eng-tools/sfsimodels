@@ -404,10 +404,10 @@ class Frame(object):
         self._bay_lengths = np.array(bay_lengths)
 
 
-class BuildingFrame(Frame, Building):
+class FrameBuilding(Frame, Building):
     _n_seismic_frames = None
     _n_gravity_frames = None
-    type = "building_frame"
+    type = "frame_building"
 
     def __init__(self, n_storeys, n_bays):
         Frame.__init__(self, n_storeys, n_bays)
@@ -421,7 +421,7 @@ class BuildingFrame(Frame, Building):
 
     @property
     def ancestor_types(self):
-        return super(BuildingFrame, self).ancestor_types + ["building_frame"]
+        return super(FrameBuilding, self).ancestor_types + ["frame_building"]
 
     @property
     def n_seismic_frames(self):
@@ -440,15 +440,15 @@ class BuildingFrame(Frame, Building):
         self._n_gravity_frames = value
 
 
-class FrameBuilding(BuildingFrame):
+class BuildingFrame(FrameBuilding):
     def __init__(self, n_storeys, n_bays):
-        deprecation("FrameBuilding is deprecated, use BuildingFrame.")
-        super(FrameBuilding, self).__init__(n_storeys, n_bays)
+        deprecation("BuildingFrame is deprecated, use FrameBuilding.")
+        super(BuildingFrame, self).__init__(n_storeys, n_bays)
 
 
-class BuildingFrame2D(Frame, Building):
+class FrameBuilding2D(Frame, Building):
     _extra_class_inputs = []
-    type = "building_frame2D"
+    type = "frame_building2D"
 
     def __init__(self, n_storeys, n_bays):
         Frame.__init__(self, n_storeys, n_bays)
@@ -458,7 +458,7 @@ class BuildingFrame2D(Frame, Building):
 
     @property
     def ancestor_types(self):
-        return ["physical_object", "frame", "building"] + ["building_frame2D"]  # TODO: improve this logic
+        return ["physical_object", "frame", "building"] + ["frame_building2D"]  # TODO: improve this logic
 
     def to_dict(self, extra=(), compression=True, **kwargs):
         outputs = OrderedDict()
@@ -536,20 +536,20 @@ class BuildingFrame2D(Frame, Building):
         return outputs
 
 
-class FrameBuilding2D(BuildingFrame2D):
+class BuildingFrame2D(FrameBuilding2D):
     def __init__(self, n_storeys, n_bays):
-        deprecation("FrameBuilding2D class is deprecated, use BuildingFrame2D.")
-        super(FrameBuilding2D, self).__init__(n_storeys, n_bays)
+        deprecation("BuildingFrame2D class is deprecated, use FrameBuilding2D.")
+        super(BuildingFrame2D, self).__init__(n_storeys, n_bays)
 
 
-class BuildingWall(Building):  # new name
+class WallBuilding(Building):  # new name
     n_walls = 1
     wall_depth = 0.0  # m
     wall_width = 0.0  # m
-    type = "building_wall"
+    type = "wall_building"
 
     def __init__(self, n_storeys):
-        super(BuildingWall, self).__init__(n_storeys)  # run parent class initialiser function
+        super(WallBuilding, self).__init__(n_storeys)  # run parent class initialiser function
         self._extra_class_inputs = [
             "n_walls",
             "wall_depth",
@@ -559,16 +559,16 @@ class BuildingWall(Building):  # new name
 
     @property
     def ancestor_types(self):
-        return super(BuildingWall, self).ancestor_types + ["building_wall"]
+        return super(WallBuilding, self).ancestor_types + ["wall_building"]
 
 
-class WallBuilding(BuildingWall):
+class BuildingWall(WallBuilding):
     def __init__(self, n_storeys):
-        deprecation("WallBuilding class is deprecated, use BuildingWall.")
-        super(WallBuilding, self).__init__(n_storeys)
+        deprecation("BuildingWall class is deprecated, use WallBuilding.")
+        super(BuildingWall, self).__init__(n_storeys)
 
 
-class BuildingSDOF(PhysicalObject):
+class SDOFBuilding(PhysicalObject):
     """
     An object to describe structures.
     """
@@ -596,7 +596,7 @@ class BuildingSDOF(PhysicalObject):
 
     @property
     def ancestor_types(self):
-        return super(BuildingSDOF, self).ancestor_types + ["sdof"]
+        return super(SDOFBuilding, self).ancestor_types + ["sdof"]
 
     @property
     def id(self):
@@ -655,6 +655,12 @@ class BuildingSDOF(PhysicalObject):
         return self.mass_eff / self.mass_ratio * self._g
 
 
+class BuildingSDOF(SDOFBuilding):
+    def __init__(self, g=9.8):
+        deprecation("BuildingSDOF class is deprecated, use SDOFBuilding.")
+        super(BuildingSDOF, self).__init__(g=g)
+
+
 class Structure(BuildingSDOF):
     def __init__(self, g=9.8):
         deprecation("Structure class is deprecated, use BuildingSDOF.")
@@ -662,7 +668,7 @@ class Structure(BuildingSDOF):
 
 
 class SoilStructureSystem(PhysicalObject):
-    bd = BuildingSDOF()
+    bd = SDOFBuilding()
     fd = Foundation()
     sp = Soil()
     hz = SeismicHazard()

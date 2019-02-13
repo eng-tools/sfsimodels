@@ -319,7 +319,7 @@ def test_stress_dependent_soil_g_mod():
     soil_1.phi = 33.
     soil_1.unit_dry_weight = 18000
     soil_1.specific_gravity = 2.65
-    soil_2 = sm.SoilStressDependent()
+    soil_2 = sm.StressDependentSoil()
     soil_2.phi = 33.
     soil_2.cohesion = 50000
     soil_2.unit_dry_weight = 18000
@@ -343,13 +343,13 @@ def test_inputs_soil():
     sl = models.Soil()
     assert "g_mod" in sl.inputs
     assert "e_cr0" not in sl.inputs
-    crit_sl = models.SoilCritical()
+    crit_sl = models.CriticalSoil()
     assert "g_mod" in crit_sl.inputs
     assert "e_cr0" in crit_sl.inputs
 
 
 def test_e_critical():
-    crit_sl = models.SoilCritical(pw=9800)
+    crit_sl = models.CriticalSoil(pw=9800)
     crit_sl.e_cr0 = 0.79  # Jin et al. 2015
     crit_sl.p_cr0 = 10  # Jin et al. 2015
     crit_sl.lamb_crl = 0.015  # Jin et al. 2015

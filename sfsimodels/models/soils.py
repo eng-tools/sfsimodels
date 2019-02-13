@@ -1,5 +1,5 @@
-import numbers
 from collections import OrderedDict
+from sfsimodels.exceptions import deprecation
 
 import numpy as np
 
@@ -706,40 +706,40 @@ class Soil(PhysicalObject):
             return None
 
 
-class SoilCritical(Soil):
+class CriticalSoil(Soil):
     # critical state parameters
     e_cr0 = 0.0
     p_cr0 = 0.0
     lamb_crl = 0.0
-    type = "soil_critical"
+    type = "critical_soil"
 
     def __init__(self, pw=9800):
-        super(SoilCritical, self).__init__(pw=pw)  # run parent class initialiser function
+        super(CriticalSoil, self).__init__(pw=pw)  # run parent class initialiser function
         self._extra_class_inputs = ["e_cr0", "p_cr0", "lamb_crl"]
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
-        return super(SoilCritical, self).ancestor_types + [self.type]
+        return super(CriticalSoil, self).ancestor_types + [self.type]
 
     def e_critical(self, p):
         p = float(p)
         return self.e_cr0 - self.lamb_crl * np.log(p / self.p_cr0)
 
 
-class SoilStressDependent(Soil):
+class StressDependentSoil(Soil):
     _g0_mod = None
     _p_atm = 101000.0  # Pa
-    type = "soil_stress_dependent"
+    type = "stress_dependent_soil"
 
     def __init__(self, pw=9800):
-        super(SoilStressDependent, self).__init__(pw=pw)
+        super(StressDependentSoil, self).__init__(pw=pw)
         self._extra_class_inputs = ["g0_mod", "p_atm"]
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property
     def ancestor_types(self):
-        return super(SoilStressDependent, self).ancestor_types + [self.type]
+        return super(StressDependentSoil, self).ancestor_types + [self.type]
 
     @property
     def g0_mod(self):
@@ -1087,7 +1087,7 @@ def discretize_soil_profile(sp, incs=None, target=1.0):
     for i in range(sp.n_layers):
         sl = sp.layer(i + 1)
         thickness = sp.layer_height(i + 1)
-        n_slices = int(thickness / incs[i])
+        n_slices = max(int(thickness / incs[i]), 1)
         slice_thickness = float(thickness) / n_slices
         for j in range(n_slices):
             cum_thickness += slice_thickness
@@ -1110,6 +1110,16 @@ def discretize_soil_profile(sp, incs=None, target=1.0):
     return dd
 
 
-
-
 # TODO: extend to have LiquefiableSoil
+
+
+class SoilCritical(CriticalSoil):
+    def __init__(self, pw=9800):
+        deprecation("SoilCritical class is deprecated (remove in version 1.0), use CriticalSoil.")
+        super(SoilCritical, self).__init__(pw=pw)
+
+
+class SoilStressDependent(StressDependentSoil):
+    def __init__(self, pw=9800):
+        deprecation("SoilStressDependent class is deprecated (remove in version 1.0), use StressDependentSoil.")
+        super(SoilStressDependent, self).__init__(pw=pw)

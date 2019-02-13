@@ -1,8 +1,13 @@
 from sfsimodels.models.abstract_models import PhysicalObject, CustomObject
 from sfsimodels.models.hazards import SeismicHazard
-from sfsimodels.models.foundations import Foundation, FoundationPad, FoundationRaft
-from sfsimodels.models.soils import Soil, SoilCritical, SoilProfile, SoilStressDependent, discretize_soil_profile
-from sfsimodels.models.buildings import Building, BuildingFrame, BuildingWall, BuildingSDOF, BuildingFrame2D, Section
+from sfsimodels.models.foundations import Foundation, PadFoundation, RaftFoundation
+from sfsimodels.models.soils import Soil, CriticalSoil, discretize_soil_profile, SoilProfile, StressDependentSoil
+from sfsimodels.models.buildings import Building, FrameBuilding, WallBuilding, SDOFBuilding, FrameBuilding2D, Section
+
+# deprecated
+from sfsimodels.models.soils import SoilStressDependent, SoilCritical
+from sfsimodels.models.foundations import FoundationPad, FoundationRaft
+from sfsimodels.models.buildings import BuildingFrame, BuildingWall, BuildingSDOF, BuildingFrame2D
 
 from sfsimodels.models import material
 from sfsimodels.models.systems import SoilStructureSystem

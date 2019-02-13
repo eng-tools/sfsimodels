@@ -103,21 +103,25 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
 
     obj_map = {
         "soil-soil": soils.Soil,
-        "soil-soil_critical": soils.SoilCritical,
-        "soil-soil_stress_dependent": soils.SoilStressDependent,
+        "soil-critical_soil": soils.CriticalSoil,
+        "soil-soil_critical": soils.CriticalSoil,  # deprecated type
+        "soil-stress_dependent_soil": soils.StressDependentSoil,
+        "soil-soil_stress_dependent": soils.StressDependentSoil,
         "soil_profile-soil_profile": soils.SoilProfile,
         "building-building": buildings.Building,
         "building-frame_building": buildings.BuildingFrame,
-        # "building-frame_building_2D": buildings.BuildingFrame2D,  # deprecated type
-        "building-building_frame2D": buildings.BuildingFrame2D,
-        # "building-wall_building": buildings.BuildingWall,  # deprecated type
-        "building-building_wall": buildings.BuildingWall,
-        "building-structure": buildings.BuildingSDOF,
-        "building-sdof": buildings.BuildingSDOF,
+        "building-frame_building2D": buildings.FrameBuilding2D,
+        "building-building_frame2D": buildings.FrameBuilding2D,  # deprecated type
+        "building-wall_building": buildings.WallBuilding,
+        "building-building_wall": buildings.WallBuilding,  # deprecated type
+        "building-structure": buildings.SDOFBuilding,  # Deprecated type, remove in v1
+        "building-sdof": buildings.SDOFBuilding,
         "foundation-foundation": foundations.Foundation,
-        "foundation-foundation_raft": foundations.FoundationRaft,
-        "foundation-raft": foundations.FoundationRaft,  # Deprecated approach for type, remove in v1
-        "foundation-foundation_pad": foundations.FoundationPad,
+        "foundation-foundation_raft": foundations.RaftFoundation,  # deprecated type
+        "foundation-raft_foundation": foundations.RaftFoundation,
+        "foundation-raft": foundations.RaftFoundation,  # Deprecated approach for type, remove in v1
+        "foundation-pad_foundation": foundations.PadFoundation,
+        "foundation-foundation_pad": foundations.PadFoundation,  # deprecated type
         "section-section": buildings.Section,
         "custom_object-custom_object": abstract_models.CustomObject,
         "system-system": systems.SoilStructureSystem,  # deprecated type
@@ -210,7 +214,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                     obj["type"] = base_type
                 if obj["type"] in ["sdof"]:
                     new_building = obj_map["%s-%s" % (base_type, obj["type"])]()
-                elif "building_frame" in obj["type"]:
+                elif "building_frame" in obj["type"] or "frame_building" in obj["type"]:
                     n_storeys = len(obj['interstorey_heights'])
                     n_bays = len(obj['bay_lengths'])
                     new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys, n_bays)
