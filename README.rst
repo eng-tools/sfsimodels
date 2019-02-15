@@ -54,12 +54,16 @@ Installation
 ============
 
 .. code:: bash
+
     pip install sfsimodels
 
 Saving and loading models
 =========================
 
+Check out a full set of examples [on github](https://github.com/eng-tools/sfsimodels/blob/master/examples/saving_and_loading_objects.ipynb)
+
 .. code-block:: python
+
     structure = models.Structure()  # Create a structure object
     structure.id = 1  # Assign it an id
     structure.name = "sample building"  # Assign it a name and other parameters
@@ -104,6 +108,7 @@ To deploy the package to pypi.com you need to:
  2. Create a git tag and push to github, run: ``trigger_deploy.py`` or manually:
 
  .. code:: bash
+
     git tag 0.5.2 -m "version 0.5.2"
     git push --tags origin pypi
 
