@@ -812,6 +812,7 @@ class SoilProfile(PhysicalObject):
     def __init__(self):
         super(PhysicalObject, self).__init__()  # run parent class initialiser function
         self._layers = OrderedDict([(0.0, Soil())])  # [depth to top of layer, Soil object]
+        self.skip_list = ["layers"]
 
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)

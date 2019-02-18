@@ -9,6 +9,8 @@ from sfsimodels import functions as sf
 class PhysicalObject(object):
     _counter = 0
     type = "physical_object"
+    inputs = ()
+    skip_list = ()
 
     def __iter__(self):  # real signature unknown
         return self
@@ -72,14 +74,16 @@ class PhysicalObject(object):
 
     def to_dict(self, extra=(), **kwargs):
         outputs = OrderedDict()
-        skip_list = []
+        export_none = kwargs.get("export_none", True)
         if hasattr(self, "inputs"):
             full_inputs = list(self.inputs) + list(extra)
         else:
             full_inputs = list(extra)
         for item in full_inputs:
-            if item not in skip_list:
+            if item not in self.skip_list:
                 value = self.__getattribute__(item)
+                if not export_none and value is None:
+                    continue
                 outputs[item] = sf.collect_serial_value(value)
         return outputs
 

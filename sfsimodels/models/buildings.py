@@ -46,16 +46,6 @@ class Building(PhysicalObject):
             "n_storeys"
         ]
 
-    def to_dict(self, extra=(), **kwargs):
-        outputs = OrderedDict()
-        skip_list = []
-        full_inputs = self.inputs + list(extra)
-        for item in full_inputs:
-            if item not in skip_list:
-                value = self.__getattribute__(item)
-                outputs[item] = sf.collect_serial_value(value)
-        return outputs
-
     @property
     def ancestor_types(self):
         return super(Building, self).ancestor_types + ["building"]
@@ -153,16 +143,6 @@ class Section(PhysicalObject):  # not used?
     def __init__(self):
         self.inputs = ["depth",
                        "width"]
-
-    def to_dict(self, extra=(), **kwargs):
-        outputs = OrderedDict()
-        skip_list = []
-        full_inputs = self.inputs + list(extra)
-        for item in full_inputs:
-            if item not in skip_list:
-                value = self.__getattribute__(item)
-                outputs[item] = sf.collect_serial_value(value)
-        return outputs
 
     @property
     def depth(self):
