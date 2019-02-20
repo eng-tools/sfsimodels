@@ -9,7 +9,7 @@ from sfsimodels import functions as sf
 class PhysicalObject(object):
     _counter = 0
     type = "physical_object"
-    inputs = ()
+    # inputs = ()
     skip_list = ()
 
     def __iter__(self):  # real signature unknown

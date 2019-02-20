@@ -69,7 +69,7 @@ class Soil(PhysicalObject):
         ]
         if not hasattr(self, "inputs"):
             self.inputs = []
-        self.inputs += self._extra_class_inputs
+        self.inputs += list(self._extra_class_inputs)
 
     @property
     def ancestor_types(self):

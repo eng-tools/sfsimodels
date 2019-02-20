@@ -19,7 +19,7 @@ def test_building_heights():
 
 
 def test_k_eff():
-    structure = models.BuildingSDOF()
+    structure = models.SDOFBuilding()
     structure.mass_eff = 10.0
     structure.t_fixed = 1.5
     expected_k_eff = 4.0 * 3.141 ** 2 * 10.0 / 1.5 ** 2
@@ -50,7 +50,7 @@ def test_load_frame_building_sample_data():
     masses = 40.0e3  # kg
     n_bays = 3
 
-    fb = models.BuildingFrame(number_of_storeys, n_bays)
+    fb = models.FrameBuilding(number_of_storeys, n_bays)
     fb.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb.floor_length = 18.0  # m
     fb.floor_width = 16.0  # m
