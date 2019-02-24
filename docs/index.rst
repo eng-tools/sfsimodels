@@ -10,6 +10,7 @@ Welcome to sfsimodels's documentation!
    :maxdepth: 2
 
    sfsimodels
+   sfsimodels.models
    sfsimodels.methods
 
 Indices and tables

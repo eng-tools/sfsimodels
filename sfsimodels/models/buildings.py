@@ -12,6 +12,12 @@ from sfsimodels import functions as sf
 class Building(PhysicalObject):
     """
     An object to define Buildings
+
+    Parameters
+    ----------
+    n_storeys : int
+        Number of storeys
+
     """
     _id = None
     name = None
@@ -26,7 +32,6 @@ class Building(PhysicalObject):
     _g = 9.81  # m/s2  # gravity
 
     def __init__(self, n_storeys, verbose=0, **kwargs):
-        print(**kwargs)
         super(Building, self).__init__()
         self._n_storeys = n_storeys
         if not hasattr(self, "inputs"):
