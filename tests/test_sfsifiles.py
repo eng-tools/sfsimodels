@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 from tests import load_test_data as ltd
 from sfsimodels import files
-from sfsimodels import checking_tools as ct
 import numpy as np
 from sfsimodels import models
 import sfsimodels as sm
@@ -15,11 +14,11 @@ test_dir = os.path.dirname(__file__)
 def test_load_json():
     fp = test_dir + "/unit_test_data/ecp_models.json"
     objs = files.load_json(fp, verbose=0)
-    assert ct.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
-    assert ct.isclose(objs["foundations"][1].length, 1.0)
-    assert ct.isclose(objs["soil_profiles"][1].layers[0].unit_dry_weight, 15564.70588)
+    assert np.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
+    assert np.isclose(objs["foundations"][1].length, 1.0)
+    assert np.isclose(objs["soil_profiles"][1].layers[0].unit_dry_weight, 15564.70588)
     rel_density = objs["soil_profiles"][1].layer(2).relative_density
-    assert ct.isclose(objs["soil_profiles"][1].layer(2).relative_density, 0.7299999994277497), rel_density
+    assert np.isclose(objs["soil_profiles"][1].layer(2).relative_density, 0.7299999994277497), rel_density
 
 
 def test_load_and_save_structure():
@@ -38,7 +37,7 @@ def test_load_and_save_structure():
 
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
     objs = files.loads_json(p_str)
-    assert ct.isclose(structure.mass_eff, objs['building'][1].mass_eff)
+    assert np.isclose(structure.mass_eff, objs['building'][1].mass_eff)
 
 
 def test_save_and_load_soil():
@@ -193,25 +192,25 @@ def test_full_save_and_load():
     a.write(p_str)
     a.close()
     objs = files.loads_json(p_str, verbose=0)
-    assert ct.isclose(system.bd.mass_eff, objs['buildings'][1].mass_eff)
+    assert np.isclose(system.bd.mass_eff, objs['buildings'][1].mass_eff)
 
     soil = system.sp.layer(1)
     for item in soil.inputs:
         if getattr(soil, item) is not None:
             if not isinstance(getattr(soil, item), str):
-                assert ct.isclose(getattr(soil, item), getattr(objs['soils'][1], item)), item
+                assert np.isclose(getattr(soil, item), getattr(objs['soils'][1], item)), item
     for item in system.fd.inputs:
         if getattr(system.fd, item) is not None:
             if isinstance(getattr(system.fd, item), str):
                 assert getattr(system.fd, item) == getattr(objs['foundations'][1], item), item
             else:
-                assert ct.isclose(getattr(system.fd, item), getattr(objs['foundations'][1], item)), item
+                assert np.isclose(getattr(system.fd, item), getattr(objs['foundations'][1], item)), item
     for item in system.bd.inputs:
         if getattr(system.bd, item) is not None:
             if isinstance(getattr(system.bd, item), str):
                 assert getattr(system.bd, item) == getattr(objs['buildings'][1], item), item
             else:
-                assert ct.isclose(getattr(system.bd, item), getattr(objs['buildings'][1], item)), item
+                assert np.isclose(getattr(system.bd, item), getattr(objs['buildings'][1], item)), item
 
 
 def test_saturation_set_in_soil_profile():
@@ -252,8 +251,8 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 
     fp = test_dir + "/unit_test_data/ecp_models_w_custom_obj.json"
     objs, meta_data = files.load_json_and_meta(fp, custom={"cantilever-cantilever": Cantilever}, verbose=0)
-    assert ct.isclose(objs["foundation"][1].length, 1.0)
-    assert ct.isclose(objs["cantilever"][1].length, 6.0)
+    assert np.isclose(objs["foundation"][1].length, 1.0)
+    assert np.isclose(objs["cantilever"][1].length, 6.0)
     ecp_output = files.Output()
     for m_type in objs:
         for instance in objs[m_type]:
@@ -304,11 +303,11 @@ def test_load_frame_w_hinges():
     # Override the base_type-type for building-building_frame2D with the custom model
     objs = files.load_json(fp, verbose=0, custom={"building-building_frame2D": CustomBuildingFrame2D})
     bd = objs["building"][1]
-    assert ct.isclose(bd.floor_length, 13.05)
-    assert ct.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
-    assert ct.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
+    assert np.isclose(bd.floor_length, 13.05)
+    assert np.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
+    assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
     assert bd.beams[1][0].s[0].diametertop is None
-    assert ct.isclose(bd.columns[1][0].s[0].nbar_hplusx, 2)
+    assert np.isclose(bd.columns[1][0].s[0].nbar_hplusx, 2)
     assert "diametertop" in bd.beams[0][0].s[0].inputs
     ecp_output = files.Output()
     ecp_output.add_to_dict(bd)
@@ -316,8 +315,8 @@ def test_load_frame_w_hinges():
     assert '"filongtop"' in p_str
     objs = files.loads_json(p_str)
     bd = objs["building"][1]
-    assert ct.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
-    assert ct.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
+    assert np.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
+    assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
 
 
 if __name__ == '__main__':

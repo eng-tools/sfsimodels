@@ -1,6 +1,5 @@
 import numpy as np
 
-# from sfsimodels.checking_tools import isclose
 from sfsimodels.models import time
 
 

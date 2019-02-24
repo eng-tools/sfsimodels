@@ -5,7 +5,6 @@ from sfsimodels import files
 from sfsimodels import models
 import sfsimodels as sm
 import numpy as np
-from sfsimodels.checking_tools import isclose
 from sfsimodels import exceptions
 
 
@@ -49,7 +48,7 @@ def test_void_ratio_setter():
     sl.unit_dry_weight = 17000
     assert sl.specific_gravity is None
     sl.e_curr = 0.7
-    assert isclose(sl.specific_gravity, 2.949, rel_tol=0.01)
+    assert np.isclose(sl.specific_gravity, 2.949, rtol=0.01)
     # check that unit_dry_weight is still consistent
     sl.unit_dry_weight = 17000
 
@@ -60,7 +59,7 @@ def test_specific_gravity_setter():
     sl.e_curr = 0.7
     assert sl.unit_dry_weight is None
     sl.specific_gravity = 2.95
-    assert isclose(sl.unit_dry_weight, 17000, rel_tol=0.01)
+    assert np.isclose(sl.unit_dry_weight, 17000, rtol=0.01)
     # check that void ratio is still consistent
     sl.e_curr = 0.7
 
@@ -69,7 +68,7 @@ def test_specific_gravity_setter():
     sl.specific_gravity = 2.95
     assert sl.unit_dry_weight is None
     sl.e_curr = 0.7
-    assert isclose(sl.unit_dry_weight, 17000, rel_tol=0.01)
+    assert np.isclose(sl.unit_dry_weight, 17000, rtol=0.01)
     # check that specific gravity is still consistent
     sl.specific_gravity = 2.95
 
@@ -79,7 +78,7 @@ def test_dry_unit_weight_setter():
     sl.e_curr = 0.7
     assert sl.specific_gravity is None
     sl.unit_dry_weight = 17000
-    assert isclose(sl.specific_gravity, 2.949, rel_tol=0.01)
+    assert np.isclose(sl.specific_gravity, 2.949, rtol=0.01)
     # check that void ratio is still consistent
     sl.e_curr = 0.7
 
@@ -90,18 +89,18 @@ def test_moist_weight_setter():
     sl.e_curr = 0.7
     assert sl.saturation is None
     sl.unit_moist_weight = 18000
-    assert isclose(sl.saturation, 0.248, 0.01)
+    assert np.isclose(sl.saturation, 0.248, 0.01)
 
 
 def test_saturation_setter_on_soil():
     sl = models.Soil()
     sl.unit_dry_weight = 17000
     sl.e_curr = 0.7
-    assert isclose(sl.unit_sat_weight, 21035.3, rel_tol=0.01)
+    assert np.isclose(sl.unit_sat_weight, 21035.3, rtol=0.01)
     assert sl.saturation is None
     assert sl.unit_moist_weight is None
     sl.saturation = 1.0
-    assert isclose(sl.unit_moist_weight, 21035.3, rel_tol=0.01)
+    assert np.isclose(sl.unit_moist_weight, 21035.3, rtol=0.01)
 
 
 
@@ -113,7 +112,7 @@ def test_relative_density_to_e_curr_setter():
     sl.relative_density = 0.4
     # expected_void_ratio = sl.e_max - sl.relative_density * (sl.e_max - sl.e_min)
     expected_void_ratio = 0.76
-    assert isclose(sl.e_curr, expected_void_ratio, rel_tol=0.01), sl.e_curr
+    assert np.isclose(sl.e_curr, expected_void_ratio, rtol=0.01), sl.e_curr
     # reverse
     sl = models.Soil()
     sl.e_max = 1.0
@@ -122,7 +121,7 @@ def test_relative_density_to_e_curr_setter():
     sl.e_curr = 0.76
     # expected_void_ratio = sl.e_max - sl.relative_density * (sl.e_max - sl.e_min)
     expected_relative_density = 0.4
-    assert isclose(sl.relative_density, expected_relative_density, rel_tol=0.01), sl.e_curr
+    assert np.isclose(sl.relative_density, expected_relative_density, rtol=0.01), sl.e_curr
 
 
 def test_relative_density_to_e_min_setter():
@@ -132,7 +131,7 @@ def test_relative_density_to_e_min_setter():
     assert sl.e_min is None
     sl.relative_density = 0.4
     e_min = 0.4
-    assert isclose(sl.e_min, e_min, rel_tol=0.01), sl.e_min
+    assert np.isclose(sl.e_min, e_min, rtol=0.01), sl.e_min
 
     # reverse
     sl = models.Soil()
@@ -141,7 +140,7 @@ def test_relative_density_to_e_min_setter():
     assert sl.relative_density is None
     relative_density = 0.4
     sl.e_min = 0.4
-    assert isclose(sl.relative_density, relative_density, rel_tol=0.01), sl.relative_density
+    assert np.isclose(sl.relative_density, relative_density, rtol=0.01), sl.relative_density
 
 
 def test_relative_density_to_e_max_setter():
@@ -152,7 +151,7 @@ def test_relative_density_to_e_max_setter():
     sl.relative_density = 0.4
     e_max = 1.0
     actual = sl.e_max
-    assert isclose(sl.e_max, e_max, rel_tol=0.01), actual
+    assert np.isclose(sl.e_max, e_max, rtol=0.01), actual
 
     # reverse
     sl = models.Soil()
@@ -162,7 +161,7 @@ def test_relative_density_to_e_max_setter():
     relative_density = 0.4
     sl.e_max = 1.0
     actual = sl.relative_density
-    assert isclose(sl.relative_density, relative_density, rel_tol=0.01), actual
+    assert np.isclose(sl.relative_density, relative_density, rtol=0.01), actual
 
 
 def test_e_max_to_saturated_weight_setter():
@@ -176,7 +175,7 @@ def test_e_max_to_saturated_weight_setter():
     sl.relative_density = 0.4
     unit_sat_weight = 20231.818
 
-    assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.01), sl.unit_sat_weight
+    assert np.isclose(sl.unit_sat_weight, unit_sat_weight, rtol=0.01), sl.unit_sat_weight
 
 
 def test_e_max_to_moist_weight_setter():
@@ -191,7 +190,7 @@ def test_e_max_to_moist_weight_setter():
     sl.relative_density = 0.4
     unit_sat_weight = 20231.818
 
-    assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.01), sl.unit_sat_weight
+    assert np.isclose(sl.unit_sat_weight, unit_sat_weight, rtol=0.01), sl.unit_sat_weight
 
 
 def test_bulk_to_g_mod_setter():
@@ -203,37 +202,37 @@ def test_bulk_to_g_mod_setter():
     sl.bulk_mod = expected_bulk_mod
     assert sl.g_mod is None
     sl.poissons_ratio = expected_poissons_ratio
-    assert isclose(sl.g_mod, expected_g_mod, rel_tol=0.01), sl.g_mod
+    assert np.isclose(sl.g_mod, expected_g_mod, rtol=0.01), sl.g_mod
     # b - g - v
     sl = models.Soil()
     sl.bulk_mod = expected_bulk_mod
     assert sl.poissons_ratio is None
     sl.g_mod = expected_g_mod
-    assert isclose(sl.poissons_ratio, expected_poissons_ratio, rel_tol=0.01), sl.poissons_ratio
+    assert np.isclose(sl.poissons_ratio, expected_poissons_ratio, rtol=0.01), sl.poissons_ratio
     # g - v - b
     sl = models.Soil()
     sl.g_mod = expected_g_mod
     assert sl.bulk_mod is None
     sl.poissons_ratio = expected_poissons_ratio
-    assert isclose(sl.bulk_mod, expected_bulk_mod, rel_tol=0.01), sl.bulk_mod
+    assert np.isclose(sl.bulk_mod, expected_bulk_mod, rtol=0.01), sl.bulk_mod
     # g - b - v
     sl = models.Soil()
     sl.g_mod = expected_g_mod
     assert sl.poissons_ratio is None
     sl.bulk_mod = expected_bulk_mod
-    assert isclose(sl.poissons_ratio, expected_poissons_ratio, rel_tol=0.01), sl.poissons_ratio
+    assert np.isclose(sl.poissons_ratio, expected_poissons_ratio, rtol=0.01), sl.poissons_ratio
     # v - b - g
     sl = models.Soil()
     sl.poissons_ratio = expected_poissons_ratio
     assert sl.g_mod is None
     sl.bulk_mod = expected_bulk_mod
-    assert isclose(sl.g_mod, expected_g_mod, rel_tol=0.01), sl.g_mod
+    assert np.isclose(sl.g_mod, expected_g_mod, rtol=0.01), sl.g_mod
     # v - g - b
     sl = models.Soil()
     sl.poissons_ratio = expected_poissons_ratio
     assert sl.bulk_mod is None
     sl.g_mod = expected_g_mod
-    assert isclose(sl.bulk_mod, expected_bulk_mod, rel_tol=0.01), sl.bulk_mod
+    assert np.isclose(sl.bulk_mod, expected_bulk_mod, rtol=0.01), sl.bulk_mod
 
 
 def test_soil_profile_vertical_total_stress():
@@ -243,14 +242,14 @@ def test_soil_profile_vertical_total_stress():
     soil_1.unit_dry_weight = 18000
     soil_profile = models.SoilProfile()
     soil_profile.add_layer(0, soil_1)
-    assert isclose(soil_profile.vertical_total_stress(5), 5 * 18000, rel_tol=0.0001)
+    assert np.isclose(soil_profile.vertical_total_stress(5), 5 * 18000, rtol=0.0001)
     soil_profile.gwl = 3.
-    assert isclose(soil_profile.vertical_total_stress(3), 3 * 18000, rel_tol=0.0001)
+    assert np.isclose(soil_profile.vertical_total_stress(3), 3 * 18000, rtol=0.0001)
     with pytest.raises(exceptions.AnalysisError):
         soil_profile.vertical_effective_stress(4)
     soil_profile.layer(1).unit_sat_weight = 21000
     expected = 3 * 18000 + 2 * 21000
-    assert isclose(soil_profile.vertical_total_stress(5), expected, rel_tol=0.0001)
+    assert np.isclose(soil_profile.vertical_total_stress(5), expected, rtol=0.0001)
     soil_2 = models.Soil()
     soil_2.phi = 33.
     soil_2.cohesion = 50000
@@ -259,13 +258,13 @@ def test_soil_profile_vertical_total_stress():
     # CONSIDER TWO LAYER SOIL PROFILE
     soil_profile.add_layer(4., soil_2)
     soil_profile.gwl = 10000  # Dry first
-    assert isclose(soil_profile.vertical_total_stress(5), 4 * 18000 + 1 * 16000, rel_tol=0.0001)
+    assert np.isclose(soil_profile.vertical_total_stress(5), 4 * 18000 + 1 * 16000, rtol=0.0001)
     soil_profile.gwl = 3.
     with pytest.raises(exceptions.AnalysisError):
         soil_profile.vertical_effective_stress(5)
     soil_profile.layer(2).unit_sat_weight = 20000
     expected = 3 * 18000 + 1 * 21000 + 1 * 20000
-    assert isclose(soil_profile.vertical_total_stress(5), expected, rel_tol=0.0001)
+    assert np.isclose(soil_profile.vertical_total_stress(5), expected, rtol=0.0001)
 
 
 def test_soil_profile_vertical_effective_stress():
@@ -285,12 +284,12 @@ def test_soil_profile_vertical_effective_stress():
     soil_profile.gwl = gwl
 
     assert soil_1.unit_sat_weight is None
-    assert isclose(soil_profile.vertical_effective_stress(2), 2 * 18000, rel_tol=0.0001)
+    assert np.isclose(soil_profile.vertical_effective_stress(2), 2 * 18000, rtol=0.0001)
     with pytest.raises(exceptions.AnalysisError):
         soil_profile.vertical_effective_stress(z_c)
     soil_1.unit_sat_weight = 21000
     expected_sigma_veff = (z_c - gwl) * (21000 - 9800) + gwl * 18000
-    assert isclose(soil_profile.vertical_effective_stress(z_c), expected_sigma_veff, rel_tol=0.0001)
+    assert np.isclose(soil_profile.vertical_effective_stress(z_c), expected_sigma_veff, rtol=0.0001)
 
 
 def test_hydrostatic_pressure():
@@ -310,8 +309,8 @@ def test_hydrostatic_pressure():
     soil_profile.gwl = gwl
 
     assert soil_1.unit_sat_weight is None
-    assert isclose(soil_profile.hydrostatic_pressure(2), 0.0, rel_tol=0.0001)
-    assert isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rel_tol=0.0001)
+    assert np.isclose(soil_profile.hydrostatic_pressure(2), 0.0, rtol=0.0001)
+    assert np.isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rtol=0.0001)
 
 
 def test_stress_dependent_soil_g_mod():
@@ -331,12 +330,12 @@ def test_stress_dependent_soil_g_mod():
     gwl = 4.0
     soil_profile.gwl = gwl
 
-    assert isclose(soil_1.unit_sat_weight, 21007.5471698, rel_tol=0.0001)
-    assert isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rel_tol=0.0001)
+    assert np.isclose(soil_1.unit_sat_weight, 21007.5471698, rtol=0.0001)
+    assert np.isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rtol=0.0001)
     v_eff = soil_profile.vertical_effective_stress(z_c)
-    assert isclose(soil_2.g_mod_at_v_eff_stress(v_eff), 36580544.6888, rel_tol=0.0001)
+    assert np.isclose(soil_2.g_mod_at_v_eff_stress(v_eff), 36580544.6888, rtol=0.0001)
     m_eff = v_eff * (1 + 2 * (1 - np.sin(soil_2.phi_r))) / 3
-    assert isclose(soil_2.g_mod_at_m_eff_stress(m_eff), 36580544.6888, rel_tol=0.0001)
+    assert np.isclose(soil_2.g_mod_at_m_eff_stress(m_eff), 36580544.6888, rtol=0.0001)
 
 
 def test_inputs_soil():
@@ -354,7 +353,7 @@ def test_e_critical():
     crit_sl.p_cr0 = 10  # Jin et al. 2015
     crit_sl.lamb_crl = 0.015  # Jin et al. 2015
 
-    assert isclose(crit_sl.e_critical(1.8), 0.81572, rel_tol=0.0001)
+    assert np.isclose(crit_sl.e_critical(1.8), 0.81572, rtol=0.0001)
 
 
 def test_load_test_data():
@@ -384,7 +383,7 @@ def test_override():
     assert sl.unit_moist_weight is not None
     sl.relative_density = 0.4
     unit_sat_weight = 20231.818
-    assert isclose(sl.unit_sat_weight, unit_sat_weight, rel_tol=0.001), sl.unit_sat_weight
+    assert np.isclose(sl.unit_sat_weight, unit_sat_weight, rtol=0.001), sl.unit_sat_weight
 
     # Can call override when value is consistent
     sl.override("unit_sat_weight", unit_sat_weight)
@@ -395,7 +394,7 @@ def test_override():
     assert len(conflicts) == len(expected_conflicts)
     for i in range(len(conflicts)):
         assert conflicts[i] == expected_conflicts[i]
-    assert isclose(sl.unit_sat_weight, new_unit_sat_weight, rel_tol=0.001), sl.unit_sat_weight
+    assert np.isclose(sl.unit_sat_weight, new_unit_sat_weight, rtol=0.001), sl.unit_sat_weight
 
 
 def test_can_override_all():
@@ -435,9 +434,9 @@ def test_can_compute_layer_depth():
     soil_profile = objs["soil_profiles"][1]
     assert isinstance(soil_profile, models.SoilProfile)
 
-    assert isclose(soil_profile.layers[0].unit_dry_weight, 15564.70588)
+    assert np.isclose(soil_profile.layers[0].unit_dry_weight, 15564.70588)
     rel_density = soil_profile.layer(2).relative_density
-    assert isclose(rel_density, 0.7299999994277497), rel_density
+    assert np.isclose(rel_density, 0.7299999994277497), rel_density
     assert soil_profile.layer(1).id == 1
     assert soil_profile.layer_depth(2) == 4.0
     assert soil_profile.layer_height(2) == 4.0
@@ -504,9 +503,9 @@ def test_can_replace_layers():
     sp = models.SoilProfile()
     sp.add_layer(0.0, sl1)
     sp.add_layer(3.0, sl2)
-    assert isclose(sp.layer(2).g_mod, 2.0)
+    assert np.isclose(sp.layer(2).g_mod, 2.0)
     sp.replace_layer(2, sl3)
-    assert isclose(sp.layer(2).g_mod, 3.0)
+    assert np.isclose(sp.layer(2).g_mod, 3.0)
 
 
 def test_set_soil_ids_in_soil_profile():

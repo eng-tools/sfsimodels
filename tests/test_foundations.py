@@ -1,5 +1,5 @@
 from sfsimodels import models
-from sfsimodels.checking_tools import isclose
+import numpy as np
 
 
 def test_raft_foundation():
@@ -10,12 +10,12 @@ def test_raft_foundation():
     fd.height = 0.1
     fd.density = 3
     expected_mass = fd.length * fd.width * fd.height * fd.density
-    assert isclose(expected_mass, 7.2, rel_tol=0.0001)
-    assert isclose(fd.mass, expected_mass, rel_tol=0.0001)
+    assert np.isclose(expected_mass, 7.2, rtol=0.0001)
+    assert np.isclose(fd.mass, expected_mass, rtol=0.0001)
     i_ll = fd.width ** 3 * fd.length / 12
     i_ww = fd.length ** 3 * fd.width / 12
-    assert isclose(fd.i_ll, i_ll, rel_tol=0.001)
-    assert isclose(fd.i_ww, i_ww, rel_tol=0.001)
+    assert np.isclose(fd.i_ll, i_ll, rtol=0.001)
+    assert np.isclose(fd.i_ww, i_ww, rtol=0.001)
 
 
 def test_pad_foundation():
@@ -31,8 +31,8 @@ def test_pad_foundation():
     assert fd.pad_i_ww == 3. ** 3 * 2 / 12
     assert fd.pad_i_ll == 2. ** 3 * 3 / 12
     assert fd.pad_area == 2 * 3
-    assert isclose(fd.i_ww, 1992.0, rel_tol=0.001)
-    assert isclose(fd.i_ll, 1112.0, rel_tol=0.001)
+    assert np.isclose(fd.i_ww, 1992.0, rtol=0.001)
+    assert np.isclose(fd.i_ll, 1112.0, rtol=0.001)
     assert fd.area == 4 * 4 * 2 * 3
 
 
@@ -51,7 +51,8 @@ def test_pad_density_setter():
     expected_area = (2 * 2) * (3 * 2)
     assert fd.area == expected_area
     expected_mass = expected_area * 0.5 * 3
-    assert isclose(fd.mass, expected_mass, rel_tol=0.0001)
+    print((fd.mass, expected_mass))
+    assert np.isclose(fd.mass, expected_mass, rtol=0.0001), (fd.mass, expected_mass)
 
 
 def test_zero_height_raft():
@@ -60,7 +61,7 @@ def test_zero_height_raft():
     fd.width = 6
     fd.height = 0.0
     fd.density = 3
-    assert isclose(fd.mass, 0.0, rel_tol=0.0001)
+    assert np.isclose(fd.mass, 0.0, rtol=0.0001)
     fd2 = models.RaftFoundation()
     fd2.length = 4
     fd2.width = 6
@@ -88,4 +89,4 @@ def test_load_nan():
 
 
 if __name__ == '__main__':
-    test_load_nan()
+    test_pad_density_setter()

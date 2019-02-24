@@ -41,7 +41,7 @@ class Soil(PhysicalObject):
     _plasticity_index = None
     _gravity = 9.8
 
-    def __init__(self, pw=9800):
+    def __init__(self, pw=9800, **kwargs):
         self._pw = pw  # specific weight of water
         self.stack = []
         self._extra_class_inputs = [
@@ -70,6 +70,9 @@ class Soil(PhysicalObject):
         if not hasattr(self, "inputs"):
             self.inputs = []
         self.inputs += list(self._extra_class_inputs)
+        for param in kwargs:
+            if param in self.inputs:
+                setattr(self, param, kwargs[param])
 
     @property
     def ancestor_types(self):
@@ -713,10 +716,13 @@ class CriticalSoil(Soil):
     lamb_crl = 0.0
     type = "critical_soil"
 
-    def __init__(self, pw=9800):
+    def __init__(self, pw=9800, **kwargs):
         super(CriticalSoil, self).__init__(pw=pw)  # run parent class initialiser function
         self._extra_class_inputs = ["e_cr0", "p_cr0", "lamb_crl"]
         self.inputs = self.inputs + self._extra_class_inputs
+        for param in kwargs:
+            if param in self.inputs:
+                setattr(self, param, kwargs[param])
 
     @property
     def ancestor_types(self):
@@ -732,10 +738,13 @@ class StressDependentSoil(Soil):
     _p_atm = 101000.0  # Pa
     type = "stress_dependent_soil"
 
-    def __init__(self, pw=9800):
+    def __init__(self, pw=9800, **kwargs):
         super(StressDependentSoil, self).__init__(pw=pw)
         self._extra_class_inputs = ["g0_mod", "p_atm"]
         self.inputs = self.inputs + self._extra_class_inputs
+        for param in kwargs:
+            if param in self.inputs:
+                setattr(self, param, kwargs[param])
 
     @property
     def ancestor_types(self):

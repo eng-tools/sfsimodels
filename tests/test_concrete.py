@@ -1,12 +1,10 @@
-__author__ = 'maximmillen'
-
-from sfsimodels.checking_tools import isclose
+import numpy as np
 from sfsimodels.models.material import Concrete
 
 
 def test_youngs():
     concrete = Concrete()
-    assert isclose(concrete.youngs_concrete, 25084388909.2, 0.0001)
+    assert np.isclose(concrete.youngs_concrete, 25084388909.2, rtol=0.0001)
 
 
 def can_iterate():
