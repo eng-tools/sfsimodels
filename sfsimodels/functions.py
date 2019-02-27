@@ -1,3 +1,5 @@
+from collections.__init__ import OrderedDict
+
 __author__ = 'maximmillen'
 
 
@@ -44,3 +46,57 @@ def collect_serial_value(value):
                 return values
     else:
         return value
+
+
+def get_key_value(value, objs, key=None):
+    if key is not None and "_id" == key[-3:]:
+        obj_base_type = key[:-3]
+        return obj_base_type, objs[obj_base_type][int(value)]
+    elif isinstance(value, list):
+        vals = []
+        for item in value:
+            ikey, val = get_key_value(item, objs)
+            vals.append(val)
+            # if isinstance(item, list) or isinstance(item, dict) or isinstance(item, OrderedDict):
+        return key, vals
+    elif isinstance(value, dict):
+        vals = {}
+        for item in value:
+            ikey, ivalue = get_key_value(value[item], objs, key=item)
+            vals[ikey] = ivalue
+        return key, vals
+    elif isinstance(value, OrderedDict):
+        vals = OrderedDict()
+        for item in value:
+            ikey, ivalue = get_key_value(value[item], objs, key=item)
+            vals[ikey] = ivalue
+        return key, vals
+    else:
+        return key, value
+
+
+def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
+    """
+    Cycles through a dictionary and adds the key-value pairs to an object.
+
+    :param obj:
+    :param dictionary:
+    :param exceptions:
+    :param verbose:
+    :return:
+    """
+    if exceptions is None:
+        exceptions = []
+    for item in dictionary:
+        if item in exceptions:
+            continue
+        if dictionary[item] is not None:
+            if verbose:
+                print("process: ", item, dictionary[item])
+            key, value = get_key_value(dictionary[item], objs, key=item)
+            if verbose:
+                print("assign: ", key, value)
+            try:
+                setattr(obj, key, value)
+            except AttributeError:
+                raise AttributeError("Can't set {0}={1} on object: {2}".format(key, value, obj))

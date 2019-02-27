@@ -133,6 +133,34 @@ def test_save_and_load_building():
     a.close()
 
 
+def test_save_and_load_wall_building():
+    number_of_storeys = 6
+    interstorey_height = 3.4  # m
+    masses = 40.0e3  # kg
+    n_bays = 3
+
+    fb = models.WallBuilding(number_of_storeys)
+    fb.id = 1
+    fb.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
+    fb.floor_length = 18.0  # m
+    fb.floor_width = 16.0  # m
+    fb.storey_masses = masses * np.ones(number_of_storeys)  # kg
+
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(fb)
+
+    ecp_output.name = "a single wall building"
+    ecp_output.units = "N, kg, m, s"
+    ecp_output.comments = ""
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    objs = sm.loads_json(p_str)
+    building = objs["buildings"][1]
+    assert np.isclose(building.floor_length, 18.0)
+    # a = open("temp.json", "w")
+    # a.write(p_str)
+    # a.close()
+
+
 def test_save_and_load_2d_frame_building():
     number_of_storeys = 6
     interstorey_height = 3.4  # m
@@ -140,6 +168,7 @@ def test_save_and_load_2d_frame_building():
     n_bays = 3
 
     fb2d = models.FrameBuilding2D(number_of_storeys, n_bays)
+    fb2d.n_storeys = 6
     fb2d.id = 1
     fb2d.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb2d.floor_length = 18.0  # m
@@ -319,15 +348,41 @@ def test_load_frame_w_hinges():
     assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
 
 
+class Custom3Req(sm.CustomObject):
+    type = "custom3"
+
+    def __init__(self, p1, p2, p3):
+        super(Custom3Req, self).__init__()
+
+        self._extra_class_variables = ["p1", "p2", "p3"]
+        self.inputs += self._extra_class_variables
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+
+
+def test_can_set_more_than_two_positional_args():
+    c3 = Custom3Req(1, 3, 5)
+    c3.id = 1
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(c3)
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    objs = sm.loads_json(p_str, custom={"custom_object-custom3": Custom3Req})
+    cus = objs["custom_object"][1]
+    assert cus.p2 == 3
+    assert cus.p3 == 5
+
+
 if __name__ == '__main__':
-    test_load_json()
+    # test_load_json()
+    # test_save_and_load_wall_building()
     # test_save_and_load_building()
     # test_load_and_save_structure()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    # test_save_and_load_2d_frame_building()
+    test_save_and_load_2d_frame_building()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

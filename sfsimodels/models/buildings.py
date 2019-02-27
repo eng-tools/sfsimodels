@@ -41,6 +41,7 @@ class Building(PhysicalObject):
                 "name",
                 "base_type",
                 "type",
+                'n_storeys',
                 'floor_length',
                 'floor_width',
                 'interstorey_heights',
@@ -48,7 +49,6 @@ class Building(PhysicalObject):
             ]
         self.inputs += self._extra_class_variables
         self.all_parameters = self.inputs + [
-            "n_storeys"
         ]
 
     @property
@@ -109,6 +109,10 @@ class Building(PhysicalObject):
     @property
     def n_storeys(self):
         return self._n_storeys
+
+    @n_storeys.setter
+    def n_storeys(self, value):
+        assert self._n_storeys == value
 
     @property
     def interstorey_heights(self):
@@ -213,11 +217,17 @@ class Frame(object):
     _bay_lengths = None
     _custom_beam_section = None
     _custom_column_section = None
+    _loaded_beam_section_ids = None  # should not be accessed by end user
+    _loaded_beam_sections = None  # should not be accessed by end user
+    _loaded_column_section_ids = None  # should not be accessed by end user
+    _loaded_column_sections = None  # should not be accessed by end user
 
     def __init__(self, n_storeys, n_bays):
         if not hasattr(self, "inputs"):
             self.inputs = []
         self._extra_class_variables = [
+            "n_bays",
+            "n_storeys",
             "beams",
             "columns",
             "bay_lengths"
@@ -283,17 +293,95 @@ class Frame(object):
     def n_bays(self):
         return self._n_bays
 
+    @n_bays.setter
+    def n_bays(self, value):
+        assert self._n_bays == value
+
     @property
     def n_storeys(self):
         return self._n_storeys
+
+    @n_storeys.setter
+    def n_storeys(self, value):
+        assert self._n_storeys == value
 
     @property
     def n_cols(self):
         return self._n_bays + 1
 
-    @n_bays.setter
-    def n_bays(self, value):
-        raise ModelError("Can not set n_bays, only on initialisation")
+    @property
+    def beam_section_ids(self):
+        return None
+
+    @beam_section_ids.setter
+    def beam_section_ids(self, beam_ids):
+        self._loaded_beam_section_ids = beam_ids
+        if self._loaded_beam_sections is not None:
+            self._assign_loaded_beams()
+
+    @property
+    def beam_sections(self):
+        return None
+
+    @beam_sections.setter
+    def beam_sections(self, beam_sections):
+        self._loaded_beam_sections = beam_sections
+        if self._loaded_beam_section_ids is not None:
+            self._assign_loaded_beams()
+
+    def _assign_loaded_beams(self):
+        for ss in range(self.n_storeys):
+            for bb in range(self.n_bays):
+                sect_is = self._loaded_beam_section_ids[ss][bb]
+                if hasattr(sect_is, "__len__"):
+                    n_sections = len(sect_is)
+                    self.beams[ss][bb].split_into_multiple([1] * n_sections)  # TODO: should be lengths
+                    for sect_i in range(len(sect_is)):
+                        beam_sect_id = str(self._loaded_beam_section_ids[ss][bb][sect_i])
+                        sect_dictionary = self._loaded_beam_sections[beam_sect_id]
+                        sf.add_to_obj(self.beams[ss][bb].sections[sect_i], sect_dictionary)
+                else:  # deprecated loading
+                    deprecation("Frame data structure is out-of-date, please load and save the file to update.")
+                    beam_sect_id = str(self._loaded_beam_section_ids[ss][bb])
+                    sect_dictionary = self._loaded_beam_sections[beam_sect_id]
+                    sf.add_to_obj(self.beams[ss][bb].sections[0], sect_dictionary)
+
+    @property
+    def column_section_ids(self):
+        return None
+
+    @column_section_ids.setter
+    def column_section_ids(self, column_ids):
+        self._loaded_column_section_ids = column_ids
+        if self._loaded_column_sections is not None:
+            self._assign_loaded_columns()
+
+    @property
+    def column_sections(self):
+        return None
+
+    @column_sections.setter
+    def column_sections(self, column_sections):
+        self._loaded_column_sections = column_sections
+        if self._loaded_column_section_ids is not None:
+            self._assign_loaded_columns()
+
+    def _assign_loaded_columns(self):
+        for ss in range(self.n_storeys):
+            for bb in range(self.n_bays):
+                sect_is = self._loaded_column_section_ids[ss][bb]
+                if hasattr(sect_is, "__len__"):
+                    n_sections = len(sect_is)
+                    self.columns[ss][bb].split_into_multiple([1] * n_sections)  # TODO: should be lengths
+                    for sect_i in range(len(sect_is)):
+                        column_sect_id = str(self._loaded_column_section_ids[ss][bb][sect_i])
+                        sect_dictionary = self._loaded_column_sections[column_sect_id]
+                        sf.add_to_obj(self.columns[ss][bb].sections[sect_i], sect_dictionary)
+                else:  # deprecated loading
+                    deprecation("Frame data structure is out-of-date, please load and save the file to update.")
+                    column_sect_id = str(self._loaded_column_section_ids[ss][bb])
+                    sect_dictionary = self._loaded_column_sections[column_sect_id]
+                    sf.add_to_obj(self.columns[ss][bb].sections[0], sect_dictionary)
 
     # @column_sections.setter
     # def column_sections(self, columns: dict):

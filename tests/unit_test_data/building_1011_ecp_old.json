@@ -7,8 +7,6 @@
 	"models": {
 		"building": {
 			"1": {
-				"n_storeys": 3,
-				"n_bays": 3,
 				"bay_lengths": [
 					4.35,
 					4.35,

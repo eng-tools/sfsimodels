@@ -1,62 +1,11 @@
 import json
-from sfsimodels.models import soils, buildings, foundations, material, systems, abstract_models
+from sfsimodels.models import soils, buildings, foundations, systems, abstract_models
 from collections import OrderedDict
-from sfsimodels import models
+from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
 
 
 standard_types = ["soil", "soil_profile", "foundation", "building", "section", "system", "custom_type"]
-
-
-def get_key_value(value, objs, key=None):
-    if key is not None and "_id" == key[-3:]:
-        obj_base_type = key[:-3]
-        return obj_base_type, objs[obj_base_type][int(value)]
-    elif isinstance(value, list):
-        vals = []
-        for item in value:
-            ikey, val = get_key_value(item, objs)
-            vals.append(val)
-            # if isinstance(item, list) or isinstance(item, dict) or isinstance(item, OrderedDict):
-        return key, vals
-    elif isinstance(value, dict):
-        vals = {}
-        for item in value:
-            ikey, ivalue = get_key_value(value[item], objs, key=item)
-            vals[ikey] = ivalue
-        return key, vals
-    elif isinstance(value, OrderedDict):
-        vals = OrderedDict()
-        for item in value:
-            ikey, ivalue = get_key_value(value[item], objs, key=item)
-            vals[ikey] = ivalue
-        return key, vals
-    else:
-        return key, value
-
-
-def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
-    """
-    Cycles through a dictionary and adds the key-value pairs to an object.
-
-    :param obj:
-    :param dictionary:
-    :param exceptions:
-    :param verbose:
-    :return:
-    """
-    if exceptions is None:
-        exceptions = []
-    for item in dictionary:
-        if item in exceptions:
-            continue
-        if dictionary[item] is not None:
-            if verbose:
-                print("process: ", item, dictionary[item])
-            key, value = get_key_value(dictionary[item], objs, key=item)
-            if verbose:
-                print("assign: ", key, value)
-            setattr(obj, key, value)
 
 
 def load_json(ffp, custom=None, verbose=0):
@@ -164,7 +113,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
 
     data_models = ecp_dict["models"]
 
-    exception_list = ["building", "system"]  # TODO: make system not an exception
+    exception_list = ["system"]  # TODO: make system not an exception
     objs = OrderedDict()
     collected = set([])
     # Set base type properly
@@ -200,7 +149,32 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                 else:
                     raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
                                    "add '%s-%s' to custom dict" % (base_type, m_id, base_type, base_type, obj["type"]))
-            new_instance = obj_class()
+            try:
+                new_instance = obj_class()
+            except TypeError as e:
+                if "required positional argument:" in str(e):
+                    parameter = str(e).split("argument: ")[-1]
+                    parameter = parameter[1:-1]
+                    new_instance = obj_class(data_models[mtype][m_id][parameter])
+                elif "required positional arguments:" in str(e):
+                    p_str = str(e).split("arguments: ")[-1]
+                    if ", and " in p_str:  # if more than 2
+                        partial = p_str.split(", and ")
+                        parameters = partial[0].split(", ") + partial[-1:]
+                    else:  # if one
+                        parameters = p_str.split(" and ")
+                    params = []
+                    for parameter in parameters:
+                        parameter = parameter[1:-1]
+                        try:
+                            params.append(data_models[mtype][m_id][parameter])
+                        except KeyError as e2:
+                            raise KeyError("Can't find required positional argument: {0} for {1} id: {2}".format(
+                                parameter, mtype, m_id
+                            ))
+                    new_instance = obj_class(*params)
+                else:
+                    raise TypeError(e)
             add_to_obj(new_instance, data_models[mtype][m_id], objs=objs, verbose=verbose)
             # print(mtype, m_id)
             objs[base_type][int(data_models[mtype][m_id]["id"])] = new_instance
@@ -214,74 +188,53 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
         if base_type not in objs:
             objs[base_type] = OrderedDict()
 
-        # if base_type == "soil_profile":
-        #     if "soil" not in objs:
-        #         objs["soil"] = OrderedDict()
+        # if base_type == "building":
         #     for m_id in data_models[mtype]:
         #         obj = data_models[mtype][m_id]
+        #         if obj["type"] in deprecated_types:
+        #             obj["type"] = deprecated_types[obj["type"]]
         #         if "type" not in obj:
         #             obj["type"] = base_type
-        #         try:
-        #             obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
-        #         except KeyError:
-        #             raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
-        #                            "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
-        #         new_soil_profile = obj_class()
-        #         new_soil_profile.id = data_models[mtype][m_id]["id"]
-        #         for j in range(len(data_models[mtype][m_id]["layers"])):
-        #             depth = data_models[mtype][m_id]['layers'][j]["depth"]
-        #             soil = objs["soil"][int(data_models[mtype][m_id]['layers'][j]["soil_id"])]
-        #             new_soil_profile.add_layer(depth, soil)
-        #         add_to_obj(new_soil_profile, data_models[mtype][m_id], exceptions=["layers"], verbose=verbose)
-        #         objs[base_type][int(data_models[mtype][m_id]["id"])] = new_soil_profile
-
-        if base_type == "building":
-            for m_id in data_models[mtype]:
-                obj = data_models[mtype][m_id]
-                if obj["type"] in deprecated_types:
-                    obj["type"] = deprecated_types[obj["type"]]
-                if "type" not in obj:
-                    obj["type"] = base_type
-                if obj["type"] in ["sdof"]:
-                    new_building = obj_map["%s-%s" % (base_type, obj["type"])]()
-                elif "building_frame" in obj["type"] or "frame_building" in obj["type"]:
-                    n_storeys = len(obj['interstorey_heights'])
-                    n_bays = len(obj['bay_lengths'])
-                    new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys, n_bays)
-                    for ss in range(n_storeys):
-                        for bb in range(n_bays):
-                            sect_is = obj["beam_section_ids"][ss][bb]
-                            if hasattr(sect_is, "__len__"):
-                                n_sections = len(sect_is)
-                                new_building.beams[ss][bb].split_into_multiple([1] * n_sections)  # TODO: should be lengths
-                                for sect_i in range(len(sect_is)):
-                                    beam_sect_id = str(obj["beam_section_ids"][ss][bb][sect_i])
-                                    sect_dictionary = obj["beam_sections"][beam_sect_id]
-                                    add_to_obj(new_building.beams[ss][bb].sections[sect_i], sect_dictionary, verbose=verbose)
-                            else:  # deprecated loading
-                                beam_sect_id = str(obj["beam_section_ids"][ss][bb])
-                                sect_dictionary = obj["beam_sections"][beam_sect_id]
-                                add_to_obj(new_building.beams[ss][bb].section[0], sect_dictionary, verbose=verbose)
-                        for cc in range(n_bays + 1):
-                            sect_is = obj["column_section_ids"][ss][cc]
-                            if hasattr(sect_is, "__len__"):
-                                n_sections = len(sect_is)
-                                # TODO: should be lengths
-                                new_building.columns[ss][cc].split_into_multiple([1] * n_sections)
-                                for sect_i in range(len(sect_is)):
-                                    column_sect_id = str(obj["column_section_ids"][ss][cc][sect_i])
-                                    sect_dictionary = obj["column_sections"][column_sect_id]
-                                    add_to_obj(new_building.columns[ss][cc].sections[sect_i], sect_dictionary, verbose=verbose)
-                            else:
-                                column_sect_id = str(obj["column_section_ids"][ss][cc])
-                                sect_dictionary = obj["column_sections"][column_sect_id]
-                                add_to_obj(new_building.columns[ss][cc].sections[0], sect_dictionary, verbose=verbose)
-
-                else:
-                    n_storeys = len(obj['interstorey_heights'])
-                    new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys)
-                add_to_obj(new_building, data_models[mtype][m_id], verbose=verbose)
-                objs[base_type][int(data_models[mtype][m_id]["id"])] = new_building
+        #         if obj["type"] in ["sdof"]:
+        #             new_building = obj_map["%s-%s" % (base_type, obj["type"])]()
+        #         elif "building_frame" in obj["type"] or "frame_building" in obj["type"]:
+        #             n_storeys = len(obj['interstorey_heights'])
+        #             n_bays = len(obj['bay_lengths'])
+        #             new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys, n_bays)
+        #             for ss in range(n_storeys):
+        #                 for bb in range(n_bays):
+        #                     sect_is = obj["beam_section_ids"][ss][bb]
+        #                     if hasattr(sect_is, "__len__"):
+        #                         n_sections = len(sect_is)
+        #                         new_building.beams[ss][bb].split_into_multiple([1] * n_sections)  # TODO: should be lengths
+        #                         for sect_i in range(len(sect_is)):
+        #                             beam_sect_id = str(obj["beam_section_ids"][ss][bb][sect_i])
+        #                             sect_dictionary = obj["beam_sections"][beam_sect_id]
+        #                             add_to_obj(new_building.beams[ss][bb].sections[sect_i], sect_dictionary, verbose=verbose)
+        #                     else:  # deprecated loading
+        #                         beam_sect_id = str(obj["beam_section_ids"][ss][bb])
+        #                         sect_dictionary = obj["beam_sections"][beam_sect_id]
+        #                         add_to_obj(new_building.beams[ss][bb].section[0], sect_dictionary, verbose=verbose)
+        #                 for cc in range(n_bays + 1):
+        #                     sect_is = obj["column_section_ids"][ss][cc]
+        #                     if hasattr(sect_is, "__len__"):
+        #                         n_sections = len(sect_is)
+        #                         # TODO: should be lengths
+        #                         new_building.columns[ss][cc].split_into_multiple([1] * n_sections)
+        #                         for sect_i in range(len(sect_is)):
+        #                             column_sect_id = str(obj["column_section_ids"][ss][cc][sect_i])
+        #                             sect_dictionary = obj["column_sections"][column_sect_id]
+        #                             add_to_obj(new_building.columns[ss][cc].sections[sect_i], sect_dictionary, verbose=verbose)
+        #                     else:
+        #                         column_sect_id = str(obj["column_section_ids"][ss][cc])
+        #                         sect_dictionary = obj["column_sections"][column_sect_id]
+        #                         add_to_obj(new_building.columns[ss][cc].sections[0], sect_dictionary, verbose=verbose)
+        #
+        #         else:
+        #             n_storeys = len(obj['interstorey_heights'])
+        #             new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys)
+        #         add_to_obj(new_building, data_models[mtype][m_id], verbose=verbose)
+        #         objs[base_type][int(data_models[mtype][m_id]["id"])] = new_building
 
         if base_type == "system":  # must be run after other objects are loaded
             for m_id in data_models[mtype]:
