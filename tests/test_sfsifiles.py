@@ -13,7 +13,7 @@ test_dir = os.path.dirname(__file__)
 
 def test_load_json():
     fp = test_dir + "/unit_test_data/ecp_models.json"
-    objs = files.load_json(fp, verbose=0)
+    objs = files.load_json(fp, verbose=1)
     assert np.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
     assert np.isclose(objs["foundations"][1].length, 1.0)
     assert np.isclose(objs["soil_profiles"][1].layers[0].unit_dry_weight, 15564.70588)
@@ -320,13 +320,14 @@ def test_load_frame_w_hinges():
 
 
 if __name__ == '__main__':
+    test_load_json()
     # test_save_and_load_building()
     # test_load_and_save_structure()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    test_save_and_load_2d_frame_building()
+    # test_save_and_load_2d_frame_building()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

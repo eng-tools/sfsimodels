@@ -5,7 +5,7 @@
     "sfsimodels_version": "0.5.0",
     "comments": "",
     "models": {
-        "soil": {
+        "soils": {
             "1": {
                 "id": 1,
                 "name": "Soil 0",
@@ -55,7 +55,7 @@
                 "e_curr": 0.6000000000000001
             }
         },
-        "soil_profile": {
+        "soil_profiles": {
             "1": {
                 "id": "1",
                 "name": "L1",
@@ -95,7 +95,7 @@
                 ]
             }
         },
-        "foundation": {
+        "foundations": {
             "1": {
                 "id": "1",
                 "name": "A",
@@ -137,7 +137,7 @@
                 "density": 2500.0
             }
         },
-        "building": {
+        "buildings": {
             "1": {
                 "id": "1",
                 "name": "foundation-only",
@@ -175,7 +175,7 @@
                 "mass_ratio": 1.0
             }
         },
-        "system": {
+        "systems": {
             "null": {
                 "id": 1,
                 "name": "main",

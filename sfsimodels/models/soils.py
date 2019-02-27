@@ -911,6 +911,13 @@ class SoilProfile(PhysicalObject):
     def layers(self):
         return self._layers
 
+    @layers.setter
+    def layers(self, layers):
+        for layer in layers:
+            layer_depth = layer["depth"]
+            sl = layer["soil"]  # is actually a soil object
+            self.add_layer(layer_depth, sl)
+
     def remove_layer_at_depth(self, depth):
         try:
             del self._layers[depth]
