@@ -153,9 +153,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                 new_instance = obj_class()
             except TypeError as e:
                 if "required positional argument:" in str(e):
-                    parameter = str(e).split("argument: ")[-1]
-                    parameter = parameter[1:-1]
-                    new_instance = obj_class(data_models[mtype][m_id][parameter])
+                    parameters = [str(e).split("argument: ")[-1]]
                 elif "required positional arguments:" in str(e):
                     p_str = str(e).split("arguments: ")[-1]
                     if ", and " in p_str:  # if more than 2
@@ -163,25 +161,26 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                         parameters = partial[0].split(", ") + partial[-1:]
                     else:  # if one
                         parameters = p_str.split(" and ")
-                    params = []
-                    for parameter in parameters:
-                        parameter = parameter[1:-1]
-                        try:
-                            params.append(data_models[mtype][m_id][parameter])
-                        except KeyError as e2:  # To be removed and just raise exception
-                            deprecation("Your file is out of date, "
-                                        "run sfsimodels.migrate_ecp(<file-path>, <out-file-path>).")
-                            if mtype == "building":
-                                params = [len(data_models[mtype][m_id]["storey_masses"])]  # n_storeys
-                                if "frame" in data_models[mtype][m_id]["type"]:
-                                    params.append(len(data_models[mtype][m_id]["bay_lengths"]))
-                            else:
-                                raise KeyError("Can't find required positional argument: {0} for {1} id: {2}".format(
-                                    parameter, mtype, m_id
-                                ))
-                    new_instance = obj_class(*params)
                 else:
                     raise TypeError(e)
+                params = []
+                for parameter in parameters:
+                    parameter = parameter[1:-1]
+                    try:
+                        params.append(data_models[mtype][m_id][parameter])
+                    except KeyError as e2:  # To be removed and just raise exception
+                        deprecation("Your file is out of date, "
+                                    "run sfsimodels.migrate_ecp(<file-path>, <out-file-path>).")
+                        if mtype == "building":
+                            params = [len(data_models[mtype][m_id]["storey_masses"])]  # n_storeys
+                            if "frame" in data_models[mtype][m_id]["type"]:
+                                params.append(len(data_models[mtype][m_id]["bay_lengths"]))
+                        else:
+                            raise KeyError("Can't find required positional argument: {0} for {1} id: {2}".format(
+                                parameter, mtype, m_id
+                            ))
+                new_instance = obj_class(*params)
+
             add_to_obj(new_instance, data_models[mtype][m_id], objs=objs, verbose=verbose)
             # print(mtype, m_id)
             objs[base_type][int(data_models[mtype][m_id]["id"])] = new_instance
@@ -194,54 +193,6 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
             continue
         if base_type not in objs:
             objs[base_type] = OrderedDict()
-
-        # if base_type == "building":
-        #     for m_id in data_models[mtype]:
-        #         obj = data_models[mtype][m_id]
-        #         if obj["type"] in deprecated_types:
-        #             obj["type"] = deprecated_types[obj["type"]]
-        #         if "type" not in obj:
-        #             obj["type"] = base_type
-        #         if obj["type"] in ["sdof"]:
-        #             new_building = obj_map["%s-%s" % (base_type, obj["type"])]()
-        #         elif "building_frame" in obj["type"] or "frame_building" in obj["type"]:
-        #             n_storeys = len(obj['interstorey_heights'])
-        #             n_bays = len(obj['bay_lengths'])
-        #             new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys, n_bays)
-        #             for ss in range(n_storeys):
-        #                 for bb in range(n_bays):
-        #                     sect_is = obj["beam_section_ids"][ss][bb]
-        #                     if hasattr(sect_is, "__len__"):
-        #                         n_sections = len(sect_is)
-        #                         new_building.beams[ss][bb].split_into_multiple([1] * n_sections)  # TODO: should be lengths
-        #                         for sect_i in range(len(sect_is)):
-        #                             beam_sect_id = str(obj["beam_section_ids"][ss][bb][sect_i])
-        #                             sect_dictionary = obj["beam_sections"][beam_sect_id]
-        #                             add_to_obj(new_building.beams[ss][bb].sections[sect_i], sect_dictionary, verbose=verbose)
-        #                     else:  # deprecated loading
-        #                         beam_sect_id = str(obj["beam_section_ids"][ss][bb])
-        #                         sect_dictionary = obj["beam_sections"][beam_sect_id]
-        #                         add_to_obj(new_building.beams[ss][bb].section[0], sect_dictionary, verbose=verbose)
-        #                 for cc in range(n_bays + 1):
-        #                     sect_is = obj["column_section_ids"][ss][cc]
-        #                     if hasattr(sect_is, "__len__"):
-        #                         n_sections = len(sect_is)
-        #                         # TODO: should be lengths
-        #                         new_building.columns[ss][cc].split_into_multiple([1] * n_sections)
-        #                         for sect_i in range(len(sect_is)):
-        #                             column_sect_id = str(obj["column_section_ids"][ss][cc][sect_i])
-        #                             sect_dictionary = obj["column_sections"][column_sect_id]
-        #                             add_to_obj(new_building.columns[ss][cc].sections[sect_i], sect_dictionary, verbose=verbose)
-        #                     else:
-        #                         column_sect_id = str(obj["column_section_ids"][ss][cc])
-        #                         sect_dictionary = obj["column_sections"][column_sect_id]
-        #                         add_to_obj(new_building.columns[ss][cc].sections[0], sect_dictionary, verbose=verbose)
-        #
-        #         else:
-        #             n_storeys = len(obj['interstorey_heights'])
-        #             new_building = obj_map["%s-%s" % (base_type, obj["type"])](n_storeys)
-        #         add_to_obj(new_building, data_models[mtype][m_id], verbose=verbose)
-        #         objs[base_type][int(data_models[mtype][m_id]["id"])] = new_building
 
         if base_type == "system":  # must be run after other objects are loaded
             for m_id in data_models[mtype]:
