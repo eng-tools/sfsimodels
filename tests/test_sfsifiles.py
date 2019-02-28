@@ -13,7 +13,7 @@ test_dir = os.path.dirname(__file__)
 
 def test_load_json():
     fp = test_dir + "/unit_test_data/ecp_models.json"
-    objs = files.load_json(fp, verbose=1)
+    objs = files.load_json(fp, verbose=0)
     assert np.isclose(objs["soils"][1].unit_dry_weight, 15564.70588)
     assert np.isclose(objs["foundations"][1].length, 1.0)
     assert np.isclose(objs["soil_profiles"][1].layers[0].unit_dry_weight, 15564.70588)
@@ -347,6 +347,48 @@ def test_load_frame_w_hinges():
     assert np.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
     assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
 
+
+def test_load_olf_file_w_frame_w_hinges():
+    # Define special class for section
+    class CustomBeamSection(sm.Section):
+        diametertop = None
+        fylong = None
+        filongtop = None
+
+        def __init__(self):
+            super(CustomBeamSection, self).__init__()
+            self._extra_class_variables = [
+                "diametertop",
+                "fylong",
+                "filongtop",
+                "myplus_section"
+            ]
+            self.inputs += self._extra_class_variables
+
+    # Attach the section class as the default for the building
+    class CustomBuildingFrame2D(sm.FrameBuilding2D):
+        _custom_beam_section = CustomBeamSection
+        _custom_column_section = None
+
+    fp = test_dir + "/unit_test_data/building_1011_ecp_old.json"
+
+    # Override the base_type-type for building-building_frame2D with the custom model
+    objs = files.load_json(fp, verbose=0, custom={"building-building_frame2D": CustomBuildingFrame2D})
+    bd = objs["building"][1]
+    assert np.isclose(bd.floor_length, 13.05)
+    assert np.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
+    assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
+    assert bd.beams[1][0].s[0].diametertop is None
+    assert np.isclose(bd.columns[1][0].s[0].nbar_hplusx, 2)
+    assert "diametertop" in bd.beams[0][0].s[0].inputs
+    ecp_output = files.Output()
+    ecp_output.add_to_dict(bd)
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    assert '"filongtop"' in p_str
+    objs = files.loads_json(p_str)
+    bd = objs["building"][1]
+    assert np.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
+    assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
 
 class Custom3Req(sm.CustomObject):
     type = "custom3"

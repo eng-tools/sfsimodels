@@ -168,10 +168,17 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                         parameter = parameter[1:-1]
                         try:
                             params.append(data_models[mtype][m_id][parameter])
-                        except KeyError as e2:
-                            raise KeyError("Can't find required positional argument: {0} for {1} id: {2}".format(
-                                parameter, mtype, m_id
-                            ))
+                        except KeyError as e2:  # To be removed and just raise exception
+                            deprecation("Your file is out of date, "
+                                        "run sfsimodels.migrate_ecp(<file-path>, <out-file-path>).")
+                            if mtype == "building":
+                                params = [len(data_models[mtype][m_id]["storey_masses"])]  # n_storeys
+                                if "frame" in data_models[mtype][m_id]["type"]:
+                                    params.append(len(data_models[mtype][m_id]["bay_lengths"]))
+                            else:
+                                raise KeyError("Can't find required positional argument: {0} for {1} id: {2}".format(
+                                    parameter, mtype, m_id
+                                ))
                     new_instance = obj_class(*params)
                 else:
                     raise TypeError(e)
@@ -360,3 +367,20 @@ class Output(object):
         for item in self.parameters():
             outputs[item] = self.__getattribute__(item)
         return outputs
+
+
+def migrate_ecp(in_ffp, out_ffp):
+    objs, meta_data = load_json_and_meta(in_ffp)
+    ecp_output = Output()
+    for m_type in objs:
+        for instance in objs[m_type]:
+            ecp_output.add_to_dict(objs[m_type][instance])
+    ecp_output.name = meta_data["name"]
+    ecp_output.units = meta_data["units"]
+    ecp_output.comments = meta_data["comments"]
+    ecp_output.sfsimodels_version = meta_data["sfsimodels_version"]
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    a = open(out_ffp, "w")
+    a.write(p_str)
+    a.close()
+

@@ -13,7 +13,7 @@ from sfsimodels.models import material
 from sfsimodels.models.systems import SoilStructureSystem
 from sfsimodels.models.time import TimeSeries
 from sfsimodels.output import format_value, format_name, output_to_table
-from sfsimodels.files import ecp_dict_to_objects, load_json, loads_json, Output
+from sfsimodels.files import ecp_dict_to_objects, load_json, loads_json, Output, migrate_ecp
 from sfsimodels.functions import clean_float, collect_serial_value, add_to_obj
 from sfsimodels.exceptions import DesignError, AnalysisError, ModelError, ModelWarning
 from sfsimodels import sensors

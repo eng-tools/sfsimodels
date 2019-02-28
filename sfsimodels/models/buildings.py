@@ -378,7 +378,8 @@ class Frame(object):
                         sect_dictionary = self._loaded_column_sections[column_sect_id]
                         sf.add_to_obj(self.columns[ss][bb].sections[sect_i], sect_dictionary)
                 else:  # deprecated loading
-                    deprecation("Frame data structure is out-of-date, please load and save the file to update.")
+                    deprecation("Frame data structure is out-of-date, "
+                                "run sfsimodels.migrate_ecp(<file-path>, <out-file-path>).")
                     column_sect_id = str(self._loaded_column_section_ids[ss][bb])
                     sect_dictionary = self._loaded_column_sections[column_sect_id]
                     sf.add_to_obj(self.columns[ss][bb].sections[0], sect_dictionary)
