@@ -113,7 +113,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
 
     data_models = ecp_dict["models"]
 
-    exception_list = ["system"]  # TODO: make system not an exception
+    exception_list = []
     objs = OrderedDict()
     collected = set([])
     # Set base type properly
@@ -186,45 +186,13 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
             objs[base_type][int(data_models[mtype][m_id]["id"])] = new_instance
 
     # Deal with all the exceptions
-    for mtype in data_models:
-        base_type = mtype
-
-        if base_type in collected:
-            continue
-        if base_type not in objs:
-            objs[base_type] = OrderedDict()
-
-        if base_type == "system":  # must be run after other objects are loaded
-            for m_id in data_models[mtype]:
-                obj = data_models[mtype][m_id]
-                if "type" not in obj:
-                    obj["type"] = base_type
-                try:
-                    obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
-                except KeyError:
-                    raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
-                                   "add '%s-%s' to custom dict" % (mtype, m_id, base_type, base_type, obj["type"]))
-                new_system = obj_class()
-
-                # Attach the soil profile
-                soil_profile_id = data_models[mtype][m_id]['soil_profile_id']
-                soil_profile = objs["soil_profile"][int(soil_profile_id)]
-                new_system.sp = soil_profile
-
-                # Attach the foundation
-                foundation_id = data_models[mtype][m_id]['foundation_id']
-                foundation = objs["foundation"][int(foundation_id)]
-                new_system.fd = foundation
-
-                # Attach the building
-                building_id = data_models[mtype][m_id]['building_id']
-                building = objs["building"][int(building_id)]
-                new_system.bd = building
-
-                # Add remaining parameters
-                ignore_list = ["foundation_id", "building_id", "soil_profile_id"]
-                add_to_obj(new_system, data_models[mtype][m_id], exceptions=ignore_list, verbose=verbose)
-                objs[base_type][int(data_models[mtype][m_id]["id"])] = new_system
+    # for mtype in data_models:
+    #     base_type = mtype
+    #
+    #     if base_type in collected:
+    #         continue
+    #     if base_type not in objs:
+    #         objs[base_type] = OrderedDict()
 
     all_bts = list(objs)
     for base_type in all_bts:  # Support for old style ecp file
