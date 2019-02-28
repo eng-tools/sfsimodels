@@ -289,6 +289,7 @@ class Output(object):
 
 
 def migrate_ecp(in_ffp, out_ffp):
+    """Migrates and ECP file to the current version of sfsimodels"""
     objs, meta_data = load_json_and_meta(in_ffp)
     ecp_output = Output()
     for m_type in objs:
