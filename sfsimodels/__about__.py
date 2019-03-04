@@ -1,1 +1,4 @@
-__version__ = "0.9.6"
+__project__ = "sfsimodels"
+__author__ = "Maxim Millen"
+__version__ = "0.9.7"
+__license__ = "MIT"

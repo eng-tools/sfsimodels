@@ -21,3 +21,5 @@ from sfsimodels import sensors
 # from sfsimodels.build_model_descriptions import print_all_parameters
 from sfsimodels.models.foundations import PadFoundation, RaftFoundation  # deprecated objects
 from sfsimodels.models.buildings import FrameBuilding, WallBuilding, Structure, FrameBuilding2D  # deprecated objects
+
+from sfsimodels import __about__
