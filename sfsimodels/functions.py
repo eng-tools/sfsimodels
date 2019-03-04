@@ -1,6 +1,4 @@
-from collections.__init__ import OrderedDict
-
-__author__ = 'maximmillen'
+from collections import OrderedDict
 
 
 def convert_stress_to_mass(q, width, length, gravity):
