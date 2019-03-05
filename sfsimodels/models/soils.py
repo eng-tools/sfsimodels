@@ -846,6 +846,14 @@ class SoilProfile(PhysicalObject):
         return super(SoilProfile, self).ancestor_types + ["soil_profile"]
 
     def add_layer(self, depth: float, soil):
+        """
+        Adds a soil to the SoilProfile at a set depth.
+
+        Note, the soils are automatically reordered based on depth from surface.
+
+        :param depth: depth from surface to top of soil layer
+        :param soil: Soil object
+        """
 
         self._layers[depth] = soil
         self._sort_layers()
@@ -864,26 +872,37 @@ class SoilProfile(PhysicalObject):
                     soil.saturation = sat_height / self.layer_height(li)
 
     def _sort_layers(self):
-        """
-        Sort the layers by depth.
-        :return:
-        """
+        """Sort the layers by depth."""
         self._layers = OrderedDict(sorted(self._layers.items(), key=lambda t: t[0]))
 
     @property
     def id(self):
+        """Get the id number of the soil profile"""
         return self._id
 
     @id.setter
     def id(self, value: int):
+        """
+        Set the id of the soil profile
+
+        :param value:
+        :return:
+        """
         self._id = int(value)
 
     @property
     def gwl(self):
+        """Get the ground water level"""
         return self._gwl
 
     @gwl.setter
     def gwl(self, value: float):
+        """
+        Set the depth from the surface to the ground water level (gwl)
+
+        :param value:
+        :return:
+        """
         self._gwl = float(value)
 
     @property
@@ -892,13 +911,20 @@ class SoilProfile(PhysicalObject):
 
     @height.setter
     def height(self, value: float):
+        """
+        Sets the depth from the surface to the base of the soil profile
+
+        :param value:
+        :return:
+        """
         self._height = float(value)
 
     def layer_height(self, layer_int):
         """
-        The number of the layer.
+        Get the layer height by layer id number.
+
         :param layer_int:
-        :return:
+        :return: float, height of the soil layer
         """
         if layer_int == self.n_layers:
             if self.height is None:
@@ -995,6 +1021,7 @@ class SoilProfile(PhysicalObject):
     def equivalent_crust_cohesion(self):
         """
         Calculate the equivalent crust cohesion strength according to Karamitros et al. 2013 sett, pg 8 eq. 14
+
         :return: equivalent cohesion [Pa]
         """
         if len(self.layers) > 1:
@@ -1030,6 +1057,8 @@ class SoilProfile(PhysicalObject):
     def one_vertical_total_stress(self, z_c: float):
         """
         Determine the vertical total stress at a single depth z_c.
+
+        :param z_c: depth from surface
         """
         total_stress = 0.0
         depths = self.depths
@@ -1063,12 +1092,16 @@ class SoilProfile(PhysicalObject):
     def hydrostatic_pressure(self, y_c):
         """
         Determine the vertical effective stress at a single depth y_c.
+
+        :param y_c: float, depth from surface
         """
         return np.where(y_c < self.gwl, 0.0, (y_c - self.gwl) * self.unit_water_weight)
 
     def vert_eff_stress(self, y_c):
         """
         Determine the vertical effective stress at a single depth z_c.
+
+        :param y_c: float, depth from surface
         """
         sigma_v_c = self.vertical_total_stress(y_c)
         pp = self.hydrostatic_pressure(y_c)
@@ -1076,9 +1109,16 @@ class SoilProfile(PhysicalObject):
         return sigma_veff_c
 
     def vertical_effective_stress(self, y_c):  # deprecated function
+        """Deprecated. Use vert_eff_stress"""
         return self.vert_eff_stress(y_c)
 
     def shear_vel_at_depth(self, y_c):
+        """
+        Get the shear wave velocity at a depth.
+
+        :param y_c: float, depth from surface
+        :return:
+        """
         sl = self.get_soil_at_depth(y_c)
         if y_c <= self.gwl:
             saturation = False
@@ -1093,6 +1133,14 @@ class SoilProfile(PhysicalObject):
 
 
 def discretize_soil_profile(sp, incs=None, target=1.0):
+    """
+    Splits the soil profile into slices and stores as dictionary
+
+    :param sp: SoilProfile
+    :param incs: array_like, increments of depth to use for each layer
+    :param target: target depth increment size
+    :return: dict
+    """
 
     if incs is None:
         incs = np.ones(sp.n_layers) * target
@@ -1132,11 +1180,13 @@ def discretize_soil_profile(sp, incs=None, target=1.0):
 
 class SoilCritical(CriticalSoil):
     def __init__(self, pw=9800):
+        """Deprecated. Use CriticalSoil"""
         deprecation("SoilCritical class is deprecated (remove in version 1.0), use CriticalSoil.")
         super(SoilCritical, self).__init__(pw=pw)
 
 
 class SoilStressDependent(StressDependentSoil):
     def __init__(self, pw=9800):
+        """Deprecated. Use StressDependentSoil"""
         deprecation("SoilStressDependent class is deprecated (remove in version 1.0), use StressDependentSoil.")
         super(SoilStressDependent, self).__init__(pw=pw)
