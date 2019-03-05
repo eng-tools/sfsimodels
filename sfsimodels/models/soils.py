@@ -881,11 +881,11 @@ class SoilProfile(PhysicalObject):
         return self._id
 
     @id.setter
-    def id(self, value: int):
+    def id(self, value):
         """
         Set the id of the soil profile
 
-        :param value:
+        :param value: int
         :return:
         """
         self._id = int(value)
@@ -910,11 +910,11 @@ class SoilProfile(PhysicalObject):
         return self._height
 
     @height.setter
-    def height(self, value: float):
+    def height(self, value):
         """
         Sets the depth from the surface to the base of the soil profile
 
-        :param value:
+        :param value: float, height
         :return:
         """
         self._height = float(value)
