@@ -845,7 +845,7 @@ class SoilProfile(PhysicalObject):
     def ancestor_types(self):
         return super(SoilProfile, self).ancestor_types + ["soil_profile"]
 
-    def add_layer(self, depth: float, soil):
+    def add_layer(self, depth, soil):
         """
         Adds a soil to the SoilProfile at a set depth.
 
