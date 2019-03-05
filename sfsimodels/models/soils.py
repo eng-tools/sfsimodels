@@ -896,7 +896,7 @@ class SoilProfile(PhysicalObject):
         return self._gwl
 
     @gwl.setter
-    def gwl(self, value: float):
+    def gwl(self, value):
         """
         Set the depth from the surface to the ground water level (gwl)
 
