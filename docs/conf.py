@@ -62,7 +62,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'sphinx_autodoc_typehints'
+    # 'sphinx_autodoc_typehints'
               ]
 
 napoleon_use_param = True  # to get type hinting working
