@@ -1054,7 +1054,7 @@ class SoilProfile(PhysicalObject):
                 sigma_v_effs.append(self.one_vertical_total_stress(value))
             return np.array(sigma_v_effs)
 
-    def one_vertical_total_stress(self, z_c: float):
+    def one_vertical_total_stress(self, z_c):
         """
         Determine the vertical total stress at a single depth z_c.
 
