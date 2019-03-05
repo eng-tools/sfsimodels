@@ -65,6 +65,8 @@ extensions = [
     'sphinx_autodoc_typehints'
               ]
 
+napoleon_use_param = True  # to get type hinting working
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
