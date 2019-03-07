@@ -266,6 +266,7 @@ class Output(object):
                 models_dict[item] = new_dict
                 collected.append(item)
         for item in self.unordered_models:
+            print("item: ", item)
             if item not in collected:
                 new_dict, replacement_dict = unhash_dict(self.unordered_models[item])
                 models_dict[item] = new_dict
@@ -304,7 +305,7 @@ def unhash_dict(pdict):
     replacement_dict = OrderedDict()
     for i, item in enumerate(pdict):
         key = str(i + 1)
-        # int(item)  # TODO: stop replacement if item is an int!!!
+        assert int(item) > 1000  # avoid hashes that are in the same range as ids!
         new_dict[key] = pdict[item]
         replacement_dict[item] = key
     return new_dict, replacement_dict
