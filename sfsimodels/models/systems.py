@@ -2,6 +2,7 @@ from collections import OrderedDict
 from sfsimodels.models import SoilProfile, Foundation, Building, SDOFBuilding
 from sfsimodels.exceptions import ModelError
 from sfsimodels import functions as sf
+import uuid
 
 
 # class SoilSystem(object):
@@ -53,6 +54,7 @@ class SoilStructureSystem(object):
     name = None
     base_type = "system"
     type = "sfs"
+    _unique_hash = None
     _sp = SoilProfile()
     _bd = SDOFBuilding()
     _fd = Foundation()
@@ -139,3 +141,9 @@ class SoilStructureSystem(object):
         # Could add assertions here for type?
         self._bd = obj
         self._building_id = obj.id
+
+    @property
+    def unique_hash(self):
+        if self._unique_hash is None:
+            self._unique_hash = uuid.uuid1()
+        return self._unique_hash

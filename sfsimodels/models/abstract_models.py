@@ -4,11 +4,13 @@ import copy
 import types
 from sfsimodels.exceptions import ModelError
 from sfsimodels import functions as sf
+import uuid
 
 
 class PhysicalObject(object):
     _counter = 0
     type = "physical_object"
+    _unique_hash = None
     # inputs = ()
     skip_list = ()
 
@@ -86,6 +88,12 @@ class PhysicalObject(object):
                     continue
                 outputs[item] = sf.collect_serial_value(value)
         return outputs
+
+    @property
+    def unique_hash(self):
+        if self._unique_hash is None:
+            self._unique_hash = uuid.uuid1()
+        return self._unique_hash
 
 
 class CustomObject(PhysicalObject):

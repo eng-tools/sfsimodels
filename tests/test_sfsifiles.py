@@ -266,7 +266,7 @@ def test_saturation_set_in_soil_profile():
 
 
 def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
-    class Cantilever(object):
+    class Cantilever(sm.CustomObject):
         id = None
         base_type = "cantilever"
         type = "cantilever"
@@ -424,7 +424,7 @@ if __name__ == '__main__':
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    test_save_and_load_2d_frame_building()
+    test_save_and_load_soil()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

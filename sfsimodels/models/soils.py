@@ -807,6 +807,7 @@ class SoilProfile(PhysicalObject):
     unit_water_weight = 9800.  # [N/m3]
     _height = None
     hydrostatic = False
+    base_type = "soil_profile"
     type = "soil_profile"
 
     inputs = [
@@ -840,6 +841,21 @@ class SoilProfile(PhysicalObject):
         # for depth in self.layers:
         #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
         return outputs
+
+    def add_to_dict(self, models_dict, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = OrderedDict()
+        if "soil" not in models_dict:
+            models_dict["soil"] = OrderedDict()
+        profile_dict = self.to_dict()
+        profile_dict["layers"] = []
+        for layer in self.layers:
+            models_dict["soil"][self.layers[layer].unique_hash] = self.layers[layer].to_dict()
+            profile_dict["layers"].append({
+                "soil_id": str(self.layers[layer].id),
+                "depth": float(layer)
+            })
+        models_dict["soil_profile"][self.unique_hash] = profile_dict
 
     @property
     def ancestor_types(self):

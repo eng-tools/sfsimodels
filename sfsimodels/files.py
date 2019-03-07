@@ -233,21 +233,12 @@ class Output(object):
             raise ModelError("Object does not have attribute 'base_type' or 'type', cannot add to output.")
         if mtype not in self.unordered_models:  # Catch any custom objects
             self.unordered_models[mtype] = OrderedDict()
-        if mtype == "soil_profile":
-            if "soil" not in self.unordered_models:
-                self.unordered_models["soil"] = OrderedDict()
-            profile_dict = an_object.to_dict()
-            profile_dict["layers"] = []
-            for layer in an_object.layers:
-                self.unordered_models["soil"][an_object.layers[layer].id] = an_object.layers[layer].to_dict()
-                profile_dict["layers"].append({
-                    "soil_id": str(an_object.layers[layer].id),
-                    "depth": float(layer)
-                })
 
-            self.unordered_models["soil_profile"][an_object.id] = profile_dict
+        if hasattr(an_object, "add_to_dict"):
+            an_object.add_to_dict(self.unordered_models)
+
         elif hasattr(an_object, "to_dict"):
-            self.unordered_models[mtype][an_object.id] = an_object.to_dict(compression=self.compression)
+            self.unordered_models[mtype][an_object.unique_hash] = an_object.to_dict(compression=self.compression)
         else:
             raise ModelError("Object does not have method 'to_dict', cannot add to output.")
 
@@ -266,15 +257,18 @@ class Output(object):
 
     @property
     def models(self):
+        """Unhashed"""
         models_dict = OrderedDict()
         collected = []
         for item in standard_types:
             if item in self.unordered_models:
-                models_dict[item] = self.unordered_models[item]
+                new_dict, replacement_dict = unhash_dict(self.unordered_models[item])
+                models_dict[item] = new_dict
                 collected.append(item)
         for item in self.unordered_models:
             if item not in collected:
-                models_dict[item] = self.unordered_models[item]
+                new_dict, replacement_dict = unhash_dict(self.unordered_models[item])
+                models_dict[item] = new_dict
         return models_dict
 
     @staticmethod
@@ -304,3 +298,13 @@ def migrate_ecp(in_ffp, out_ffp):
     a.write(p_str)
     a.close()
 
+
+def unhash_dict(pdict):
+    new_dict = OrderedDict()
+    replacement_dict = OrderedDict()
+    for i, item in enumerate(pdict):
+        key = str(i + 1)
+        # int(item)  # TODO: stop replacement if item is an int!!!
+        new_dict[key] = pdict[item]
+        replacement_dict[item] = key
+    return new_dict, replacement_dict
