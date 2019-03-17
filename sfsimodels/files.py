@@ -266,7 +266,7 @@ class Output(object):
                 models_dict[item] = new_dict
                 collected.append(item)
         for item in self.unordered_models:
-            print("item: ", item)
+            # print("item: ", item)
             if item not in collected:
                 new_dict, replacement_dict = unhash_dict(self.unordered_models[item])
                 models_dict[item] = new_dict

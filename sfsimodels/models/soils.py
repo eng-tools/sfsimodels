@@ -76,6 +76,7 @@ class Soil(PhysicalObject):
 
     @property
     def ancestor_types(self):
+        """View list of types from inherited objects"""
         parent_ancestor_types = super(Soil, self).ancestor_types
         return parent_ancestor_types + ["soil"]
 
@@ -119,7 +120,6 @@ class Soil(PhysicalObject):
     def reset_all(self):
         """
         Resets all parameters to None
-        :return:
         """
         for item in self.inputs:
             setattr(self, "_%s" % item, None)
@@ -138,17 +138,14 @@ class Soil(PhysicalObject):
 
     @property
     def id(self):
-        """
-        Object id
-        :return:
-        """
+        """Object id"""
         return self._id
 
     @property
     def unit_weight(self):
         """
         The unit moist weight of the soil (accounts for saturation level)
-        :return:
+        :return: float
         """
         if self.saturation is not None:
             return self.unit_moist_weight
@@ -241,6 +238,7 @@ class Soil(PhysicalObject):
 
     @property
     def unit_dry_mass(self):
+        """The mass of the soil in dry state"""
         try:
             return self._unit_dry_weight / self._gravity
         except TypeError:
@@ -248,12 +246,19 @@ class Soil(PhysicalObject):
 
     @property
     def unit_sat_mass(self):
+        """The mass of the soil when fully saturated"""
         try:
             return self._unit_sat_weight / self._gravity
         except TypeError:
             return None
 
     def calc_shear_vel(self, saturated=True):
+        """
+        Calculate the shear wave velocity
+
+        :param saturated: bool, if true the use saturated mass
+        :return:
+        """
         try:
             if saturated:
                 return np.sqrt(self.g_mod / self.unit_sat_mass)
