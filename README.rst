@@ -13,6 +13,10 @@
     :target: https://github.com/eng-tools/sfsimodels/blob/master/LICENSE
     :alt: License
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.2596721.svg
+    :target: https://doi.org/10.5281/zenodo.2596721
+
+
 **********
 sfsimodels
 **********
@@ -56,6 +60,14 @@ Installation
 .. code:: bash
 
     pip install sfsimodels
+
+Citing
+======
+
+Please use the following citation:
+
+Millen M. D. L. (2019) Sfsimodels <version-number> - A set of standard models for assessing structural and geotechnical problems,
+https://pypi.org/project/sfsimodels/, doi: 10.5281/zenodo.2596721
 
 Saving and loading models
 =========================
