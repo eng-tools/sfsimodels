@@ -1236,7 +1236,7 @@ class SoilProfile(PhysicalObject):
                             raise ValueError("Cannot compute vertical effective stress at depth: {0}".format(cum_thickness))
                         value = sf.get_value_of_a_get_method(sl, fn0, extras={"saturated": saturated,
                                                                               'v_eff_stress': v_eff})
-                    elif fn1:
+                    elif hasattr(sl, fn1):
                         value = sf.get_value_of_a_get_method(sl, fn1, extras={"saturated": saturated})
                     elif hasattr(sl, item):
                         value = getattr(sl, item)
