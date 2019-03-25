@@ -268,6 +268,10 @@ class Soil(PhysicalObject):
         except TypeError:
             return None
 
+    def calc_shear_vel(self, saturated):
+        deprecation("Use get_shear_vel")
+        return self.get_shear_vel(saturated)
+
     def get_unit_mass(self, saturated):
         if saturated:
             return self.unit_sat_mass
