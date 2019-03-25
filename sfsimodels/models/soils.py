@@ -7,6 +7,7 @@ from sfsimodels.exceptions import ModelError, AnalysisError
 from sfsimodels.functions import clean_float
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels import checking_tools as ct
+from sfsimodels import functions as sf
 
 
 class Soil(PhysicalObject):
@@ -252,11 +253,11 @@ class Soil(PhysicalObject):
         except TypeError:
             return None
 
-    def calc_shear_vel(self, saturated=True):
+    def get_shear_vel(self, saturated):
         """
         Calculate the shear wave velocity
 
-        :param saturated: bool, if true the use saturated mass
+        :param saturated: bool, if true then use saturated mass
         :return:
         """
         try:
@@ -266,6 +267,12 @@ class Soil(PhysicalObject):
                 return np.sqrt(self.g_mod / self.unit_dry_mass)
         except TypeError:
             return None
+
+    def get_unit_mass(self, saturated):
+        if saturated:
+            return self.unit_sat_mass
+        else:
+            return self.unit_dry_mass
 
     @property
     def permeability(self):
@@ -755,6 +762,10 @@ class StressDependentSoil(Soil):
     def ancestor_types(self):
         return super(StressDependentSoil, self).ancestor_types + [self.type]
 
+    # @g_mod.setter
+    # def g_mod(self, value):
+    #     raise ValueError
+
     @property
     def g0_mod(self):
         return self._g0_mod
@@ -773,22 +784,34 @@ class StressDependentSoil(Soil):
         value = clean_float(value)
         self._p_atm = value
 
-    def g_mod_at_v_eff_stress(self, sigma_v_eff):
+    def get_g_mod_at_v_eff_stress(self, v_eff_stress):
         k0 = 1 - np.sin(self.phi_r)
-        return self.g0_mod * self.p_atm * (sigma_v_eff * (1 + 2 * k0) / 3 / self.p_atm) ** 0.5
+        return self.g0_mod * self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** 0.5
 
-    def g_mod_at_m_eff_stress(self, sigma_m_eff):
-        return self.g0_mod * self.p_atm * (sigma_m_eff / self.p_atm) ** 0.5
+    def get_g_mod_at_m_eff_stress(self, m_eff_stress):
+        return self.g0_mod * self.p_atm * (m_eff_stress / self.p_atm) ** 0.5
 
-    def calc_shear_vel_at_v_eff_stress(self, saturated, sigma_v_eff):
+    def get_shear_vel_at_v_eff_stress(self, v_eff_stress, saturated):
         try:
-            g_mod = self.g_mod_at_v_eff_stress(sigma_v_eff)
+            g_mod = self.get_g_mod_at_v_eff_stress(v_eff_stress)
             if saturated:
                 return np.sqrt(g_mod / self.unit_sat_mass)
             else:
                 return np.sqrt(g_mod / self.unit_dry_mass)
         except TypeError:
             return None
+
+    def g_mod_at_v_eff_stress(self, v_eff_stress):
+        deprecation("Use get_g_mod_at_v_eff_stress")
+        return self.get_g_mod_at_v_eff_stress(v_eff_stress)
+
+    def g_mod_at_m_eff_stress(self, m_eff_stress):
+        deprecation("Use get_g_mod_at_m_eff_stress")
+        return self.get_g_mod_at_m_eff_stress(m_eff_stress)
+
+    def calc_shear_vel_at_v_eff_stress(self, saturated, v_eff_stress):
+        deprecation("Use get_shear_vel_at_v_eff_stress - note inputs switched")
+        return self.get_shear_vel_at_v_eff_stress(v_eff_stress, saturated)
 
 
 class SoilLayer(Soil):  # not used
@@ -828,6 +851,7 @@ class SoilProfile(PhysicalObject):
         super(PhysicalObject, self).__init__()  # run parent class initialiser function
         self._layers = OrderedDict([(0.0, Soil())])  # [depth to top of layer, Soil object]
         self.skip_list = ["layers"]
+        self.split = OrderedDict()
 
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
@@ -1045,6 +1069,7 @@ class SoilProfile(PhysicalObject):
 
         :return: equivalent cohesion [Pa]
         """
+        deprecation("Will be moved to a function")
         if len(self.layers) > 1:
             crust = self.layer(0)
             crust_phi_r = np.radians(crust.phi)
@@ -1054,6 +1079,7 @@ class SoilProfile(PhysicalObject):
 
     @property
     def crust_effective_unit_weight(self):
+        deprecation("Will be moved to a function")
         if len(self.layers) > 1:
             crust = self.layer(0)
             crust_height = self.layer_depth(1)
@@ -1062,7 +1088,11 @@ class SoilProfile(PhysicalObject):
             unit_weight_eff = (total_stress_base - pore_pressure_base) / crust_height
             return unit_weight_eff
 
-    def vertical_total_stress(self, z):
+    def vertical_total_stress(self, y_c):
+        deprecation("Use get_v_total_stress_at_depth")
+        return self.get_v_total_stress_at_depth(y_c)
+
+    def get_v_total_stress_at_depth(self, z):
         """
         Determine the vertical total stress at depth z, where z can be a number or an array of numbers.
         """
@@ -1116,6 +1146,10 @@ class SoilProfile(PhysicalObject):
 
         :param y_c: float, depth from surface
         """
+        deprecation("Use get_hydrostatic_pressure_at_depth")
+        return self.get_hydrostatic_pressure_at_depth(y_c)
+
+    def get_hydrostatic_pressure_at_depth(self, y_c):
         return np.where(y_c < self.gwl, 0.0, (y_c - self.gwl) * self.unit_water_weight)
 
     def vert_eff_stress(self, y_c):
@@ -1124,13 +1158,23 @@ class SoilProfile(PhysicalObject):
 
         :param y_c: float, depth from surface
         """
-        sigma_v_c = self.vertical_total_stress(y_c)
-        pp = self.hydrostatic_pressure(y_c)
+        deprecation("Use get_v_eff_stress_at_depth")
+        return self.get_v_eff_stress_at_depth(y_c)
+
+    def get_v_eff_stress_at_depth(self, y_c):
+        """
+        Determine the vertical effective stress at a single depth z_c.
+
+        :param y_c: float, depth from surface
+        """
+        sigma_v_c = self.get_v_total_stress_at_depth(y_c)
+        pp = self.get_hydrostatic_pressure_at_depth(y_c)
         sigma_veff_c = sigma_v_c - pp
         return sigma_veff_c
 
     def vertical_effective_stress(self, y_c):  # deprecated function
-        """Deprecated. Use vert_eff_stress"""
+        """Deprecated. Use get_vert_eff_stress"""
+        deprecation("Use get_v_eff_stress_at_depth")
         return self.vert_eff_stress(y_c)
 
     def shear_vel_at_depth(self, y_c):
@@ -1145,12 +1189,63 @@ class SoilProfile(PhysicalObject):
             saturation = False
         else:
             saturation = True
-        if hasattr(sl, "calc_shear_vel_at_v_eff_stress"):
-            v_eff = self.vertical_effective_stress(y_c)
-            vs = sl.calc_shear_vel_at_v_eff_stress(saturation, v_eff)
+        if hasattr(sl, "get_shear_vel_at_v_eff_stress"):
+            v_eff = self.get_v_eff_stress_at_depth(y_c)
+            vs = sl.get_shear_vel_at_v_eff_stress(v_eff, saturation)
         else:
-            vs = sl.calc_shear_vel(saturation)
+            vs = sl.get_shear_vel(saturation)
         return vs
+
+    def split_props(self, incs=None, target=1.0, props=None):
+        if incs is None:
+            incs = np.ones(self.n_layers) * target
+        if props is None:
+            props = ['unit_mass', 'shear_vel']
+        else:
+            if 'thickness' in props:
+                props.remove('thickness')
+        dd = OrderedDict([('thickness', [])])
+        for item in props:
+            dd[item] = []
+
+        cum_thickness = 0
+        for i in range(self.n_layers):
+            sl = self.layer(i + 1)
+            thickness = self.layer_height(i + 1)
+            if thickness is None:
+                raise ValueError("thickness of layer {0} is None, check if soil_profile.height is set".format(i + 1))
+            n_slices = max(int(thickness / incs[i]), 1)
+            slice_thickness = float(thickness) / n_slices
+            for j in range(n_slices):
+                dd["thickness"].append(slice_thickness)
+                v_eff = None
+                cum_thickness += slice_thickness
+                if cum_thickness >= self.gwl:
+                    saturated = True
+                else:
+                    saturated = False
+                # some properties require vertical effective stress or saturation
+                for item in props:
+                    value = None
+                    fn0 = "get_{0}_at_v_eff_stress".format(item)  # first check for stress dependence
+                    fn1 = "get_{0}".format(item)  # first check for stress dependence
+                    if hasattr(sl, fn0):
+                        try:
+                            v_eff = self.get_v_eff_stress_at_depth(cum_thickness)
+                        except TypeError:
+                            raise ValueError("Cannot compute vertical effective stress at depth: {0}".format(cum_thickness))
+                        value = sf.get_value_of_a_get_method(sl, fn0, extras={"saturated": saturated,
+                                                                              'v_eff_stress': v_eff})
+                    elif fn1:
+                        value = sf.get_value_of_a_get_method(sl, fn1, extras={"saturated": saturated})
+                    elif hasattr(sl, item):
+                        value = getattr(sl, item)
+
+                    dd[item].append(value)
+
+        for item in dd:
+            dd[item] = np.array(dd[item])
+        self.split = dd
 
 
 def discretize_soil_profile(sp, incs=None, target=1.0):
@@ -1183,9 +1278,9 @@ def discretize_soil_profile(sp, incs=None, target=1.0):
             else:
                 rho = sl.unit_dry_mass
                 saturation = False
-            if hasattr(sl, "calc_shear_vel_at_v_eff_stress"):
+            if hasattr(sl, "get_shear_vel_at_v_eff_stress"):
                 v_eff = sp.vertical_effective_stress(cum_thickness)
-                vs = sl.calc_shear_vel_at_v_eff_stress(saturation, v_eff)
+                vs = sl.get_shear_vel_at_v_eff_stress(v_eff, saturation)
             else:
                 vs = sl.calc_shear_vel(saturation)
             dd["shear_vel"].append(vs)

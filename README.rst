@@ -124,6 +124,14 @@ To deploy the package to pypi.com you need to:
     git tag 0.5.2 -m "version 0.5.2"
     git push --tags origin pypi
 
+Contributing
+============
+
+ * All properties that require exterior parameters should be named `get_<property>`,
+ * Parameters that vary with depth in the soil profile should be named `get_<property>_at_depth`
+ * Properties in the stress dependent soil should use `get_<property>_at_v_eff_stress` to obtain the property
+
+
 
 Documentation
 =============

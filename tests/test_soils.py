@@ -580,8 +580,84 @@ def test_get_soil_at_depth_in_soil_profile():
     assert np.isclose(sl_at_4.cohesion, sl2_cohesion)
 
 
+def test_soil_profile_split_simple_prop():
+    sl1 = models.Soil()
+    sl1_gmod = 30e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+    sl2 = models.Soil()
+    sl2_cohesion = 20e3
+    sl2.cohesion = sl2_cohesion
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    sp.height = 5
+    sp.split_props(props=["cohesion"])
+    assert len(sp.split['thickness']) == len(sp.split['cohesion'])
+    assert None in sp.split['cohesion']
+    sl1.cohesion = 0.0
+    sp.split_props(props=["cohesion"])
+    assert np.max(sp.split["cohesion"]) == 20e3
+
+
+def test_soil_profile_split_complex():
+    sl1 = models.Soil()
+    sl1_gmod = 40e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+    sl2 = models.Soil()
+    sl2_cohesion = 20e3
+    sl2.cohesion = sl2_cohesion
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    sp.height = 5
+    sp.split_props(props=["shear_vel"])
+    assert len(sp.split['thickness']) == len(sp.split['shear_vel'])
+
+    assert None in sp.split['shear_vel']
+    sl2.g_mod = 40e6
+    sp.layer(2).unit_dry_weight = sl1_unit_dry_weight
+    sp.split_props(props=["shear_vel"])
+    print(sp.split["shear_vel"])
+    assert None not in sp.split['shear_vel']
+
+
+def test_soil_profile_split_complex_stress_dependent():
+    sl1 = models.Soil()
+    sl1_gmod = 40e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+    sl2 = models.StressDependentSoil()
+    sl2.phi = 30.0
+
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    sp.height = 5
+    with pytest.raises(ValueError):
+        sp.split_props(props=["shear_vel"])
+    sl2.unit_dry_weight = 17000
+    sp.split_props(props=["shear_vel"])
+    assert len(sp.split['thickness']) == len(sp.split['shear_vel'])
+
+    assert None in sp.split['shear_vel']
+    sl2.g0_mod = 501
+    sp.layer(2).unit_dry_weight = sl1_unit_dry_weight
+    sp.split_props(props=["shear_vel"])
+    assert None not in sp.split['shear_vel']
+
+
+
 if __name__ == '__main__':
-    test_e_critical()
+    # test_e_critical()
+    test_soil_profile_split_complex_stress_dependent()
     # test_poissons_ratio_again()
     # test_reset_all()
     # test_override_fake_key()

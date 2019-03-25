@@ -98,3 +98,33 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
                 setattr(obj, key, value)
             except AttributeError:
                 raise AttributeError("Can't set {0}={1} on object: {2}".format(key, value, obj))
+
+
+def get_value_of_a_get_method(obj, method, extras=None):
+    if extras is None:
+        extras = {}
+    try:
+        value = getattr(obj, method)()
+    except TypeError as e:
+        if "required positional argument:" in str(e):
+            parameters = [str(e).split("argument: ")[-1]]
+        elif "required positional arguments:" in str(e):
+            p_str = str(e).split("arguments: ")[-1]
+            if ", and " in p_str:  # if more than 2
+                partial = p_str.split(", and ")
+                parameters = partial[0].split(", ") + partial[-1:]
+            else:  # if one
+                parameters = p_str.split(" and ")
+        else:
+            raise TypeError(e)
+        params = []
+        for parameter in parameters:
+            parameter = parameter[1:-1]
+            if parameter in extras:
+                params.append(extras[parameter])
+            else:
+                params.append(getattr(obj, parameter))
+
+        value = getattr(obj, method)(*params)
+    return value
+
