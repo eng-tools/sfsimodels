@@ -130,6 +130,8 @@ Contributing
  * All properties that require exterior parameters should be named `get_<property>`,
  * Parameters that vary with depth in the soil profile should be named `get_<property>_at_depth`
  * Properties in the stress dependent soil should use `get_<property>_at_v_eff_stress` to obtain the property
+ * Functions that set properties on objects should start with 'set' then the property the citation, i.e. `set_<property>_<author-year>`
+ * Methods that generate properties on the object should have the prefix 'gen_' then property i.e. `gen_<property` e.g. 'soil_profile.gen_split()`
 
 
 

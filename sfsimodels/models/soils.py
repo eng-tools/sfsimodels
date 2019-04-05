@@ -286,7 +286,10 @@ class Soil(PhysicalObject):
     @property
     def phi_r(self):
         """internal friction angle in radians"""
-        return np.radians(self.phi)
+        try:
+            return np.radians(self.phi)
+        except AttributeError:
+            return None
 
     @property
     def k_0(self):
@@ -753,10 +756,11 @@ class StressDependentSoil(Soil):
     _g0_mod = None
     _p_atm = 101000.0  # Pa
     type = "stress_dependent_soil"
+    _a = 0.5  # stress factor
 
     def __init__(self, pw=9800, **kwargs):
         super(StressDependentSoil, self).__init__(pw=pw)
-        self._extra_class_inputs = ["g0_mod", "p_atm"]
+        self._extra_class_inputs = ["g0_mod", "p_atm", "a"]
         self.inputs = self.inputs + self._extra_class_inputs
         for param in kwargs:
             if param in self.inputs:
@@ -780,6 +784,15 @@ class StressDependentSoil(Soil):
         self._g0_mod = value
 
     @property
+    def a(self):
+        return self._a
+
+    @a.setter
+    def a(self, value):
+        value = clean_float(value)
+        self._a = value
+
+    @property
     def p_atm(self):
         return self._p_atm
 
@@ -790,10 +803,10 @@ class StressDependentSoil(Soil):
 
     def get_g_mod_at_v_eff_stress(self, v_eff_stress):
         k0 = 1 - np.sin(self.phi_r)
-        return self.g0_mod * self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** 0.5
+        return self.g0_mod * self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a
 
     def get_g_mod_at_m_eff_stress(self, m_eff_stress):
-        return self.g0_mod * self.p_atm * (m_eff_stress / self.p_atm) ** 0.5
+        return self.g0_mod * self.p_atm * (m_eff_stress / self.p_atm) ** self.a
 
     def get_shear_vel_at_v_eff_stress(self, v_eff_stress, saturated):
         try:
@@ -1201,6 +1214,10 @@ class SoilProfile(PhysicalObject):
         return vs
 
     def split_props(self, incs=None, target=1.0, props=None):
+        deprecation('Use gen_split')
+        self.gen_split(incs=incs, target=target, props=props)
+
+    def gen_split(self, incs=None, target=1.0, props=None):
         if incs is None:
             incs = np.ones(self.n_layers) * target
         if props is None:
