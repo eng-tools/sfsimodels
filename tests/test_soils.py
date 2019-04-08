@@ -642,15 +642,15 @@ def test_soil_profile_split_complex_stress_dependent():
     sp.add_layer(3, sl2)
     sp.height = 5
     with pytest.raises(ValueError):
-        sp.split_props(props=["shear_vel"])
+        sp.gen_split(props=["shear_vel"])
     sl2.unit_dry_weight = 17000
-    sp.split_props(props=["shear_vel"])
+    sp.gen_split(props=["shear_vel"])
     assert len(sp.split['thickness']) == len(sp.split['shear_vel'])
 
     assert None in sp.split['shear_vel']
     sl2.g0_mod = 501
     sp.layer(2).unit_dry_weight = sl1_unit_dry_weight
-    sp.split_props(props=["shear_vel"])
+    sp.gen_split(props=["shear_vel"])
     assert None not in sp.split['shear_vel']
 
 

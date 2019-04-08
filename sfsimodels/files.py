@@ -108,8 +108,9 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
     }
 
     # merge and overwrite the object map with custom maps
-    for item in custom_map:
-        obj_map[item] = custom_map[item]
+    # for item in custom_map:
+    #     obj_map[item] = custom_map[item]
+    obj_map = {**obj_map, **custom_map}
 
     data_models = ecp_dict["models"]
 
