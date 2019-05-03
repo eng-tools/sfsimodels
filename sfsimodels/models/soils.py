@@ -143,16 +143,6 @@ class Soil(PhysicalObject):
         return self._id
 
     @property
-    def unit_weight(self):
-        """
-        The unit moist weight of the soil (accounts for saturation level)
-        :return: float
-        """
-        if self.saturation is not None:
-            return self.unit_moist_weight
-        return self.unit_dry_weight
-
-    @property
     def phi(self):
         """Internal friction angle of the soil"""
         return self._phi
@@ -236,6 +226,26 @@ class Soil(PhysicalObject):
             return self._unit_sat_weight - self._pw
         except TypeError:
             return None
+
+    @property
+    def unit_weight(self):
+        """
+        The unit moist weight of the soil (accounts for saturation level)
+        :return: float
+        """
+        if self.saturation is not None:
+            return self.unit_moist_weight
+        return self.unit_dry_weight
+
+    def get_unit_weight_or(self, alt='none'):
+        if self.saturation is not None:
+            return self.unit_moist_weight
+        elif alt == 'dry':
+            return self.unit_dry_weight
+        elif alt == 'sat':
+            return self.unit_sat_weight
+        return None
+
 
     @property
     def unit_dry_mass(self):
@@ -584,9 +594,59 @@ class Soil(PhysicalObject):
         self._add_to_stack("plasticity_index", value)
         self._plasticity_index = value
 
+    def _calc_void_ratio(self):
+        try:
+            return self.specific_gravity * self.pw / self.unit_dry_weight - 1
+        except TypeError:
+            pass
+        try:
+            return (self.specific_gravity * self.pw / self.unit_sat_weight - 1) / (1 - self.pw / self.unit_sat_weight)
+        except TypeError:
+            pass
+        try:
+            return self.e_max - self.relative_density * (self.e_max - self.e_min)
+        except TypeError:
+            return None
+
+    def _calc_relative_density(self):
+        try:
+            return (self.e_max - self.e_curr) / (self.e_max - self.e_min)
+        except TypeError:
+            return None
+
+    def _calc_max_void_ratio(self):
+        try:
+            # return (self.e_curr - self.relative_density) / (1. - self.relative_density)
+            return (self.relative_density * self.e_min - self.e_curr) / (self.relative_density - 1)
+        except TypeError:
+            return None
+
+    def _calc_min_void_ratio(self):
+        try:
+            return (self.e_curr + (self.relative_density - 1) * self.e_max) / self.relative_density
+        except TypeError:
+            return None
+
+    def _calc_specific_gravity(self):
+        try:
+            return (1 + self.e_curr) * self.unit_dry_weight / self._pw
+        except TypeError:
+            pass
+        try:
+            return (1 + self.e_curr) * self.unit_sat_weight / self._pw - self.e_curr
+        except TypeError:
+            return None
+
+    def _calc_unit_dry_weight(self):
+        try:
+            return (self.specific_gravity * self._pw) / (1 + self.e_curr)  # dry relationship
+        except TypeError:
+            return None
+
     def _calc_unit_sat_weight(self):
         try:
-            return self._calc_unit_void_volume() * self._pw + self.unit_dry_weight
+            return ((self.specific_gravity + self.e_curr) * self._pw) / (1 + self.e_curr)
+            # return self._calc_unit_void_volume() * self._pw + self.unit_dry_weight
         except TypeError:
             return None
 
@@ -601,47 +661,6 @@ class Soil(PhysicalObject):
             unit_moisture_weight = self.unit_moist_weight - self.unit_dry_weight
             unit_moisture_volume = unit_moisture_weight / self._pw
             return unit_moisture_volume / self._calc_unit_void_volume()
-        except TypeError:
-            return None
-
-    def _calc_relative_density(self):
-        try:
-            return (self.e_max - self.e_curr) / (self.e_max - self.e_min)
-        except TypeError:
-            return None
-
-    def _calc_specific_gravity(self):
-        try:
-            return (1 + self.e_curr) * self.unit_dry_weight / self._pw
-        except TypeError:
-            return None
-
-    def _calc_unit_dry_weight(self):
-        try:
-            return (self.specific_gravity * self._pw) / (1 + self.e_curr)  # dry relationship
-        except TypeError:
-            return None
-
-    def _calc_void_ratio(self):
-        try:
-            return self.specific_gravity * self._pw / self.unit_dry_weight - 1
-        except TypeError:
-            pass
-        try:
-            return self.e_max - self.relative_density * (self.e_max - self.e_min)
-        except TypeError:
-            return None
-
-    def _calc_max_void_ratio(self):
-        try:
-            # return (self.e_curr - self.relative_density) / (1. - self.relative_density)
-            return (self.relative_density * self.e_min - self.e_curr) / (self.relative_density - 1)
-        except TypeError:
-            return None
-
-    def _calc_min_void_ratio(self):
-        try:
-            return (self.e_curr + (self.relative_density - 1) * self.e_max) / self.relative_density
         except TypeError:
             return None
 
@@ -673,10 +692,10 @@ class Soil(PhysicalObject):
         f_map["_e_min"] = self._calc_min_void_ratio
         f_map["_e_max"] = self._calc_max_void_ratio
         # weights
-        f_map["_unit_dry_weight"] = self._calc_unit_dry_weight
         f_map["_specific_gravity"] = self._calc_specific_gravity
-        # saturation
+        f_map["_unit_dry_weight"] = self._calc_unit_dry_weight
         f_map["_unit_sat_weight"] = self._calc_unit_sat_weight
+        # saturation
         f_map["_unit_moist_weight"] = self._calc_unit_moist_weight
         f_map["_saturation"] = self._calc_saturation
 
@@ -1079,31 +1098,31 @@ class SoilProfile(PhysicalObject):
         """
         return list(self._layers.keys())
 
-    @property
-    def equivalent_crust_cohesion(self):
-        """
-        Calculate the equivalent crust cohesion strength according to Karamitros et al. 2013 sett, pg 8 eq. 14
-
-        :return: equivalent cohesion [Pa]
-        """
-        deprecation("Will be moved to a function")
-        if len(self.layers) > 1:
-            crust = self.layer(0)
-            crust_phi_r = np.radians(crust.phi)
-            equivalent_cohesion = crust.cohesion + crust.k_0 * self.crust_effective_unit_weight * \
-                                                    self.layer_depth(1) / 2 * np.tan(crust_phi_r)
-            return equivalent_cohesion
-
-    @property
-    def crust_effective_unit_weight(self):
-        deprecation("Will be moved to a function")
-        if len(self.layers) > 1:
-            crust = self.layer(0)
-            crust_height = self.layer_depth(1)
-            total_stress_base = crust_height * crust.unit_weight
-            pore_pressure_base = (crust_height - self.gwl) * self.unit_water_weight
-            unit_weight_eff = (total_stress_base - pore_pressure_base) / crust_height
-            return unit_weight_eff
+    # @property
+    # def equivalent_crust_cohesion(self):
+    #     """
+    #     Calculate the equivalent crust cohesion strength according to Karamitros et al. 2013 sett, pg 8 eq. 14
+    #
+    #     :return: equivalent cohesion [Pa]
+    #     """
+    #     deprecation("Will be moved to a function")
+    #     if len(self.layers) > 1:
+    #         crust = self.layer(0)
+    #         crust_phi_r = np.radians(crust.phi)
+    #         equivalent_cohesion = crust.cohesion + crust.k_0 * self.crust_effective_unit_weight * \
+    #                                                 self.layer_depth(1) / 2 * np.tan(crust_phi_r)
+    #         return equivalent_cohesion
+    #
+    # @property
+    # def crust_effective_unit_weight(self):
+    #     deprecation("Will be moved to a function")
+    #     if len(self.layers) > 1:
+    #         crust = self.layer(0)
+    #         crust_height = self.layer_depth(1)
+    #         total_stress_base = crust_height * crust.unit_weight
+    #         pore_pressure_base = (crust_height - self.gwl) * self.unit_water_weight
+    #         unit_weight_eff = (total_stress_base - pore_pressure_base) / crust_height
+    #         return unit_weight_eff
 
     def vertical_total_stress(self, y_c):
         deprecation("Use get_v_total_stress_at_depth")
@@ -1143,7 +1162,7 @@ class SoilProfile(PhysicalObject):
                     bottom_depth = z_c
 
                 if bottom_depth <= self.gwl:
-                    total_stress += height * self.layer(layer_int).unit_dry_weight
+                    total_stress += height * self.layer(layer_int).get_unit_weight_or('dry')
                 else:
                     if self.layer(layer_int).unit_sat_weight is None:
                         raise AnalysisError("Saturated unit weight not defined for layer %i." % layer_int)
@@ -1192,7 +1211,7 @@ class SoilProfile(PhysicalObject):
     def vertical_effective_stress(self, y_c):  # deprecated function
         """Deprecated. Use get_vert_eff_stress"""
         deprecation("Use get_v_eff_stress_at_depth")
-        return self.vert_eff_stress(y_c)
+        return self.get_v_eff_stress_at_depth(y_c)
 
     def shear_vel_at_depth(self, y_c):
         """
