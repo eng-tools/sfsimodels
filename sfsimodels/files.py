@@ -3,9 +3,17 @@ from sfsimodels.models import soils, buildings, foundations, systems, abstract_m
 from collections import OrderedDict
 from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
+import numpy as np
 
 
 standard_types = ["soil", "soil_profile", "foundation", "building", "section", "system", "custom_type"]
+
+
+def _json_default(o):
+    """Converts numpy types to json serialisable python types"""
+    if isinstance(o, np.int64):
+        return int(o)
+    raise TypeError
 
 
 def load_json(ffp, custom=None, verbose=0):
@@ -282,6 +290,9 @@ class Output(object):
         for item in self.parameters():
             outputs[item] = self.__getattribute__(item)
         return outputs
+
+    def to_file(self, ffp, indent=4):
+        json.dump(self.to_dict(), open(ffp, "w"), indent=indent, default=_json_default)
 
 
 def migrate_ecp(in_ffp, out_ffp):

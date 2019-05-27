@@ -70,7 +70,7 @@ def format_value(value, sf=3):
         return fmt_str.format(value)
 
 
-def add_table_ends(para, oformat='latex', caption="caption-text", label="table"):
+def add_table_ends(para, oformat='latex', caption="caption-text", label="table", np=2, align='c'):
     """
     Adds the latex table ends
 
@@ -80,11 +80,15 @@ def add_table_ends(para, oformat='latex', caption="caption-text", label="table")
     :param label:
     :return:
     """
+    if len(align) == 1:
+        a_str = "".join([align] * np)
+    else:
+        a_str = align
     fpara = ""
     if oformat == 'latex':
         fpara += "\\begin{table}[H]\n"
         fpara += "\\centering\n"
-        fpara += "\\begin{tabular}{cc}\n"
+        fpara += "\\begin{tabular}{%s}\n" % a_str
         fpara += "\\toprule\n"
         fpara += "Parameter & Value \\\\\n"
         fpara += "\\midrule\n"
