@@ -4,6 +4,7 @@ from collections import OrderedDict
 from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
 import numpy as np
+import pkg_resources
 
 
 standard_types = ["soil", "soil_profile", "foundation", "building", "section", "system", "custom_type"]
@@ -214,12 +215,21 @@ class Output(object):
     name = ""
     units = ""
     doi = ""
-    sfsimodels_version = ""
     comments = ""
     compression = True
+    reset_ids = True
 
     def __init__(self):
         self.unordered_models = OrderedDict()
+        self.id2hash_dict = OrderedDict()
+
+    @property
+    def sfsimodels_version(self):
+        return pkg_resources.require("sfsimodels")[0].version
+
+    @sfsimodels_version.setter
+    def sfsimodels_version(self, value):
+        deprecation('sfsimodels_version automatically set')
 
     def add_to_dict(self, an_object, extras=None):
         """
@@ -229,7 +239,7 @@ class Output(object):
         :param extras: A dictionary of extra variables that should be
         :return:
         """
-        if an_object.id is None:
+        if an_object.id is None and self.reset_ids is False:
             raise ModelError("id must be set on object before adding to output.")
         if hasattr(an_object, "base_type"):
             mtype = an_object.base_type
@@ -247,9 +257,75 @@ class Output(object):
             an_object.add_to_dict(self.unordered_models)
 
         elif hasattr(an_object, "to_dict"):
+
             self.unordered_models[mtype][an_object.unique_hash] = an_object.to_dict(compression=self.compression)
         else:
             raise ModelError("Object does not have method 'to_dict', cannot add to output.")
+
+    def build_id2hash_dict(self):
+        for mtype in self.unordered_models:
+            if mtype not in self.id2hash_dict:  # Catch any custom objects
+                self.id2hash_dict[mtype] = OrderedDict()
+            for unique_hash in self.unordered_models[mtype]:
+                if self.reset_ids is False:
+                    obj_id = self.unordered_models[mtype][unique_hash]['id']
+                    if obj_id in self.id2hash_dict[mtype]:
+                        raise ModelError('Duplicate id: {0} for model type: {1}'.format(obj_id, mtype))
+                else:
+                    obj_id = len(self.id2hash_dict[mtype]) + 1
+                self.id2hash_dict[mtype][obj_id] = unique_hash
+
+    def get_id_from_hash(self, mtype, unique_hash):
+        for m_id in self.id2hash_dict[mtype]:
+            if self.id2hash_dict[mtype][m_id] == unique_hash:
+                return m_id
+        return None
+
+    def _replace_single_id(self, value, item, pdict=None):  # returns value
+        """
+        A recursive method to cycle through output dictionary and replace ids with the correct id in the id2hash_dict
+
+        :param value:
+        :param item:
+        :param pdict:
+        :return:
+        """
+        if isinstance(value, str):
+            pass
+        elif hasattr(value, '__len__'):
+            tolist = getattr(value, "tolist", None)
+            if hasattr(value, 'keys'):
+                # odict = OrderedDict()
+                for i2 in value:
+                    self._replace_single_id(value[i2], i2, value)
+                return value
+            elif callable(tolist):
+                values = value.tolist()
+            else:
+                values = value
+            for i, val2 in enumerate(values):
+                values[i] = self._replace_single_id(val2, '')  # if it is a list then check if dict is deeper
+            return values
+        if '_unique_hash' in item:  # detect link to new object
+            child_mtype = item.replace('_unique_hash', '')
+            child_hash = value
+            pdict['{0}_id'.format(child_mtype)] = self.get_id_from_hash(child_mtype, child_hash)
+        return value
+
+    def replace_conflicting_ids(self):
+        """
+        Goes through output dictionary and replaces all ids with the correct id from the id2hash_dict
+
+        :return:
+        """
+        self.build_id2hash_dict()
+        for mtype in self.unordered_models:
+            for unique_hash in self.unordered_models[mtype]:
+                umd = self.unordered_models[mtype][unique_hash]
+                umd['id'] = self.get_id_from_hash(mtype, unique_hash)
+                for item in umd:
+                    val = umd[item]
+                    umd[item] = self._replace_single_id(val, item, umd)
 
     def add_to_output(self, mtype, m_id, serialisable_dict):
         """
@@ -267,6 +343,7 @@ class Output(object):
     @property
     def models(self):
         """Unhashed"""
+        self.replace_conflicting_ids()
         models_dict = OrderedDict()
         collected = []
         for item in standard_types:
@@ -291,7 +368,13 @@ class Output(object):
             outputs[item] = self.__getattribute__(item)
         return outputs
 
-    def to_file(self, ffp, indent=4):
+    def to_file(self, ffp, indent=4, name=None, units=None, comments=None):
+        if name is not None:
+            self.name = "%s" % name
+        if units is not None:
+            self.units = units
+        if comments is not None:
+            self.comments = comments
         json.dump(self.to_dict(), open(ffp, "w"), indent=indent, default=_json_default)
 
 
@@ -312,12 +395,12 @@ def migrate_ecp(in_ffp, out_ffp):
     a.close()
 
 
-def unhash_dict(pdict):
+def unhash_dict(pdict):  # TODO: make method
     new_dict = OrderedDict()
     replacement_dict = OrderedDict()
     for i, item in enumerate(pdict):
         key = str(i + 1)
-        assert int(item) > 1000  # avoid hashes that are in the same range as ids!
+        # assert int(item) > 1000  # avoid hashes that are in the same range as ids!
         new_dict[key] = pdict[item]
         replacement_dict[item] = key
     return new_dict, replacement_dict

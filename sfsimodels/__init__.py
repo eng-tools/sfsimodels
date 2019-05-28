@@ -23,3 +23,5 @@ from sfsimodels.models.foundations import PadFoundation, RaftFoundation  # depre
 from sfsimodels.models.buildings import FrameBuilding, WallBuilding, Structure, FrameBuilding2D  # deprecated objects
 
 from sfsimodels import __about__
+
+BASE_UNITS = "N, kg, m, s"

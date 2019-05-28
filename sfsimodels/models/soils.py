@@ -892,20 +892,23 @@ class SoilProfile(PhysicalObject):
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
 
-    def to_dict(self, **kwargs):
-        outputs = OrderedDict()
-        skip_list = ["layers"]
-        for item in self.inputs:
-            if item not in skip_list:
-                value = self.__getattribute__(item)
-                if isinstance(value, int):
-                    outputs[item] = str(value)
-                else:
-                    outputs[item] = value
-        # outputs["layers"] = []
-        # for depth in self.layers:
-        #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
-        return outputs
+    # def to_dict(self, **kwargs):
+    #     outputs = OrderedDict()
+    #     skip_list = ["layers"]
+    #     for item in self.inputs:
+    #         if item not in skip_list:
+    #             value = self.__getattribute__(item)
+    #             if isinstance(value, int):
+    #                 outputs[item] = str(value)
+    #             else:
+    #                 outputs[item] = value
+    #     with_hash = kwargs.get('with_hash', True)
+    #     if with_hash:
+    #         outputs['unique_hash'] = self.unique_hash
+    #     # outputs["layers"] = []
+    #     # for depth in self.layers:
+    #     #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
+    #     return outputs
 
     def add_to_dict(self, models_dict, **kwargs):
         if self.base_type not in models_dict:
@@ -918,6 +921,7 @@ class SoilProfile(PhysicalObject):
             models_dict["soil"][self.layers[layer].unique_hash] = self.layers[layer].to_dict()
             profile_dict["layers"].append({
                 "soil_id": str(self.layers[layer].id),
+                "soil_unique_hash": str(self.layers[layer].unique_hash),
                 "depth": float(layer)
             })
         models_dict["soil_profile"][self.unique_hash] = profile_dict

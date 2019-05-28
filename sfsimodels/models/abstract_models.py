@@ -5,6 +5,9 @@ import types
 from sfsimodels.exceptions import ModelError
 from sfsimodels import functions as sf
 import uuid
+import hashlib
+import json
+json.encoder.FLOAT_REPR = lambda f: ("%.5g" % f)
 
 
 class PhysicalObject(object):
@@ -87,12 +90,16 @@ class PhysicalObject(object):
                 if not export_none and value is None:
                     continue
                 outputs[item] = sf.collect_serial_value(value)
+        with_hash = kwargs.get('with_hash', True)
+        if with_hash:
+            outputs['unique_hash'] = self.unique_hash
         return outputs
 
     @property
     def unique_hash(self):
         if self._unique_hash is None:
-            self._unique_hash = uuid.uuid1()
+            # self._unique_hash = uuid.uuid1()
+            self._unique_hash = hashlib.md5(json.dumps(self.to_dict(with_hash=False)).encode('utf-8')).hexdigest()
         return self._unique_hash
 
 
