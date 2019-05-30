@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+import numpy as np
 
 def convert_stress_to_mass(q, width, length, gravity):
     """
@@ -26,6 +26,8 @@ def collect_serial_value(value):
         return value
     elif isinstance(value, int):
         return value
+    elif isinstance(value, np.int64):
+        return int(value)
     elif hasattr(value, "to_dict"):
         return value.to_dict()
     elif hasattr(value, "__len__"):
@@ -85,6 +87,7 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
     """
     if exceptions is None:
         exceptions = []
+    exceptions.append('unique_hash')
     for item in dictionary:
         if item in exceptions:
             continue
