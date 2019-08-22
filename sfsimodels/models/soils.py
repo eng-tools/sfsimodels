@@ -735,7 +735,7 @@ class Soil(PhysicalObject):
     def _calc_unit_solid_volume(self):
         """Return the volume of the solids for total volume equal to a unit"""
         try:
-            return 1.0 - self._calc_unit_solid_volume()
+            return 1.0 - self._calc_unit_void_volume()
         except ValueError:
             return None
 

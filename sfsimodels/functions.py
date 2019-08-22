@@ -51,7 +51,9 @@ def collect_serial_value(value):
 def get_key_value(value, objs, key=None):
     if key is not None and "_id" == key[-3:]:
         obj_base_type = key[:-3]
-        return obj_base_type, objs[obj_base_type][int(value)]
+        if value is not None:
+            value = objs[obj_base_type][int(value)]
+        return obj_base_type, value
     elif isinstance(value, list):
         vals = []
         for item in value:
