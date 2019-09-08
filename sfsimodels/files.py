@@ -3,6 +3,7 @@ from sfsimodels.models import soils, buildings, foundations, systems, abstract_m
 from collections import OrderedDict
 from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
+from sfsimodels.__about__ import __version__
 import numpy as np
 import pkg_resources
 
@@ -225,7 +226,7 @@ class Output(object):
 
     @property
     def sfsimodels_version(self):
-        return pkg_resources.require("sfsimodels")[0].version
+        return __version__
 
     @sfsimodels_version.setter
     def sfsimodels_version(self, value):
