@@ -130,7 +130,7 @@ class CustomObject(PhysicalObject):
 
     @id.setter
     def id(self, value):
-        self._id = value
+        self._id = int(value)
 
     @property
     def ancestor_types(self):

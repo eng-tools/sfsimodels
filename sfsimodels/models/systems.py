@@ -123,6 +123,16 @@ class SoilStructureSystem(object):
         self._soil_profile_id = obj.id
 
     @property
+    def soil_profile(self):
+        return self._sp
+
+    @soil_profile.setter
+    def soil_profile(self, obj):
+        # Could add assertions here for type?
+        self._sp = obj
+        self._soil_profile_id = obj.id
+
+    @property
     def fd(self):
         return self._fd
 
@@ -133,11 +143,31 @@ class SoilStructureSystem(object):
         self._foundation_id = obj.id
 
     @property
+    def foundation(self):
+        return self._fd
+
+    @foundation.setter
+    def foundation(self, obj):
+        # Could add assertions here for type?
+        self._fd = obj
+        self._foundation_id = obj.id
+
+    @property
     def bd(self):
         return self._bd
 
     @bd.setter
     def bd(self, obj):
+        # Could add assertions here for type?
+        self._bd = obj
+        self._building_id = obj.id
+
+    @property
+    def building(self):
+        return self._bd
+
+    @building.setter
+    def building(self, obj):
         # Could add assertions here for type?
         self._bd = obj
         self._building_id = obj.id

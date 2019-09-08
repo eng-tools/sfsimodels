@@ -267,7 +267,7 @@ def test_saturation_set_in_soil_profile():
 
 def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
     class Cantilever(sm.CustomObject):
-        id = None
+        _id = None
         base_type = "cantilever"
         type = "cantilever"
         inputs = ["id", "length", "depth", "e_mod"]
@@ -289,7 +289,6 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
     ecp_output.name = meta_data["name"]
     ecp_output.units = meta_data["units"]
     ecp_output.comments = meta_data["comments"]
-    ecp_output.sfsimodels_version = meta_data["sfsimodels_version"]
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
     a = open("temp.json", "w")
     a.write(p_str)
@@ -300,8 +299,10 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
             for parameter in objs[m_type][instance].inputs:
                 p_org = getattr(objs[m_type][int(instance)], parameter)
                 p_2nd = getattr(objs2[m_type][int(instance)], parameter)
-                assert p_org == p_2nd, (parameter, p_org, p_2nd)
+                assert p_org == p_2nd, (m_type, parameter, p_org, p_2nd)
     for item in meta_data:
+        if item == 'sfsimodels_version':
+            continue
         assert meta_data[item] == md2[item], (item, meta_data[item], md2[item])
 
 
@@ -420,11 +421,11 @@ if __name__ == '__main__':
     # test_save_and_load_wall_building()
     # test_save_and_load_building()
     # test_load_and_save_structure()
-    # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
+    test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()
-    test_save_and_load_soil()
+    # test_save_and_load_soil()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()
     # test_full_save_and_load()
     # test_can_load_then_save_and_load_custom_ecp_w_custom_obj()

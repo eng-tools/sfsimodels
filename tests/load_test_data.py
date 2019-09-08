@@ -52,7 +52,7 @@ def load_foundation_test_data(fd):
     :return:
     """
     # foundation
-    fd.id = "1"
+    fd.id = 1
     fd.width = 16.0  # m
     fd.length = 18.0  # m
     fd.depth = 0.0  # m

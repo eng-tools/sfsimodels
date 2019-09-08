@@ -61,7 +61,8 @@ class Building(PhysicalObject):
 
     @id.setter
     def id(self, value):
-        self._id = value
+        if value not in [None, ""]:
+            self._id = int(value)
 
     @property
     def floor_length(self):

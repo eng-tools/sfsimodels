@@ -321,8 +321,9 @@ def test_can_compute_layer_depth():
     rel_density = soil_profile.layer(2).relative_density
     assert np.isclose(rel_density, 0.7299999994277497), rel_density
     assert soil_profile.layer(1).id == 1
-    assert soil_profile.layer_depth(2) == 4.0
-    assert soil_profile.layer_height(2) == 4.0
+    assert soil_profile.get_layer_depth(2) == 4.0
+    assert soil_profile.get_layer_height(2) == 4.0
+    assert soil_profile.get_layer_mid_depth(2) == 6.0
 
 
 def test_poissons_ratio_again():

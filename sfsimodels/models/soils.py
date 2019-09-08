@@ -338,8 +338,10 @@ class Soil(PhysicalObject):
 
     @id.setter
     def id(self, value):
-        self.stack.append(("id", value))
-        self._id = value
+        if value not in [None, ""]:
+            value = int(value)
+            self.stack.append(("id", value))
+            self._id = value
 
     @e_curr.setter
     def e_curr(self, value):
@@ -892,24 +894,6 @@ class SoilProfile(PhysicalObject):
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
 
-    # def to_dict(self, **kwargs):
-    #     outputs = OrderedDict()
-    #     skip_list = ["layers"]
-    #     for item in self.inputs:
-    #         if item not in skip_list:
-    #             value = self.__getattribute__(item)
-    #             if isinstance(value, int):
-    #                 outputs[item] = str(value)
-    #             else:
-    #                 outputs[item] = value
-    #     with_hash = kwargs.get('with_hash', True)
-    #     if with_hash:
-    #         outputs['unique_hash'] = self.unique_hash
-    #     # outputs["layers"] = []
-    #     # for depth in self.layers:
-    #     #     outputs["layers"].append({"depth": float(depth), "soil": self.layers[depth].to_dict()})
-    #     return outputs
-
     def add_to_dict(self, models_dict, **kwargs):
         if self.base_type not in models_dict:
             models_dict[self.base_type] = OrderedDict()
@@ -947,14 +931,14 @@ class SoilProfile(PhysicalObject):
                 soil.saturation = 1.0
             else:
                 li = self.get_layer_index_by_depth(depth)
-                layer_height = self.layer_height(li)
+                layer_height = self.get_layer_height(li)
                 if layer_height is None:
                     soil.saturation = 0.0
                 elif depth + layer_height <= self.gwl:
                     soil.saturation = 0.0
                 else:
-                    sat_height = depth + self.layer_height(li) - self.gwl
-                    soil.saturation = sat_height / self.layer_height(li)
+                    sat_height = depth + self.get_layer_height(li) - self.gwl
+                    soil.saturation = sat_height / self.get_layer_height(li)
 
     def _sort_layers(self):
         """Sort the layers by depth."""
@@ -1004,7 +988,7 @@ class SoilProfile(PhysicalObject):
         """
         self._height = float(value)
 
-    def layer_height(self, layer_int):
+    def get_layer_height(self, layer_int):
         """
         Get the layer height by layer id number.
 
@@ -1014,9 +998,44 @@ class SoilProfile(PhysicalObject):
         if layer_int == self.n_layers:
             if self.height is None:
                 return None
-            return self.height - self.layer_depth(layer_int)
+            return self.height - self.get_layer_depth(layer_int)
         else:
-            return self.layer_depth(layer_int + 1) - self.layer_depth(layer_int)
+            return self.get_layer_depth(layer_int + 1) - self.get_layer_depth(layer_int)
+
+    def layer_height(self, layer_int):
+        return self.get_layer_height(layer_int)
+
+    def get_layer_depth(self, layer_int):
+        """
+        Get the distance from the surface to the top of the layer by layer id number.
+
+        :param layer_int: int,
+            Layer index
+        :return: float,
+            Depth of the soil layer
+        """
+        layer_int = int(layer_int)
+        try:
+            return self.depths[layer_int - 1]
+        except IndexError as e:
+            if layer_int == 0 or layer_int > self.n_layers:
+                raise IndexError("index={0}, but must be between 1 and {1}".format(layer_int, self.n_layers))
+            else:
+                raise e
+
+    def layer_depth(self, index):
+        return self.get_layer_depth(index)
+
+    def get_layer_mid_depth(self, layer_int):
+        """
+        Get the distance from the surface to the centre of the layer by layer id number.
+
+        :param layer_int: int,
+            Layer index
+        :return: float,
+            Depth to middle of the soil layer
+        """
+        return self.get_layer_depth(layer_int) + self.get_layer_height(layer_int) / 2
 
     @property
     def layers(self):
@@ -1048,12 +1067,6 @@ class SoilProfile(PhysicalObject):
         if index == 0:
             raise KeyError("index=%i, but must be 1 or greater." % index)
         return list(self._layers.values())[index - 1]
-
-    def layer_depth(self, index):
-        index = int(index)
-        if index == 0:
-            raise KeyError("index=%i, but must be 1 or greater." % index)
-        return self.depths[index - 1]
 
     def set_soil_ids_to_layers(self):
         for i in range(1, len(self._layers) + 1):
@@ -1101,32 +1114,6 @@ class SoilProfile(PhysicalObject):
         :return:
         """
         return list(self._layers.keys())
-
-    # @property
-    # def equivalent_crust_cohesion(self):
-    #     """
-    #     Calculate the equivalent crust cohesion strength according to Karamitros et al. 2013 sett, pg 8 eq. 14
-    #
-    #     :return: equivalent cohesion [Pa]
-    #     """
-    #     deprecation("Will be moved to a function")
-    #     if len(self.layers) > 1:
-    #         crust = self.layer(0)
-    #         crust_phi_r = np.radians(crust.phi)
-    #         equivalent_cohesion = crust.cohesion + crust.k_0 * self.crust_effective_unit_weight * \
-    #                                                 self.layer_depth(1) / 2 * np.tan(crust_phi_r)
-    #         return equivalent_cohesion
-    #
-    # @property
-    # def crust_effective_unit_weight(self):
-    #     deprecation("Will be moved to a function")
-    #     if len(self.layers) > 1:
-    #         crust = self.layer(0)
-    #         crust_height = self.layer_depth(1)
-    #         total_stress_base = crust_height * crust.unit_weight
-    #         pore_pressure_base = (crust_height - self.gwl) * self.unit_water_weight
-    #         unit_weight_eff = (total_stress_base - pore_pressure_base) / crust_height
-    #         return unit_weight_eff
 
     def vertical_total_stress(self, y_c):
         deprecation("Use get_v_total_stress_at_depth")
@@ -1217,7 +1204,7 @@ class SoilProfile(PhysicalObject):
         deprecation("Use get_v_eff_stress_at_depth")
         return self.get_v_eff_stress_at_depth(y_c)
 
-    def shear_vel_at_depth(self, y_c):
+    def get_shear_vel_at_depth(self, y_c):
         """
         Get the shear wave velocity at a depth.
 
@@ -1235,6 +1222,9 @@ class SoilProfile(PhysicalObject):
         else:
             vs = sl.get_shear_vel(saturation)
         return vs
+
+    def shear_vel_at_depth(self, y_c):
+        return self.get_shear_vel_at_depth(y_c)
 
     def split_props(self, incs=None, target=1.0, props=None):
         deprecation('Use gen_split')
@@ -1255,7 +1245,7 @@ class SoilProfile(PhysicalObject):
         cum_thickness = 0
         for i in range(self.n_layers):
             sl = self.layer(i + 1)
-            thickness = self.layer_height(i + 1)
+            thickness = self.get_layer_height(i + 1)
             if thickness is None:
                 raise ValueError("thickness of layer {0} is None, check if soil_profile.height is set".format(i + 1))
             n_slices = max(int(thickness / incs[i]), 1)
@@ -1311,7 +1301,7 @@ def discretize_soil_profile(sp, incs=None, target=1.0):
     cum_thickness = 0
     for i in range(sp.n_layers):
         sl = sp.layer(i + 1)
-        thickness = sp.layer_height(i + 1)
+        thickness = sp.get_layer_height(i + 1)
         n_slices = max(int(thickness / incs[i]), 1)
         slice_thickness = float(thickness) / n_slices
         for j in range(n_slices):
