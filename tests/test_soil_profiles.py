@@ -50,14 +50,14 @@ def test_soil_profile_vertical_total_stress():
     soil_1.unit_dry_weight = 18000
     soil_profile = models.SoilProfile()
     soil_profile.add_layer(0, soil_1)
-    assert np.isclose(soil_profile.vertical_total_stress(5), 5 * 18000, rtol=0.0001)
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), 5 * 18000, rtol=0.0001)
     soil_profile.gwl = 3.
-    assert np.isclose(soil_profile.vertical_total_stress(3), 3 * 18000, rtol=0.0001)
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(3), 3 * 18000, rtol=0.0001)
     with pytest.raises(exceptions.AnalysisError):
-        soil_profile.vertical_effective_stress(4)
+        soil_profile.get_v_eff_stress_at_depth(4)
     soil_profile.layer(1).unit_sat_weight = 21000
     expected = 3 * 18000 + 2 * 21000
-    assert np.isclose(soil_profile.vertical_total_stress(5), expected, rtol=0.0001)
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), expected, rtol=0.0001)
     soil_2 = models.Soil()
     soil_2.phi = 33.
     soil_2.cohesion = 50000
@@ -66,13 +66,13 @@ def test_soil_profile_vertical_total_stress():
     # CONSIDER TWO LAYER SOIL PROFILE
     soil_profile.add_layer(4., soil_2)
     soil_profile.gwl = 10000  # Dry first
-    assert np.isclose(soil_profile.vertical_total_stress(5), 4 * 18000 + 1 * 16000, rtol=0.0001)
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), 4 * 18000 + 1 * 16000, rtol=0.0001)
     soil_profile.gwl = 3.
     with pytest.raises(exceptions.AnalysisError):
-        soil_profile.vertical_effective_stress(5)
+        soil_profile.get_v_eff_stress_at_depth(5)
     soil_profile.layer(2).unit_sat_weight = 20000
     expected = 3 * 18000 + 1 * 21000 + 1 * 20000
-    assert np.isclose(soil_profile.vertical_total_stress(5), expected, rtol=0.0001)
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), expected, rtol=0.0001)
 
 
 def test_soil_profile_vertical_effective_stress():
@@ -92,12 +92,12 @@ def test_soil_profile_vertical_effective_stress():
     soil_profile.gwl = gwl
 
     assert soil_1.unit_sat_weight is None
-    assert np.isclose(soil_profile.vertical_effective_stress(2), 2 * 18000, rtol=0.0001)
+    assert np.isclose(soil_profile.get_v_eff_stress_at_depth(2), 2 * 18000, rtol=0.0001)
     with pytest.raises(exceptions.AnalysisError):
-        soil_profile.vertical_effective_stress(z_c)
+        soil_profile.get_v_eff_stress_at_depth(z_c)
     soil_1.unit_sat_weight = 21000
     expected_sigma_veff = (z_c - gwl) * (21000 - 9800) + gwl * 18000
-    assert np.isclose(soil_profile.vertical_effective_stress(z_c), expected_sigma_veff, rtol=0.0001)
+    assert np.isclose(soil_profile.get_v_eff_stress_at_depth(z_c), expected_sigma_veff, rtol=0.0001)
 
 
 def test_hydrostatic_pressure():
@@ -117,8 +117,8 @@ def test_hydrostatic_pressure():
     soil_profile.gwl = gwl
 
     assert soil_1.unit_sat_weight is None
-    assert np.isclose(soil_profile.hydrostatic_pressure(2), 0.0, rtol=0.0001)
-    assert np.isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rtol=0.0001)
+    assert np.isclose(soil_profile.get_hydrostatic_pressure_at_depth(2), 0.0, rtol=0.0001)
+    assert np.isclose(soil_profile.get_hydrostatic_pressure_at_depth(z_c), 9800, rtol=0.0001)
 
 
 def test_stress_dependent_soil_g_mod():
@@ -139,11 +139,11 @@ def test_stress_dependent_soil_g_mod():
     soil_profile.gwl = gwl
 
     assert np.isclose(soil_1.unit_sat_weight, 21007.5471698, rtol=0.0001)
-    assert np.isclose(soil_profile.hydrostatic_pressure(z_c), 9800, rtol=0.0001)
-    v_eff = soil_profile.vertical_effective_stress(z_c)
-    assert np.isclose(soil_2.g_mod_at_v_eff_stress(v_eff), 36580544.6888, rtol=0.0001)
+    assert np.isclose(soil_profile.get_hydrostatic_pressure_at_depth(z_c), 9800, rtol=0.0001)
+    v_eff = soil_profile.get_v_eff_stress_at_depth(z_c)
+    assert np.isclose(soil_2.get_g_mod_at_v_eff_stress(v_eff), 36580544.6888, rtol=0.0001)
     m_eff = v_eff * (1 + 2 * (1 - np.sin(soil_2.phi_r))) / 3
-    assert np.isclose(soil_2.g_mod_at_m_eff_stress(m_eff), 36580544.6888, rtol=0.0001)
+    assert np.isclose(soil_2.get_g_mod_at_m_eff_stress(m_eff), 36580544.6888, rtol=0.0001)
 
 
 def test_get_layer_index_by_depth():

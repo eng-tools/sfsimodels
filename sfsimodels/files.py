@@ -388,7 +388,6 @@ def migrate_ecp(in_ffp, out_ffp):
     ecp_output.name = meta_data["name"]
     ecp_output.units = meta_data["units"]
     ecp_output.comments = meta_data["comments"]
-    ecp_output.sfsimodels_version = meta_data["sfsimodels_version"]
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
     a = open(out_ffp, "w")
     a.write(p_str)
