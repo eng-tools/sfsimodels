@@ -292,6 +292,30 @@ def test_soil_profile_split_simple_prop():
     assert np.max(sp.split["cohesion"]) == 20e3
 
 
+def test_soil_profile_split_simple_shear_vel():
+    sl1 = models.Soil()
+    sl1_gmod = 30e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+
+    sl2 = models.Soil()
+    sl2_gmod = 20e3
+    sl2_unit_dry_weight = 16000
+    sl2.unit_dry_weight = sl2_unit_dry_weight
+    sl2.g_mod = sl2_gmod
+
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    sp.height = 5
+    t = sp.layer_height(1) / sp.layer(1).calc_shear_vel(saturated=False) + \
+        sp.layer_height(2) / sp.layer(2).calc_shear_vel(saturated=False)
+    sp.gen_split(props=["shear_vel"])
+    t_split = np.sum(sp.split['thickness'] / sp.split['shear_vel'])
+    assert np.isclose(t, t_split)
+
+
 def test_soil_profile_split_complex():
     sl1 = models.Soil()
     sl1_gmod = 40e6

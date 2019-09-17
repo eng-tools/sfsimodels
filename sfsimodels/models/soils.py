@@ -1253,6 +1253,7 @@ class SoilProfile(PhysicalObject):
             for j in range(n_slices):
                 dd["thickness"].append(slice_thickness)
                 v_eff = None
+                centre_depth = cum_thickness + slice_thickness * 0.5
                 cum_thickness += slice_thickness
                 if cum_thickness >= self.gwl:
                     saturated = True
@@ -1265,9 +1266,9 @@ class SoilProfile(PhysicalObject):
                     fn1 = "get_{0}".format(item)  # first check for stress dependence
                     if hasattr(sl, fn0):
                         try:
-                            v_eff = self.get_v_eff_stress_at_depth(cum_thickness)
+                            v_eff = self.get_v_eff_stress_at_depth(centre_depth)
                         except TypeError:
-                            raise ValueError("Cannot compute vertical effective stress at depth: {0}".format(cum_thickness))
+                            raise ValueError("Cannot compute vertical effective stress at depth: {0}".format(centre_depth))
                         value = sf.get_value_of_a_get_method(sl, fn0, extras={"saturated": saturated,
                                                                               'v_eff_stress': v_eff})
                     elif hasattr(sl, fn1):
