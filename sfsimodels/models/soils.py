@@ -10,6 +10,9 @@ from sfsimodels import checking_tools as ct
 from sfsimodels import functions as sf
 
 
+MASS_DENSITY_WATER = 1.0e3
+
+
 class Soil(PhysicalObject):
     """
     An object to simulate an element of soil
@@ -40,11 +43,20 @@ class Soil(PhysicalObject):
     _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
     _plasticity_index = None
-    _gravity = 9.8
 
-    def __init__(self, pw=9800, **kwargs):
-        self._pw = pw  # specific weight of water
-        self.stack = []
+    def __init__(self, pw=9800, liq_mass_density=None, g=9.8, **kwargs):
+        # Note: pw has deprecated
+        self._gravity = g  # m/s2
+        if liq_mass_density:
+            self._liq_mass_density = liq_mass_density  # kg/m3
+        elif pw is not None and self._gravity is not None:
+            if pw == 9800 and g == 9.8:
+                self._liq_mass_density = 1.0e3
+            else:
+                self._liq_mass_density = pw / self._gravity
+        else:
+            self._liq_mass_density = None
+        self.stack = [('gravity', self._gravity), ('liq_mass_density', self._liq_mass_density)]
         self._extra_class_inputs = [
             "id",
             "name",
@@ -66,7 +78,9 @@ class Soil(PhysicalObject):
             "saturation",
             "cohesion",
             "plasticity_index",
-            "permeability"
+            "permeability",
+            "gravity",
+            "liq_mass_density"
         ]
         if not hasattr(self, "inputs"):
             self.inputs = []
@@ -179,7 +193,44 @@ class Soil(PhysicalObject):
     @property
     def pw(self):
         """Specific weight of water"""
-        return self._pw
+        deprecation('Soil.pw is deprecated, will be removed. Use Soil.ulw')
+        return self.ulw
+
+    @property
+    def liq_mass_density(self):
+        return self._liq_mass_density
+
+    @property
+    def gravity(self):
+        return self._gravity
+
+    @property
+    def g(self):
+        return self._gravity
+
+    @gravity.setter
+    def gravity(self, value):
+        self._gravity = value
+
+    @g.setter
+    def g(self, value):
+        self._gravity = value
+
+    @liq_mass_density.setter
+    def liq_mass_density(self, value):
+        value = clean_float(value)
+        if self._liq_mass_density is not None and not np.isclose(self._liq_mass_density, value, rtol=self._tolerance):
+            raise ModelError("New liq_mass_density (%.3f) inconsistent with one (%.3f)"
+                             % (value, self._liq_mass_density))
+        if value is not None:
+            self._liq_mass_density = float(value)
+        else:
+            self._liq_mass_density = None
+
+    @property
+    def ulw(self):
+        """Unit weight of liquid"""
+        return self.g * self.liq_mass_density
 
     @property
     def saturation(self):
@@ -223,7 +274,7 @@ class Soil(PhysicalObject):
     def unit_bouy_weight(self):
         """The unit moist weight of the soil (accounts for saturation level)"""
         try:
-            return self._unit_sat_weight - self._pw
+            return self._unit_sat_weight - self.ulw
         except TypeError:
             return None
 
@@ -432,7 +483,7 @@ class Soil(PhysicalObject):
             return
         try:
             unit_moisture_weight = self.unit_moist_weight - self.unit_dry_weight
-            unit_moisture_volume = unit_moisture_weight / self._pw
+            unit_moisture_volume = unit_moisture_weight / self.ulw
             saturation = unit_moisture_volume / self._calc_unit_void_volume()
             if saturation is not None and not ct.isclose(saturation, value, rel_tol=self._tolerance):
                 raise ModelError("New saturation (%.3f) is inconsistent "
@@ -598,11 +649,11 @@ class Soil(PhysicalObject):
 
     def _calc_void_ratio(self):
         try:
-            return self.specific_gravity * self.pw / self.unit_dry_weight - 1
+            return self.specific_gravity * self._uww / self.unit_dry_weight - 1
         except TypeError:
             pass
         try:
-            return (self.specific_gravity * self.pw / self.unit_sat_weight - 1) / (1 - self.pw / self.unit_sat_weight)
+            return (self.specific_gravity * self._uww - self.unit_sat_weight) / (self.unit_sat_weight - self.liq_sg * self._uww)
         except TypeError:
             pass
         try:
@@ -629,26 +680,37 @@ class Soil(PhysicalObject):
         except TypeError:
             return None
 
+    @property
+    def _uww(self):
+        """
+        Unit water of reference water used to calculate specific gravity values
+        :return:
+        """
+        return self.gravity * MASS_DENSITY_WATER
+
+    @property
+    def liq_sg(self):
+        return self.liq_mass_density / MASS_DENSITY_WATER
+
     def _calc_specific_gravity(self):
         try:
-            return (1 + self.e_curr) * self.unit_dry_weight / self._pw
+            return (1 + self.e_curr) * self.unit_dry_weight / self._uww
         except TypeError:
             pass
         try:
-            return (1 + self.e_curr) * self.unit_sat_weight / self._pw - self.e_curr
+            return (1 + self.e_curr) * self.unit_sat_weight / self._uww - self.e_curr * self.liq_sg
         except TypeError:
             return None
 
     def _calc_unit_dry_weight(self):
         try:
-            return (self.specific_gravity * self._pw) / (1 + self.e_curr)  # dry relationship
+            return (self.specific_gravity * self._uww) / (1 + self.e_curr)  # dry relationship
         except TypeError:
             return None
 
     def _calc_unit_sat_weight(self):
         try:
-            return ((self.specific_gravity + self.e_curr) * self._pw) / (1 + self.e_curr)
-            # return self._calc_unit_void_volume() * self._pw + self.unit_dry_weight
+            return ((self.specific_gravity + self.e_curr * self.liq_sg) * self._uww) / (1 + self.e_curr)
         except TypeError:
             return None
 
@@ -661,7 +723,7 @@ class Soil(PhysicalObject):
     def _calc_saturation(self):
         try:
             unit_moisture_weight = self.unit_moist_weight - self.unit_dry_weight
-            unit_moisture_volume = unit_moisture_weight / self._pw
+            unit_moisture_volume = unit_moisture_weight / self.ulw
             return unit_moisture_volume / self._calc_unit_void_volume()
         except TypeError:
             return None
@@ -744,7 +806,7 @@ class Soil(PhysicalObject):
     def _calc_unit_moisture_weight(self):
         """Return the weight of the voids for total volume equal to a unit"""
         try:
-            return self.saturation * self._calc_unit_void_volume() * self._pw
+            return self.saturation * self._calc_unit_void_volume() * self.ulw
         except ValueError:
             return None
 
@@ -756,8 +818,9 @@ class CriticalSoil(Soil):
     lamb_crl = 0.0
     type = "critical_soil"
 
-    def __init__(self, pw=9800, **kwargs):
-        super(CriticalSoil, self).__init__(pw=pw)  # run parent class initialiser function
+    def __init__(self, pw=9800, liq_mass_density=None, g=9.8,  **kwargs):
+        # run parent class initialiser function
+        super(CriticalSoil, self).__init__(pw=pw, liq_mass_density=liq_mass_density, g=g, **kwargs)
         self._extra_class_inputs = ["e_cr0", "p_cr0", "lamb_crl"]
         self.inputs = self.inputs + self._extra_class_inputs
         for param in kwargs:
@@ -779,8 +842,9 @@ class StressDependentSoil(Soil):
     type = "stress_dependent_soil"
     _a = 0.5  # stress factor
 
-    def __init__(self, pw=9800, **kwargs):
-        super(StressDependentSoil, self).__init__(pw=pw)
+    def __init__(self, pw=9800, liq_mass_density=None, g=9.8, **kwargs):
+
+        super(StressDependentSoil, self).__init__(pw=pw, liq_mass_density=liq_mass_density, g=g, **kwargs)
         self._extra_class_inputs = ["g0_mod", "p_atm", "a"]
         self.inputs = self.inputs + self._extra_class_inputs
         for param in kwargs:
@@ -1138,7 +1202,10 @@ class SoilProfile(PhysicalObject):
 
         :param z_c: depth from surface
         """
-        total_stress = 0.0
+        if self.gwl < 0:
+            total_stress = -self.gwl * self.unit_water_weight
+        else:
+            total_stress = 0.0
         depths = self.depths
         end = 0
         for layer_int in range(1, len(depths) + 1):
@@ -1255,7 +1322,7 @@ class SoilProfile(PhysicalObject):
                 v_eff = None
                 centre_depth = cum_thickness + slice_thickness * 0.5
                 cum_thickness += slice_thickness
-                if cum_thickness >= self.gwl:
+                if centre_depth > self.gwl:
                     saturated = True
                 else:
                     saturated = False
@@ -1317,7 +1384,7 @@ def discretize_soil_profile(sp, incs=None, target=1.0):
                 v_eff = sp.vertical_effective_stress(cum_thickness)
                 vs = sl.get_shear_vel_at_v_eff_stress(v_eff, saturation)
             else:
-                vs = sl.calc_shear_vel(saturation)
+                vs = sl.get_shear_vel(saturation)
             dd["shear_vel"].append(vs)
             dd["unit_mass"].append(rho)
             dd["thickness"].append(slice_thickness)

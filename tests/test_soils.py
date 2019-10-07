@@ -246,7 +246,7 @@ def test_load_test_data():
 
 
 def test_load_nan():
-    sl = models.Soil()
+    sl = models.Soil(pw=None)
     sl.g_mod = ""
     sl.bulk_mod = ""
     sl.g_mod = None
@@ -340,9 +340,31 @@ def test_poissons_ratio_again():
     soil2.poissons_ratio = poissons_ratio
 
 
+def test_non_water_liquid():
+    sl0 = models.Soil(liq_mass_density=1.0e3, unit_dry_weight=16000., e_curr=0.55)
+    sl1 = models.Soil(liq_mass_density=1.1e3, unit_dry_weight=16000., e_curr=0.55)
+    assert np.isclose(sl0.specific_gravity, sl1.specific_gravity), (sl0.specific_gravity, sl1.specific_gravity)
+    assert not np.isclose(sl0.unit_sat_weight, sl1.unit_sat_weight), (sl0.unit_sat_weight, sl1.unit_sat_weight)
+    sl1.override('liq_mass_density', 1.0e3)
+    assert np.isclose(sl0.unit_sat_weight, sl1.unit_sat_weight), (sl0.unit_sat_weight, sl1.unit_sat_weight)
+
+    sl0 = models.Soil(liq_mass_density=1.0e3, unit_sat_weight=20000., e_curr=0.55)
+    sl1 = models.Soil(liq_mass_density=1.1e3, unit_sat_weight=20000., e_curr=0.55)
+    assert not np.isclose(sl0.specific_gravity, sl1.specific_gravity), (sl0.specific_gravity, sl1.specific_gravity)
+    assert not np.isclose(sl0.unit_dry_weight, sl1.unit_dry_weight), (sl0.unit_sat_weight, sl1.unit_sat_weight)
+
+
+def test_non_normal_g():
+    sl0 = models.Soil(liq_mass_density=1.0e3, unit_dry_weight=16000., e_curr=0.55, g=9.8)
+    sl1 = models.Soil(liq_mass_density=1.0e3, unit_dry_weight=16000., e_curr=0.55, g=2 * 9.8)
+    assert np.isclose(sl0.specific_gravity / 2, sl1.specific_gravity), (sl0.specific_gravity, sl1.specific_gravity)
+    assert not np.isclose(sl0.unit_sat_weight, sl1.unit_sat_weight), (sl0.unit_sat_weight, sl1.unit_sat_weight)
+
+
 if __name__ == '__main__':
+    test_non_normal_g()
     # test_e_critical()
-    test_auto_set_unit_dry_weight_from_sat()
+    # test_auto_set_unit_dry_weight_from_sat()
     # test_poissons_ratio_again()
     # test_reset_all()
     # test_override_fake_key()

@@ -173,7 +173,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
                     else:  # if one
                         parameters = p_str.split(" and ")
                 else:
-                    raise TypeError(e)
+                    raise TypeError('In {0}: {1}'.format(obj_class, e))
                 params = []
                 for parameter in parameters:
                     parameter = parameter[1:-1]

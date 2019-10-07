@@ -309,8 +309,8 @@ def test_soil_profile_split_simple_shear_vel():
     sp.add_layer(0, sl1)
     sp.add_layer(3, sl2)
     sp.height = 5
-    t = sp.layer_height(1) / sp.layer(1).calc_shear_vel(saturated=False) + \
-        sp.layer_height(2) / sp.layer(2).calc_shear_vel(saturated=False)
+    t = sp.layer_height(1) / sp.layer(1).get_shear_vel(saturated=False) + \
+        sp.layer_height(2) / sp.layer(2).get_shear_vel(saturated=False)
     sp.gen_split(props=["shear_vel"])
     t_split = np.sum(sp.split['thickness'] / sp.split['shear_vel'])
     assert np.isclose(t, t_split)
