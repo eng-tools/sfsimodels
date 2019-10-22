@@ -128,6 +128,8 @@ class Soil(PhysicalObject):
             # catch all conflicts
             try:
                 setattr(self, item, value)
+                if item in ['gravity', 'liq_mass_density']:
+                    self._add_to_stack(item, value)
             except ModelError:
                 conflicts.append(item)
         return conflicts
@@ -867,6 +869,8 @@ class StressDependentSoil(Soil):
     def g0_mod(self, value):
         value = clean_float(value)
         self._g0_mod = value
+        if value is not None:
+            self._add_to_stack("g0_mod", float(value))
 
     @property
     def a(self):
@@ -876,6 +880,8 @@ class StressDependentSoil(Soil):
     def a(self, value):
         value = clean_float(value)
         self._a = value
+        if value is not None:
+            self._add_to_stack("a", float(value))
 
     @property
     def p_atm(self):
@@ -885,6 +891,8 @@ class StressDependentSoil(Soil):
     def p_atm(self, value):
         value = clean_float(value)
         self._p_atm = value
+        if value is not None:
+            self._add_to_stack("p_atm", float(value))
 
     def get_g_mod_at_v_eff_stress(self, v_eff_stress):
         k0 = 1 - np.sin(self.phi_r)
