@@ -2,10 +2,11 @@
 History
 =======
 
-0.9.21 (2019-X-X)
+0.9.21 (2019-11-11)
 --------------------
 
 * Fixed issue with stack not working for overriding soil properties
+* Switched to using wheel distributions on pypi for package
 
 0.9.20 (2019-10-7)
 --------------------
