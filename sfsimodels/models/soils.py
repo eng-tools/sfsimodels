@@ -273,6 +273,11 @@ class Soil(PhysicalObject):
         return self._unit_moist_weight
 
     @property
+    def unit_moist_mass(self):
+        """The unit moist mass of the soil (accounts for saturation level)"""
+        return self._unit_moist_weight / self._gravity
+
+    @property
     def unit_bouy_weight(self):
         """The unit moist weight of the soil (accounts for saturation level)"""
         try:
@@ -971,10 +976,10 @@ class SoilProfile(PhysicalObject):
             models_dict[self.base_type] = OrderedDict()
         if "soil" not in models_dict:
             models_dict["soil"] = OrderedDict()
-        profile_dict = self.to_dict()
+        profile_dict = self.to_dict(**kwargs)
         profile_dict["layers"] = []
         for layer in self.layers:
-            models_dict["soil"][self.layers[layer].unique_hash] = self.layers[layer].to_dict()
+            models_dict["soil"][self.layers[layer].unique_hash] = self.layers[layer].to_dict(**kwargs)
             profile_dict["layers"].append({
                 "soil_id": str(self.layers[layer].id),
                 "soil_unique_hash": str(self.layers[layer].unique_hash),
@@ -1170,6 +1175,19 @@ class SoilProfile(PhysicalObject):
             if hasattr(soil, parameter):
                 od[parameter] = getattr(soil, parameter)
         return od
+    
+    def get_parameters_at_depths(self, depths, parameters):
+        od = OrderedDict()
+        for parameter in parameters:
+            od[parameter] = []
+        for depth in depths:
+            lay_index = self.get_layer_index_by_depth(depth)
+            soil = self.layer(lay_index)
+            
+            for parameter in parameters:
+                if hasattr(soil, parameter):
+                    od[parameter].append(getattr(soil, parameter))
+            return od
 
     @property
     def n_layers(self):
@@ -1186,6 +1204,10 @@ class SoilProfile(PhysicalObject):
         :return:
         """
         return list(self._layers.keys())
+
+    # def set_soil_saturation_based_on_gwl(self):
+    #     for depth in self._layers:
+    #         if depth
 
     def vertical_total_stress(self, y_c):
         deprecation("Use get_v_total_stress_at_depth")
@@ -1299,13 +1321,14 @@ class SoilProfile(PhysicalObject):
         return vs
 
     def shear_vel_at_depth(self, y_c):
+        deprecation("Use get_shear_vel_at_depth")
         return self.get_shear_vel_at_depth(y_c)
 
     def split_props(self, incs=None, target=1.0, props=None):
         deprecation('Use gen_split')
         self.gen_split(incs=incs, target=target, props=props)
 
-    def gen_split(self, incs=None, target=1.0, props=None):
+    def gen_split(self, incs=None, target=1.0, props=None, pos='centre'):
         if incs is None:
             incs = np.ones(self.n_layers) * target
         if props is None:
@@ -1313,7 +1336,7 @@ class SoilProfile(PhysicalObject):
         else:
             if 'thickness' in props:
                 props.remove('thickness')
-        dd = OrderedDict([('thickness', [])])
+        dd = OrderedDict([('thickness', []), ('depth', [])])
         for item in props:
             dd[item] = []
 
@@ -1328,7 +1351,13 @@ class SoilProfile(PhysicalObject):
             for j in range(n_slices):
                 dd["thickness"].append(slice_thickness)
                 v_eff = None
-                centre_depth = cum_thickness + slice_thickness * 0.5
+                if pos == 'centre':
+                    centre_depth = cum_thickness + slice_thickness * 0.5
+                elif pos == 'bottom':
+                    centre_depth = cum_thickness + slice_thickness
+                else:
+                    centre_depth = cum_thickness
+                dd['depth'].append(centre_depth)
                 cum_thickness += slice_thickness
                 if centre_depth > self.gwl:
                     saturated = True

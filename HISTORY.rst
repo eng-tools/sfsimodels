@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.X (2019-X-X)
+--------------------
+
+* Can now pass `export_none` to ecp_object.add_to_dict() to turn on/off the export of null in ecp file.
+
 0.9.21 (2019-11-11)
 --------------------
 

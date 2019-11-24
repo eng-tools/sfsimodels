@@ -232,7 +232,7 @@ class Output(object):
     def sfsimodels_version(self, value):
         deprecation('sfsimodels_version automatically set')
 
-    def add_to_dict(self, an_object, extras=None):
+    def add_to_dict(self, an_object, export_none=False, extras=None):
         """
         Convert models to json serialisable output
 
@@ -255,11 +255,11 @@ class Output(object):
             self.unordered_models[mtype] = OrderedDict()
 
         if hasattr(an_object, "add_to_dict"):
-            an_object.add_to_dict(self.unordered_models)
+            an_object.add_to_dict(self.unordered_models, export_none=export_none)
 
         elif hasattr(an_object, "to_dict"):
-
-            self.unordered_models[mtype][an_object.unique_hash] = an_object.to_dict(compression=self.compression)
+            self.unordered_models[mtype][an_object.unique_hash] = an_object.to_dict(compression=self.compression,
+                                                                                    export_none=export_none)
         else:
             raise ModelError("Object does not have method 'to_dict', cannot add to output.")
 

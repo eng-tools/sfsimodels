@@ -82,13 +82,18 @@ def test_save_and_load_soil_profile():
     sp.add_layer(0, sl1)
     sp.add_layer(3, sl2)
     sp.set_soil_ids_to_layers()
+    ecp_output_verby = sm.Output()
+    ecp_output_verby.add_to_dict(sp, export_none=True)
+    p_str = json.dumps(ecp_output_verby.to_dict(), skipkeys=["__repr__"], indent=4)
+    assert 'e_min' in p_str
     ecp_output = sm.Output()
-    ecp_output.add_to_dict(sp)
+    ecp_output.add_to_dict(sp, export_none=False)
 
     ecp_output.name = "a single soil"
     ecp_output.units = "N, kg, m, s"
     ecp_output.comments = ""
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    assert 'e_min' not in p_str
     a = open("temp.json", "w")
     a.write(p_str)
     a.close()
