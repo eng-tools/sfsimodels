@@ -110,9 +110,33 @@ def get_surface_height(si):
     return None
 
 
-def get_depth_by_code(si, sensor_code):
+def get_depth_by_code(si, sensor_code, coords='auto', surface=None):
+    """
+    Get depth from surface as a positive value for downwards
+
+    :param si:
+    :param sensor_code:
+    :param coords:
+    :param surface:
+    :return:
+    """
     mtype, sensor_number = get_mtype_and_number_from_code(si, sensor_code)
     if sensor_number is None:
         raise KeyError("Depth not found for sensor_code: %s" % sensor_code)
-    max_depth = get_surface_height(si)
-    return max_depth - si[mtype][sensor_number]['y']
+    if coords == 'auto':
+        surface = get_surface_height(si)
+        if surface is None:
+            raise ValueError('Cannot detect surface height, define coord system and include surface height as an input')
+        return surface - si[mtype][sensor_number]['y']
+    elif coords == '+ve':
+        return si[mtype][sensor_number]['y']
+    elif coords == '-ve':  # FLAC
+        return -si[mtype][sensor_number]['y']
+    elif coords == 'rev+ve':  # reverse positive (surface is a positive number, numbers decrease with depth)
+        if surface is None:
+            surface = get_surface_height(si)
+        if surface is None:
+            raise ValueError('Cannot detect surface height, include surface height as an input')
+        return -si[mtype][sensor_number]['y']
+    else:
+        raise ValueError(f"coords={coords}, does not match: ['auto', '+ve', '-ve', 'rev+ve']")
