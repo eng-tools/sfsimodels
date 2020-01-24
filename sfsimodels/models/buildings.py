@@ -170,6 +170,14 @@ class Section(PhysicalObject):  # not used?
     def width(self, value):
         self._width = value
 
+    @property
+    def i_rot_1(self):
+        return self._width * self._depth ** 3 / 12
+
+    @property
+    def i_rot_2(self):
+        return self._width ** 3 * self._depth / 12
+
 
 class Element(PhysicalObject):
     section_lengths = None
@@ -401,6 +409,9 @@ class Frame(object):
         if repeat == "up":
             assert len(values.shape) == 1
             values = [values for ss in range(self.n_storeys)]
+        elif repeat == "all":
+            assert len(values.shape) == 0
+            values = [[values for i in range(self.n_bays)] for ss in range(self.n_storeys)]
         else:
             assert len(values.shape) == 2
         if len(values[0]) != self.n_bays:
@@ -421,6 +432,9 @@ class Frame(object):
         if repeat == "up":
             assert len(values.shape) == 1
             values = [values for ss in range(self.n_storeys)]
+        elif repeat == 'all':
+            assert len(values.shape) == 0
+            values = [[values for i in range(self.n_cols)] for ss in range(self.n_storeys)]
         else:
             assert len(values.shape) == 2
         if len(values[0]) != self.n_cols:
