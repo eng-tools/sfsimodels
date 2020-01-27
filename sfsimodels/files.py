@@ -5,7 +5,6 @@ from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
 from sfsimodels.__about__ import __version__
 import numpy as np
-import pkg_resources
 
 
 standard_types = ["soil", "soil_profile", "foundation", "building", "section", "system", "custom_type"]
