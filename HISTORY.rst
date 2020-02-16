@@ -2,10 +2,11 @@
 History
 =======
 
-0.9.X (2019-X-X)
+0.9.22 (2020-2-17)
 --------------------
 
 * Can now pass `export_none` to ecp_object.add_to_dict() to turn on/off the export of null in ecp file.
+* Can assign beam and column properties to frames using 'all' to assign to all beams or columns.
 
 0.9.21 (2019-11-11)
 --------------------
