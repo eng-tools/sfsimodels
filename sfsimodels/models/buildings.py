@@ -9,6 +9,51 @@ from sfsimodels.exceptions import ModelError, deprecation
 from sfsimodels import functions as sf
 
 
+class NullBuilding(PhysicalObject):
+    _id = None
+    name = None
+    base_type = "building"
+    type = "null_building"
+    _g = 9.81  # m/s2  # gravity
+    _foundation = None
+
+    def __init__(self, verbose=0, **kwargs):
+        super(NullBuilding, self).__init__()
+        if not hasattr(self, "inputs"):
+            self.inputs = []
+        self._extra_class_variables = [
+            "id",
+            "name",
+            "base_type",
+            "type",
+        ]
+        self.inputs += self._extra_class_variables
+        self.all_parameters = self.inputs + [
+        ]
+
+    @property
+    def ancestor_types(self):
+        return super(NullBuilding, self).ancestor_types + ["null_building"]
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        if value not in [None, ""]:
+            self._id = int(value)
+
+    @property
+    def foundation(self):
+        return self._foundation
+
+    def set_foundation(self, foundation, two_way=True):
+        if two_way:
+            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
+        self._foundation = foundation  # TODO: allow saving and loading with link
+
+
 class Building(PhysicalObject):
     """
     An object to define Buildings
@@ -30,6 +75,7 @@ class Building(PhysicalObject):
     _concrete = Concrete()
     _n_storeys = None
     _g = 9.81  # m/s2  # gravity
+    _foundation = None
 
     def __init__(self, n_storeys, verbose=0, **kwargs):
         super(Building, self).__init__()
@@ -141,6 +187,15 @@ class Building(PhysicalObject):
             self.storey_masses = stresses * self.floor_area / self._g
         else:
             self.storey_masses = stresses * np.ones(self.n_storeys) * self.floor_area / self._g
+
+    @property
+    def foundation(self):
+        return self._foundation
+
+    def set_foundation(self, foundation, two_way=True):
+        if two_way:
+            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
+        self._foundation = foundation  # TODO: allow saving and loading with link
 
 
 class Section(PhysicalObject):  # not used?

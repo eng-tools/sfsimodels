@@ -23,6 +23,7 @@ class Foundation(PhysicalObject):
     base_type = "foundation"
     type = "foundation"
     _tolerance = 0.0001  # consistency tolerance
+    _building = None
 
     _extra_class_inputs = [
         "id",
@@ -199,6 +200,15 @@ class Foundation(PhysicalObject):
             return None
         except ZeroDivisionError:
             return None
+
+    @property
+    def building(self):
+        return self._building
+
+    def set_building(self, building, two_way=True):
+        if two_way:
+            building.set_foundation(self, two_way=False)
+        self._building = building
 
 
 class RaftFoundation(Foundation):

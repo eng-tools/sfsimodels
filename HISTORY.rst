@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.2X (2020-2-XX)
+--------------------
+* Added `NullBuilding` object to create a building with no attributes
+* Added option for linking a building and a foundation using `building.set_foundation(foundation, two_way=True)` and `foundation.set_building(building)`, where if `two_way` is true then vice-versa link also created.
+
 0.9.22 (2020-2-17)
 --------------------
 

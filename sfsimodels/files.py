@@ -97,6 +97,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
         "soil-soil_stress_dependent": soils.StressDependentSoil,
         "soil_profile-soil_profile": soils.SoilProfile,
         "building-building": buildings.Building,
+        "building-null_building": buildings.NullBuilding,
         "building-frame_building": buildings.FrameBuilding,
         "building-frame_building2D": buildings.FrameBuilding2D,
         "building-building_frame2D": buildings.FrameBuilding2D,  # deprecated type
