@@ -31,7 +31,7 @@ def test_load_nan():
     bd.g_mod = ""
     bd.bulk_mod = ""
     bd.g_mod = None
-    ignore_list = ["n_storeys", "interstorey_heights"]
+    ignore_list = ["n_storeys", "interstorey_heights", 'foundation_id']
     for item in bd.inputs:
 
         if item not in ignore_list:

@@ -51,7 +51,7 @@ class NullBuilding(PhysicalObject):
     def set_foundation(self, foundation, two_way=True):
         if two_way:
             foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
-        self._foundation = foundation  # TODO: allow saving and loading with link
+        self._foundation = foundation
 
 
 class Building(PhysicalObject):
@@ -91,7 +91,8 @@ class Building(PhysicalObject):
                 'floor_length',
                 'floor_width',
                 'interstorey_heights',
-                'storey_masses'
+                'storey_masses',
+                'foundation_id'
             ]
         self.inputs += self._extra_class_variables
         self.all_parameters = self.inputs + [
@@ -195,7 +196,13 @@ class Building(PhysicalObject):
     def set_foundation(self, foundation, two_way=True):
         if two_way:
             foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
-        self._foundation = foundation  # TODO: allow saving and loading with link
+        self._foundation = foundation
+
+    @property
+    def foundation_id(self):
+        if self._foundation is None:
+            return None
+        return self._foundation.id
 
 
 class Section(PhysicalObject):  # not used?
@@ -724,6 +731,7 @@ class SDOFBuilding(PhysicalObject):
     _mass_eff = None
     _t_fixed = None
     _mass_ratio = None
+    _foundation = None
 
     def __init__(self, g=9.8):
         self.inputs = [
@@ -797,6 +805,15 @@ class SDOFBuilding(PhysicalObject):
     @property
     def weight(self):
         return self.mass_eff / self.mass_ratio * self._g
+
+    @property
+    def foundation(self):
+        return self._foundation
+
+    def set_foundation(self, foundation, two_way=True):
+        if two_way:
+            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
+        self._foundation = foundation  # TODO: allow saving and loading with link
 
 
 class BuildingSDOF(SDOFBuilding):

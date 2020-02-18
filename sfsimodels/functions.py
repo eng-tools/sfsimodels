@@ -102,7 +102,13 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
             try:
                 setattr(obj, key, value)
             except AttributeError:
-                raise AttributeError("Can't set {0}={1} on object: {2}".format(key, value, obj))
+                if hasattr(obj, f'set_{key}'):
+                    try:
+                        getattr(obj, f'set_{key}')(value, two_way=False)
+                    except AttributeError:
+                        raise AttributeError("Can't set {0}={1} on object: {2}".format(key, value, obj))
+                else:
+                    raise AttributeError("Can't set {0}={1} on object: {2}".format(key, value, obj))
 
 
 def get_value_of_a_get_method(obj, method, extras=None):
@@ -133,3 +139,27 @@ def get_value_of_a_get_method(obj, method, extras=None):
         value = getattr(obj, method)(*params)
     return value
 
+
+def interp_left(x0, x, y=None):
+    """
+    Interpolation takes the lower value
+
+    Parameters
+    ----------
+    x0: array_like
+        Values to be interpolated on x-axis
+    x: array_like
+        Existing values on x-axis
+    y: array_like
+        Existing y-axis values
+    Returns
+    -------
+
+    """
+    if y is None:
+        y = np.arange(len(x))
+    else:
+        y = np.array(y)
+    assert min(x0) >= x[0]
+    inds = np.searchsorted(x, x0, side='right') - 1
+    return y[inds]
