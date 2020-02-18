@@ -4,20 +4,21 @@ import numpy as np
 
 
 def test_two_d_mesh():
-    vs = 150.0
     rho = 1.8
-    g_mod = vs ** 2 * rho
-    sl = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
+    sl1 = sm.Soil(g_mod=50, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
+    sl2 = sm.Soil(g_mod=100, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
+    sl3 = sm.Soil(g_mod=400, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
+    sl4 = sm.Soil(g_mod=600, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
     sp = sm.SoilProfile()
-    sp.add_layer(0, sl)
-    sp.add_layer(5, sl)
-    sp.add_layer(12, sl)
+    sp.add_layer(0, sl1)
+    sp.add_layer(5, sl2)
+    sp.add_layer(12, sl3)
     sp.height = 18
     sp.x = 0
     sp2 = sm.SoilProfile()
-    sp2.add_layer(0, sl)
-    sp2.add_layer(7, sl)
-    sp2.add_layer(12, sl)
+    sp2.add_layer(0, sl1)
+    sp2.add_layer(7, sl4)
+    sp2.add_layer(12, sl3)
     sp2.height = 20
     sp.x_angles = [0.0, 0.05, 0.0]
     sp2.x_angles = [0.0, 0.00, 0.0]
@@ -40,17 +41,38 @@ def test_two_d_mesh():
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
     femesh = sm.num.mesh.FiniteElement2DMesh(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+
     x_ind = femesh.get_indexes_at_xs([4.])[0]
     y_ind = femesh.get_indexes_at_depths([1.99])[0]
-    lay_id = femesh.soils[x_ind][y_ind]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert sl_ind == 1000000
     p_ind = femesh.profile_indys[x_ind]
     assert p_ind == 0
-    assert lay_id == -1
+    y_ind = femesh.get_indexes_at_depths([-3])[0]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert femesh.soils[sl_ind].g_mod == 50
     y_ind = femesh.get_indexes_at_depths([-8])[0]
-    lay_id = femesh.soils[x_ind][y_ind]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert femesh.soils[sl_ind].g_mod == 100
+    y_ind = femesh.get_indexes_at_depths([-12.5])[0]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert femesh.soils[sl_ind].g_mod == 400
+
+    x_ind = femesh.get_indexes_at_xs([16.])[0]
     p_ind = femesh.profile_indys[x_ind]
-    assert p_ind == 0
-    assert lay_id == 2
+    assert p_ind == 1
+    y_ind = femesh.get_indexes_at_depths([1.99])[0]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert femesh.soils[sl_ind].g_mod == 50
+    y_ind = femesh.get_indexes_at_depths([-3])[0]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert femesh.soils[sl_ind].g_mod == 50
+    y_ind = femesh.get_indexes_at_depths([-8])[0]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert femesh.soils[sl_ind].g_mod == 600
+    y_ind = femesh.get_indexes_at_depths([-12.5])[0]
+    sl_ind = femesh.soil_grid[x_ind][y_ind]
+    assert femesh.soils[sl_ind].g_mod == 400
 
 
 if __name__ == '__main__':

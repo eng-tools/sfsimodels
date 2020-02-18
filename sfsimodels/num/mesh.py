@@ -40,6 +40,14 @@ class FiniteElement2DMesh(object):
         self.xs.append(tds.width)
     
         self.y_surf_at_sps = np.interp(self.xs, tds.x_surf, tds.y_surf)
+        self._soils = []
+        self._soil_hashes = []
+        for i in range(len(self.tds.sps)):
+            for yy in range(1, self.tds.sps[i].n_layers + 1):
+                sl = self.tds.sps[i].layer(yy)
+                if sl.unique_hash not in self._soil_hashes:
+                    self._soil_hashes.append(sl.unique_hash)
+                    self._soils.append(sl)
         self.get_actual_lims()
         self.set_y_nodes()
         self.set_x_nodes()
@@ -136,15 +144,15 @@ class FiniteElement2DMesh(object):
         x_centres = (self.x_nodes[:-1] + self.x_nodes[1:]) / 2
         y_centres = (self.y_nodes[:-1] + self.y_nodes[1:]) / 2
         surf_centres = np.interp(x_centres, self.tds.x_surf, self.tds.y_surf)
-        self.soils = np.zeros((len(x_centres), len(y_centres)), dtype=int)
+        self.soil_grid = np.zeros((len(x_centres), len(y_centres)), dtype=int)
         self.profile_indys = interp_left(x_centres, self.tds.x_sps, np.arange(0, len(self.tds.x_sps)))
         self.profile_indys = np.array(self.profile_indys, dtype=int)
-        for xx in range(len(self.soils)):
-            for yy in range(len(self.soils[0])):
+        for xx in range(len(self.soil_grid)):
+            for yy in range(len(self.soil_grid[0])):
                 pid = self.profile_indys[xx]
                 sp = self.tds.sps[pid]
                 if y_centres[yy] > surf_centres[xx]:
-                    self.soils[xx][yy] = -1
+                    self.soil_grid[xx][yy] = 1000000
                     continue
                 x_angles = [10] + list(sp.x_angles)
                 sp_x = self.tds.x_sps[pid]
@@ -152,10 +160,17 @@ class FiniteElement2DMesh(object):
                     if -y_centres[yy] > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
                         pass
                     else:
-                        self.soils[xx][yy] = ll - 1
+                        unique_hash = sp.layer(ll - 1).unique_hash
+                        self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
                         break
                     if ll == sp.n_layers:
-                        self.soils[xx][yy] = ll
+                        unique_hash = sp.layer(ll).unique_hash
+                        self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
+                        break
+
+    @property
+    def soils(self):
+        return self._soils
 
     def get_indexes_at_depths(self, depths):
         return len(self.y_nodes) - (interp_left(depths, self.y_nodes[::-1]) + 1) - 1
