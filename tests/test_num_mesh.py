@@ -46,6 +46,7 @@ def test_two_d_mesh():
     y_ind = femesh.get_indexes_at_depths([1.99])[0]
     sl_ind = femesh.soil_grid[x_ind][y_ind]
     assert sl_ind == 1000000
+    assert femesh.active_nodes[x_ind][y_ind] == 0
     p_ind = femesh.profile_indys[x_ind]
     assert p_ind == 0
     y_ind = femesh.get_indexes_at_depths([-3])[0]
@@ -57,6 +58,7 @@ def test_two_d_mesh():
     y_ind = femesh.get_indexes_at_depths([-12.5])[0]
     sl_ind = femesh.soil_grid[x_ind][y_ind]
     assert femesh.soils[sl_ind].g_mod == 400
+    assert femesh.active_nodes[x_ind][y_ind] == 1
 
     x_ind = femesh.get_indexes_at_xs([16.])[0]
     p_ind = femesh.profile_indys[x_ind]

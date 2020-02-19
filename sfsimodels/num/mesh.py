@@ -11,6 +11,7 @@ class FiniteElement2DMesh(object):
     y_nodes = None
     soils = None
     profile_indys = None
+    _inactive_value = 1000000
 
     def __init__(self, tds, dy_target, x_scale_pos, x_scale_vals, dp: int=None):
         """
@@ -54,6 +55,7 @@ class FiniteElement2DMesh(object):
         if self.dp is not None:
             self.set_to_decimal_places()
         self.set_soil_ids_to_grid()
+        self.active_nodes = self.get_active_nodes()
     
     def get_actual_lims(self):
         """Find the x and y coordinates that should be maintained in the FE mesh"""
@@ -152,7 +154,7 @@ class FiniteElement2DMesh(object):
                 pid = self.profile_indys[xx]
                 sp = self.tds.sps[pid]
                 if y_centres[yy] > surf_centres[xx]:
-                    self.soil_grid[xx][yy] = 1000000
+                    self.soil_grid[xx][yy] = self._inactive_value
                     continue
                 x_angles = [10] + list(sp.x_angles)
                 sp_x = self.tds.x_sps[pid]
@@ -167,6 +169,18 @@ class FiniteElement2DMesh(object):
                         unique_hash = sp.layer(ll).unique_hash
                         self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
                         break
+
+    def get_active_nodes(self):
+        active_nodes = np.ones((len(self.x_nodes), len(self.y_nodes)), dtype=int)  # Start with all active
+        # Pad soil_grid with inactive values around edge
+        sg_w_pad = self._inactive_value * np.ones((len(self.soil_grid) + 2, len(self.soil_grid[0]) + 2))
+        sg_w_pad[1:-1, 1:-1] = self.soil_grid
+        # Then compute the average soil_grid from four elements
+        node_grid = (sg_w_pad[:-1, :-1] + sg_w_pad[:-1, 1:] + sg_w_pad[1:, :-1] + sg_w_pad[1:, 1:]) / 4
+        # if average is equal to inactive then node is not active
+        inds = np.where(node_grid == self._inactive_value)
+        active_nodes[inds] = 0
+        return active_nodes
 
     @property
     def soils(self):
