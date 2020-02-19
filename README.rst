@@ -16,6 +16,9 @@
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.2596721.svg
     :target: https://doi.org/10.5281/zenodo.2596721
 
+.. image:: https://pepy.tech/badge/sfsimodels
+    :target: https://pepy.tech/project/sfsimodels
+
 
 **********
 sfsimodels
@@ -32,25 +35,25 @@ Models represent states of physical objects, currently can not represent dynamic
 Model inheritance system
 ========================
 
-Every object contains a `type`, a `base_type` and a list of `ancestor_types`.
+Every object contains a ``type``, a ``base_type`` and a list of ``ancestor_types``.
 
- - `type` is the current type of the class or instance of the class
- - `base_type` is what class should be considered as for standard operations such as saving and loading.
- - `ancestor_types` is a list of the `type` of the ancestors of the class
+ - ``type`` is the current type of the class or instance of the class
+ - ``base_type`` is what class should be considered as for standard operations such as saving and loading.
+ - ``ancestor_types`` is a list of the ``type`` of the ancestors of the class
 
 
 Generation of new custom models
 ===============================
 
-It is easiest to create a new object by inheriting from `sm.CustomObject`, as this contains the default parameters
+It is easiest to create a new object by inheriting from ``sm.CustomObject``, as this contains the default parameters
 needed for loading and saving the model.
 
-If you chose not to use the default custom object, you must set the object `base_type` parameter to `"custom_object"`.
+If you chose not to use the default custom object, you must set the object ``base_type`` parameter to ``"custom_object"``.
 
 Loading a custom object
 =======================
 
-pass a dictionary to the `custom_object` parameter in the `sm.load_json` function, where the dictionary contains:
+pass a dictionary to the ``custom_object`` parameter in the ``sm.load_json`` function, where the dictionary contains:
 `custom={"<base_type>-<type>": Object}`.
 
 
@@ -127,11 +130,11 @@ To deploy the package to pypi.com you need to:
 Contributing
 ============
 
- * All properties that require exterior parameters should be named `get_<property>`,
- * Parameters that vary with depth in the soil profile should be named `get_<property>_at_depth`
- * Properties in the stress dependent soil should use `get_<property>_at_v_eff_stress` to obtain the property
- * Functions that set properties on objects should start with 'set' then the property the citation, i.e. `set_<property>_<author-year>`
- * Methods that generate properties on the object should have the prefix `gen_` then property i.e. `gen_<property` e.g. 'soil_profile.gen_split()`
+ * All properties that require exterior parameters should be named ``get_<property>``,
+ * Parameters that vary with depth in the soil profile should be named ``get_<property>_at_depth``
+ * Properties in the stress dependent soil should use ``get_<property>_at_v_eff_stress`` to obtain the property
+ * Functions that set properties on objects should start with 'set' then the property the citation, i.e. ``set_<property>_<author-year>``
+ * Methods that generate properties on the object should have the prefix ``gen_`` then property i.e. ``gen_<property`` e.g. ``soil_profile.gen_split()``
 
 
 
