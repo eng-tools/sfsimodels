@@ -96,20 +96,21 @@ class FiniteElement2DMesh(object):
         """Determine the optimal position of node y-coordinates"""
         y_flat = np.array(list(set(self.y_flat)))
         min_y = -1e10
-        layers = []
+        layers = []  # builds from lowest first
         while min_y < max(self.tds.y_surf):
             min_y = min(y_flat)
             inds = np.where(y_flat < min_y + self.dy_target)
             layer = np.mean(y_flat[inds])
             y_flat[inds] = 1000
             layers.append(layer)
-        dys = [0]
+        dys = []
         for i in range(1, len(layers)):
             dy_lay = layers[i] - layers[i - 1]
             approx_n_eles = dy_lay / self.dy_target
             n_eles = int(approx_n_eles + 0.99)
             dy_ele = dy_lay / n_eles
             dys += ([dy_ele] * n_eles)
+        dys.append(0)
         self.y_nodes = max(self.tds.y_surf) - np.cumsum(dys[::-1])
 
     def set_x_nodes(self):
@@ -187,7 +188,7 @@ class FiniteElement2DMesh(object):
         return self._soils
 
     def get_indexes_at_depths(self, depths):
-        return len(self.y_nodes) - (interp_left(depths, self.y_nodes[::-1]) + 1) - 1
+        return interp_left(-np.array(depths), -self.y_nodes)
 
     def get_indexes_at_xs(self, xs):
         return interp_left(xs, self.x_nodes)

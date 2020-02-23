@@ -36,7 +36,8 @@ def test_two_d_mesh():
     tds.y_surf = np.array([0, 0, 2, 2])
     bd = sm.NullBuilding()
     bd.set_foundation(fd)
-    tds.add_bd(bd, x=8)
+    bd_x = 8.
+    tds.add_bd(bd, x=bd_x)
 
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
@@ -76,6 +77,12 @@ def test_two_d_mesh():
     sl_ind = femesh.soil_grid[x_ind][y_ind]
     assert femesh.soils[sl_ind].g_mod == 400
 
+    # check foundation
+    lhs_ind = np.argmin(abs(femesh.x_nodes - bd_x))
+    assert np.isclose(bd_x, femesh.x_nodes[lhs_ind])
+    rhs_ind = np.argmin(abs(femesh.x_nodes - bd_x - fd.width))
+    assert np.isclose(bd_x + fd.width, femesh.x_nodes[rhs_ind])
+
 
 def test_two_d_mesh_w_1_profile():
     rho = 1.8
@@ -109,4 +116,4 @@ def test_two_d_mesh_w_1_profile():
 
 
 if __name__ == '__main__':
-    test_two_d_mesh_w_1_profile()
+    test_two_d_mesh()
