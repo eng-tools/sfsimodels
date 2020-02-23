@@ -77,5 +77,36 @@ def test_two_d_mesh():
     assert femesh.soils[sl_ind].g_mod == 400
 
 
+def test_two_d_mesh_w_1_profile():
+    rho = 1.8
+    sl1 = sm.Soil(g_mod=50, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
+    sl2 = sm.Soil(g_mod=100, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
+    sl3 = sm.Soil(g_mod=400, unit_dry_weight=rho * 9.8, poissons_ratio=0.3)
+    sp = sm.SoilProfile()
+    sp.add_layer(0, sl1)
+    sp.add_layer(5, sl2)
+    sp.add_layer(12, sl3)
+    sp.x_angles = [0.0, 0.0, 0.0]
+    sp.height = 18
+    sp.x = 0
+
+    tds = sm.TwoDSystem()
+    tds.width = 4
+    tds.height = 15
+    tds.add_sp(sp, x=0)
+    tds.x_surf = np.array([0])
+    tds.y_surf = np.array([0])
+
+    x_scale_pos = np.array([0])
+    x_scale_vals = np.array([2.])
+    femesh = sm.num.mesh.FiniteElement2DMesh(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    ind = np.argmin(abs(femesh.y_nodes + 5.0))
+    assert np.isclose(-5.0, femesh.y_nodes[ind])
+    ind = np.argmin(abs(femesh.y_nodes + 12.0))
+    assert np.isclose(-12.0, femesh.y_nodes[ind])
+    ind = np.argmin(abs(femesh.y_nodes + 15.0))
+    assert np.isclose(-15.0, femesh.y_nodes[ind])
+
+
 if __name__ == '__main__':
-    test_two_d_mesh()
+    test_two_d_mesh_w_1_profile()

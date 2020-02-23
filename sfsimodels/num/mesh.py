@@ -110,7 +110,7 @@ class FiniteElement2DMesh(object):
             n_eles = int(approx_n_eles + 0.99)
             dy_ele = dy_lay / n_eles
             dys += ([dy_ele] * n_eles)
-        self.y_nodes = max(self.tds.y_surf) - np.cumsum(dys)
+        self.y_nodes = max(self.tds.y_surf) - np.cumsum(dys[::-1])
 
     def set_x_nodes(self):
         """Determine optimal position of node x-coordinates"""
