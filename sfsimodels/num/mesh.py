@@ -65,7 +65,7 @@ class FiniteElement2DMesh(object):
         """Find the x and y coordinates that should be maintained in the FE mesh"""
         x_act = [0]
         y_flat = []
-        fd_lhs_coords = [x for x in self.tds.x_bds]
+        fd_lhs_coords = [x for x in self.tds.x_bds]  # TODO: deal with x_fd and use bd.x as centre
         fd_rhs_coords = [self.tds.x_bds[i] + self.tds.bds[i].foundation.width for i in range(len(self.tds.bds))]
         fd_coords = np.array(fd_lhs_coords + fd_rhs_coords)
         for i in range(len(self.tds.sps)):

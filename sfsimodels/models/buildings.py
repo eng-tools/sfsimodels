@@ -4,54 +4,8 @@ import numpy as np
 
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models import SeismicHazard, Foundation, Soil
-from sfsimodels.models.material import Concrete
 from sfsimodels.exceptions import ModelError, deprecation
 from sfsimodels import functions as sf
-
-
-class NullBuilding(PhysicalObject):
-    _id = None
-    name = None
-    base_type = "building"
-    type = "null_building"
-    _g = 9.81  # m/s2  # gravity
-    _foundation = None
-
-    def __init__(self, verbose=0, **kwargs):
-        super(NullBuilding, self).__init__()
-        if not hasattr(self, "inputs"):
-            self.inputs = []
-        self._extra_class_variables = [
-            "id",
-            "name",
-            "base_type",
-            "type",
-        ]
-        self.inputs += self._extra_class_variables
-        self.all_parameters = self.inputs + [
-        ]
-
-    @property
-    def ancestor_types(self):
-        return super(NullBuilding, self).ancestor_types + ["null_building"]
-
-    @property
-    def id(self):
-        return self._id
-
-    @id.setter
-    def id(self, value):
-        if value not in [None, ""]:
-            self._id = int(value)
-
-    @property
-    def foundation(self):
-        return self._foundation
-
-    def set_foundation(self, foundation, two_way=True):
-        if two_way:
-            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
-        self._foundation = foundation
 
 
 class Building(PhysicalObject):
@@ -72,10 +26,10 @@ class Building(PhysicalObject):
     _floor_width = None
     _interstorey_heights = np.array([0.0])  # m
     _storey_masses = np.array([0.0])  # kg
-    _concrete = Concrete()
     _n_storeys = None
     _g = 9.81  # m/s2  # gravity
     _foundation = None
+    x_fd = None
 
     def __init__(self, n_storeys, verbose=0, **kwargs):
         super(Building, self).__init__()
@@ -132,14 +86,6 @@ class Building(PhysicalObject):
         return self._g
 
     @property
-    def concrete(self):
-        return self._concrete
-
-    @concrete.setter
-    def concrete(self, conc_inst):
-        self._concrete = conc_inst
-
-    @property
     def floor_area(self):
         try:
             return self.floor_length * self.floor_width
@@ -193,7 +139,12 @@ class Building(PhysicalObject):
     def foundation(self):
         return self._foundation
 
-    def set_foundation(self, foundation, two_way=True):
+    @property
+    def fd(self):
+        return self._foundation
+
+    def set_foundation(self, foundation, x=0.0, two_way=True):
+        self.x_fd = float(x)
         if two_way:
             foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
         self._foundation = foundation
@@ -461,11 +412,16 @@ class Frame(object):
 
     def set_beam_prop(self, prop, values, repeat="up"):
         """
-        Specify the properties of the beams
+        Specify the properties of the beam
 
-        :param values:
-        :param repeat: if 'up' then duplicate up the structure
-        :return:
+        Parameters
+        ----------
+        prop: str
+            Name of property that values should be assigned to
+        values: value or array_like
+            Value or list of values to be assigned
+        repeat: str
+            If 'up' then duplicate up the structure, if 'all' the duplicate for all columns
         """
         values = np.array(values)
         if repeat == "up":
@@ -486,9 +442,14 @@ class Frame(object):
         """
         Specify the properties of the columns
 
-        :param values:
-        :param repeat: if 'up' then duplicate up the structure
-        :return:
+        Parameters
+        ----------
+        prop: str
+            Name of property that values should be assigned to
+        values: value or array_like
+            Value or list of values to be assigned
+        repeat: str
+            If 'up' then duplicate up the structure, if 'all' the duplicate for all columns
         """
         values = np.array(values)
         if repeat == "up":
@@ -506,10 +467,12 @@ class Frame(object):
                 self._columns[ss][i].set_section_prop(prop, values[0][i])
 
     def beams_at_storey(self, storey):
+        """Get the beams at a particular storey"""
         return self._beams[storey - 1]
 
     @property
     def beam_depths(self):
+        """Get a 2D array of beam depths, first index is storey"""
         beam_depths = []
         for ss in range(self.n_storeys):
             beam_depths.append([])
@@ -519,6 +482,7 @@ class Frame(object):
 
     @property
     def beam_widths(self):
+        """Get a 2D array of beam widths, first index is storey"""
         beam_widths = []
         for ss in range(self.n_storeys):
             beam_widths.append([])
@@ -528,6 +492,7 @@ class Frame(object):
 
     @property
     def column_depths(self):
+        """Get a 2D array of column depths, first index is storey"""
         column_depths = []
         for ss in range(self.n_storeys):
             column_depths.append([])
@@ -537,6 +502,7 @@ class Frame(object):
 
     @property
     def column_widths(self):
+        """Get a 2D array of column widths, first index is storey"""
         column_widths = []
         for ss in range(self.n_storeys):
             column_widths.append([])
@@ -572,10 +538,12 @@ class FrameBuilding(Frame, Building):
 
     @property
     def ancestor_types(self):
+        """List of ancestors class types"""
         return super(FrameBuilding, self).ancestor_types + ["frame_building"]
 
     @property
     def n_seismic_frames(self):
+        """Number of seismically resisting frames"""
         return self._n_seismic_frames
 
     @n_seismic_frames.setter
@@ -591,17 +559,21 @@ class FrameBuilding(Frame, Building):
         self._n_gravity_frames = value
 
 
-class BuildingFrame(FrameBuilding):
-    def __init__(self, n_storeys, n_bays):
-        deprecation("BuildingFrame is deprecated, use FrameBuilding.")
-        super(BuildingFrame, self).__init__(n_storeys, n_bays)
-
-
 class FrameBuilding2D(Frame, Building):
     _extra_class_inputs = []
     type = "frame_building2D"
 
     def __init__(self, n_storeys, n_bays):
+        """
+        A 2 dimensional definition of of frame building
+
+        Parameters
+        ----------
+        n_storeys: int
+            Number of storeys
+        n_bays: int
+            Number of bays
+        """
         Frame.__init__(self, n_storeys, n_bays)
         Building.__init__(self, n_storeys)
         # super(FrameBuilding2D, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
@@ -687,13 +659,10 @@ class FrameBuilding2D(Frame, Building):
         return outputs
 
 
-class BuildingFrame2D(FrameBuilding2D):
-    def __init__(self, n_storeys, n_bays):
-        deprecation("BuildingFrame2D class is deprecated, use FrameBuilding2D.")
-        super(BuildingFrame2D, self).__init__(n_storeys, n_bays)
-
-
-class WallBuilding(Building):  # new name
+class WallBuilding(Building):
+    """
+    A building with walls
+    """
     n_walls = 1
     wall_depth = 0.0  # m
     wall_width = 0.0  # m
@@ -713,12 +682,6 @@ class WallBuilding(Building):  # new name
         return super(WallBuilding, self).ancestor_types + ["wall_building"]
 
 
-class BuildingWall(WallBuilding):
-    def __init__(self, n_storeys):
-        deprecation("BuildingWall class is deprecated, use WallBuilding.")
-        super(BuildingWall, self).__init__(n_storeys)
-
-
 class SDOFBuilding(PhysicalObject):
     """
     An object to describe structures.
@@ -732,6 +695,7 @@ class SDOFBuilding(PhysicalObject):
     _t_fixed = None
     _mass_ratio = None
     _foundation = None
+    x_fd = None
 
     def __init__(self, g=9.8):
         self.inputs = [
@@ -810,22 +774,75 @@ class SDOFBuilding(PhysicalObject):
     def foundation(self):
         return self._foundation
 
-    def set_foundation(self, foundation, two_way=True):
+    @property
+    def fd(self):
+        return self._foundation
+
+    def set_foundation(self, foundation, x=0.0, two_way=True):
+        self.x_fd = float(x)
         if two_way:
             foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
         self._foundation = foundation  # TODO: allow saving and loading with link
 
 
-class BuildingSDOF(SDOFBuilding):
-    def __init__(self, g=9.8):
-        deprecation("BuildingSDOF class is deprecated, use SDOFBuilding.")
-        super(BuildingSDOF, self).__init__(g=g)
+class NullBuilding(PhysicalObject):
+    """
+    A placeholder building
 
+    Parameters
+    ----------
+    n_storeys : int
+        Number of storeys
 
-class Structure(BuildingSDOF):
-    def __init__(self, g=9.8):
-        deprecation("Structure class is deprecated, use BuildingSDOF.")
-        super(Structure, self).__init__(g=g)
+    """
+    _id = None
+    name = None
+    base_type = "building"
+    type = "null_building"
+    _g = 9.81  # m/s2  # gravity
+    _foundation = None
+    x_fd = None
+
+    def __init__(self, verbose=0, **kwargs):
+        super(NullBuilding, self).__init__()
+        if not hasattr(self, "inputs"):
+            self.inputs = []
+        self._extra_class_variables = [
+            "id",
+            "name",
+            "base_type",
+            "type",
+        ]
+        self.inputs += self._extra_class_variables
+        self.all_parameters = self.inputs + [
+        ]
+
+    @property
+    def ancestor_types(self):
+        return super(NullBuilding, self).ancestor_types + ["null_building"]
+
+    @property
+    def id(self):
+        return self._id
+
+    @id.setter
+    def id(self, value):
+        if value not in [None, ""]:
+            self._id = int(value)
+
+    @property
+    def foundation(self):
+        return self._foundation
+
+    @property
+    def fd(self):
+        return self._foundation
+
+    def set_foundation(self, foundation, x=0.0, two_way=True):
+        self.x_fd = float(x)
+        if two_way:
+            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
+        self._foundation = foundation
 
 
 class SoilStructureSystem(PhysicalObject):
@@ -838,7 +855,3 @@ class SoilStructureSystem(PhysicalObject):
     inputs = ["name"] + bd.inputs + fd.inputs + sp.inputs + hz.inputs
 
 
-if __name__ == '__main__':
-    print(BuildingFrame2D.__mro__)
-    a = BuildingFrame2D(1, 2)
-    print(a.n_bays)

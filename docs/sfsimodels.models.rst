@@ -1,78 +1,65 @@
-sfsimodels\.models package
+sfsimodels\.models module
 ==========================
 
-Submodules
-----------
+The models presented here are base level models that can easily be extended through
+inheritance or dynamically adding parameters.
+The properties that are provided for each model are widely used parameters (e.g. width, height, mass).
 
-sfsimodels\.models\.abstract\_models module
--------------------------------------------
 
-.. automodule:: sfsimodels.models.abstract_models
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sfsimodels\.models\.buildings module
-------------------------------------
+Building models
+---------------
 
 .. automodule:: sfsimodels.models.buildings
     :members:
     :undoc-members:
     :show-inheritance:
 
-sfsimodels\.models\.foundations module
---------------------------------------
+Foundation models
+-----------------
 
 .. automodule:: sfsimodels.models.foundations
     :members:
     :undoc-members:
     :show-inheritance:
 
-sfsimodels\.models\.hazards module
-----------------------------------
 
-.. automodule:: sfsimodels.models.hazards
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sfsimodels\.models\.material module
------------------------------------
-
-.. automodule:: sfsimodels.models.material
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sfsimodels\.models\.soils module
---------------------------------
+Soil models
+-----------
 
 .. automodule:: sfsimodels.models.soils
     :members:
     :undoc-members:
     :show-inheritance:
 
-sfsimodels\.models\.systems module
-----------------------------------
+Hazard models
+-------------
+
+.. automodule:: sfsimodels.models.hazards
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Material models
+---------------
+
+.. automodule:: sfsimodels.models.material
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+System models
+-------------
 
 .. automodule:: sfsimodels.models.systems
     :members:
     :undoc-members:
     :show-inheritance:
 
-sfsimodels\.models\.time module
--------------------------------
-
-.. automodule:: sfsimodels.models.time
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
+Abstract models
 ---------------
 
-.. automodule:: sfsimodels.models
+.. automodule:: sfsimodels.models.abstract_models
     :members:
     :undoc-members:
     :show-inheritance:
+

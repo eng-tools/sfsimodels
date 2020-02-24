@@ -7,7 +7,7 @@ vp = properties.pp
 
 def build_parameter_descriptions(obj, user_p=None, output="csv", show_none=True, ignore=None, plist=None):
     """
-    Creates a list of the decription of all the inputs of an object
+    Creates a list of the description of all the inputs of an object
 
     :param obj: object, that has parameters
     :param user_p: dict, user defined parameter descriptions

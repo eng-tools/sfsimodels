@@ -8,7 +8,6 @@ from sfsimodels.models.buildings import Building, FrameBuilding, WallBuilding, S
 # deprecated
 from sfsimodels.models.soils import SoilStressDependent, SoilCritical
 from sfsimodels.models.foundations import FoundationPad, FoundationRaft
-from sfsimodels.models.buildings import BuildingFrame, BuildingWall, BuildingSDOF, BuildingFrame2D
 
 from sfsimodels.models import material
 from sfsimodels.models.systems import SoilStructureSystem, TwoDSystem
@@ -21,7 +20,7 @@ from sfsimodels import sensors
 
 # from sfsimodels.build_model_descriptions import print_all_parameters
 from sfsimodels.models.foundations import PadFoundation, RaftFoundation  # deprecated objects
-from sfsimodels.models.buildings import FrameBuilding, WallBuilding, Structure, FrameBuilding2D  # deprecated objects
+from sfsimodels.models.buildings import FrameBuilding, WallBuilding, FrameBuilding2D  # deprecated objects
 
 from sfsimodels import __about__
 

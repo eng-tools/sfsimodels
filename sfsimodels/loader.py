@@ -7,9 +7,11 @@ from sfsimodels import models
 def add_inputs_to_object(obj, values):
     """
     A generic function to load object parameters based on a dictionary list.
-    :param obj: Object
-    :param values: Dictionary
-    :return:
+
+    Parameters
+    ----------
+    obj: object
+    values: dict
     """
     for item in obj.inputs:
         if hasattr(obj, item):
@@ -19,9 +21,11 @@ def add_inputs_to_object(obj, values):
 
 def load_sample_data(sss):
     """
-    Sample data for the SoilStructureSystem object
-    :param sss:
-    :return:
+    Adds sample data to a SoilStructureSystem object
+
+    Parameters
+    ----------
+    sss: SoilStructureSystem
     """
 
     load_soil_sample_data(sss.sp)  # soil
@@ -32,9 +36,11 @@ def load_sample_data(sss):
 
 def load_soil_sample_data(sp):
     """
-    Sample data for the Soil object
-    :param sp: Soil Object
-    :return:
+    Adds sample data to a Soil object
+
+    Parameters
+    ----------
+    sp: Soil Object
     """
     # soil
     sp.g_mod = 60.0e6  # [Pa]
@@ -55,8 +61,11 @@ def load_soil_sample_data(sp):
 
 def load_foundation_sample_data(fd):
     """
-    Sample data for the Foundation object
-    :param fd: Foundation Object
+    Adds sample data to a Foundation object
+
+    Parameters
+    ----------
+    fd: Foundation Object
     :return:
     """
     # foundation
@@ -68,9 +77,11 @@ def load_foundation_sample_data(fd):
 
 def load_structure_sample_data(st):
     """
-    Sample data for the Structure object
-    :param st: Structure Object
-    :return:
+    Adds sample data to a Structure object
+
+    Parameters
+    ----------
+    st: Structure Object
     """
     # structure
     st.h_eff = 9.0  # m
@@ -82,8 +93,10 @@ def load_structure_sample_data(st):
 def load_hazard_sample_data(hz):
     """
     Sample data for the Hazard object
-    :param hz: Hazard Object
-    :return:
+
+    Parameters
+    ----------
+    hz: Hazard Object
     """
     # hazard
     hz.z_factor = 0.3  # Hazard factor
@@ -98,8 +111,10 @@ def load_hazard_sample_data(hz):
 def load_building_sample_data(bd):
     """
     Sample data for the Building object
-    :param bd:
-    :return:
+
+    Parameters
+    ----------
+    bd:
     """
     number_of_storeys = 6
     interstorey_height = 3.4  # m
@@ -114,15 +129,13 @@ def load_building_sample_data(bd):
 def load_frame_building_sample_data():
     """
     Sample data for the BuildingFrame object
-
-    :return:
     """
     number_of_storeys = 6
     interstorey_height = 3.4  # m
     masses = 40.0e3  # kg
     n_bays = 3
 
-    fb = models.BuildingFrame(number_of_storeys, n_bays)
+    fb = models.FrameBuilding(number_of_storeys, n_bays)
     fb.interstorey_heights = interstorey_height * np.ones(number_of_storeys)
     fb.floor_length = 18.0  # m
     fb.floor_width = 16.0  # m

@@ -1,27 +1,34 @@
 from collections import OrderedDict
 import numpy as np
 
-def convert_stress_to_mass(q, width, length, gravity):
-    """
-    Converts a foundation stress to an equivalent mass.
-
-    :param q: applied stress [Pa]
-    :param width: foundation width [m]
-    :param length: foundation length [m]
-    :param gravity: applied gravitational acceleration [m/s2]
-    :return:
-    """
-    mass = q * width * length / gravity
-    return mass
+#
+# def convert_stress_to_mass(q, width, length, gravity):
+#     """
+#     Converts a foundation stress to an equivalent mass.
+#
+#     :param q: applied stress [Pa]
+#     :param width: foundation width [m]
+#     :param length: foundation length [m]
+#     :param gravity: applied gravitational acceleration [m/s2]
+#     :return:
+#     """
+#     mass = q * width * length / gravity
+#     return mass
 
 
 def clean_float(value):
+    """Converts a value to a float or returns None"""
     if value is None or value == "":
         return None
     return float(value)
 
 
 def collect_serial_value(value):
+    """
+    Introspective function that returns a serialisable value
+
+    The function converts objects to dictionaries
+    """
     if isinstance(value, str):
         return value
     elif isinstance(value, int):
@@ -81,10 +88,16 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
     """
     Cycles through a dictionary and adds the key-value pairs to an object.
 
-    :param obj:
-    :param dictionary:
-    :param exceptions:
-    :param verbose:
+    Parameters
+    ----------
+    obj: object
+        An object that parameters should be added to
+    dictionary: dict
+        Keys are object parameter names, values are object parameter values
+    exceptions: list
+        Parameters that should be excluded
+    verbose: bool
+        If true then show print statements
     :return:
     """
     if exceptions is None:
@@ -112,6 +125,22 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
 
 
 def get_value_of_a_get_method(obj, method, extras=None):
+    """
+    Can access exposed 'get' methods and pass in keyword arguments if required
+
+    Parameters
+    ----------
+    obj: object
+        The Object that has the get method
+    method: str
+        The name of the get method
+    extras: dict
+        A Dictionary of possible required keyword arguments
+
+    Returns
+    -------
+
+    """
     if extras is None:
         extras = {}
     try:

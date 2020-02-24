@@ -41,7 +41,7 @@ def test_load_nan():
 
 def test_load_frame_building_sample_data():
     """
-    Sample data for the BuildingFrame object
+    Sample data for the FrameBuilding object
 
     :return:
     """

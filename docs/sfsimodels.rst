@@ -1,15 +1,6 @@
 sfsimodels package
 ==================
 
-Subpackages
------------
-
-.. toctree::
-
-    sfsimodels.models
-
-Submodules
-----------
 
 sfsimodels\.build\_model\_descriptions module
 ---------------------------------------------
@@ -19,21 +10,6 @@ sfsimodels\.build\_model\_descriptions module
     :undoc-members:
     :show-inheritance:
 
-sfsimodels\.checking\_tools module
-----------------------------------
-
-.. automodule:: sfsimodels.checking_tools
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sfsimodels\.exceptions module
------------------------------
-
-.. automodule:: sfsimodels.exceptions
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 sfsimodels\.files module
 ------------------------
@@ -59,14 +35,6 @@ sfsimodels\.loader module
     :undoc-members:
     :show-inheritance:
 
-sfsimodels\.make\_migrations module
------------------------------------
-
-.. automodule:: sfsimodels.make_migrations
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 sfsimodels\.output module
 -------------------------
 
@@ -75,27 +43,3 @@ sfsimodels\.output module
     :undoc-members:
     :show-inheritance:
 
-sfsimodels\.properties module
------------------------------
-
-.. automodule:: sfsimodels.properties
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-sfsimodels\.scores module
--------------------------
-
-.. automodule:: sfsimodels.scores
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: sfsimodels
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -5,11 +5,21 @@ def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, pref
     """
     Compile the properties to a table.
 
-    :param olist: list, Names of the parameters to be in the output table
-    :param oformat: str, The type of table to be output
-    :param table_ends: bool, Add ends to the table
-    :param prefix: str, A string to be added to the start of each parameter name
-    :return: para, str, table as a string
+    Parameters
+    ----------
+    olist: list,
+        Names of the parameters to be in the output table
+    oformat: str,
+        The type of table to be output
+    table_ends: bool,
+        Add ends to the table
+    prefix: str,
+        A string to be added to the start of each parameter name
+
+    Returns
+    -------
+    para: str,
+        Table as a string
     """
     para = ""
     property_list = []
@@ -35,10 +45,16 @@ def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, pref
 
 def format_name(name):
     """
-    format parameter names for output
+    Format parameter names for output
 
-    :param name: Cleans a name for output
-    :return:
+    Parameters
+    ----------
+    name: str
+        Name to be formatted
+
+    Returns
+    -------
+    str: Formatted name
     """
     name = name.replace("_", " ")
     return name
@@ -46,11 +62,18 @@ def format_name(name):
 
 def format_value(value, sf=3):
     """
-    convert a parameter value into a formatted string with certain significant figures
+    Convert a parameter value into a formatted string with certain significant figures
 
-    :param value: the value to be formatted
-    :param sf: number of significant figures
-    :return: str
+    Parameters
+    ----------
+    value: float or list or array
+        The value to be formatted
+    sf: int
+        The number of significant figures
+
+    Returns
+    -------
+    str: formatted value
     """
     if isinstance(value, str):
         return value
@@ -74,11 +97,12 @@ def add_table_ends(para, oformat='latex', caption="caption-text", label="table",
     """
     Adds the latex table ends
 
-    :param para:
-    :param oformat:
-    :param caption:
-    :param label:
-    :return:
+    Parameters
+    ----------
+    para:
+    oformat:
+    caption:
+    label:
     """
     if len(align) == 1:
         a_str = "".join([align] * np)

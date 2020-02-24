@@ -337,10 +337,7 @@ class PadFoundation(Foundation):
 
     @property
     def area(self):
-        """
-        Contact area of the whole foundation in plan
-        :return:
-        """
+        """Contact area of the whole foundation in plan"""
         return self.n_pads * self.pad_area
 
     def pad_position_l(self, i):

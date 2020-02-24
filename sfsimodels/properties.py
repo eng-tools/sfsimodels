@@ -1,6 +1,3 @@
-__author__ = 'maximmillen'
-
-
 pp = {}  # TODO: switch to read description from docstring, or extend the string object
 
 # generic
