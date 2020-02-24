@@ -27,9 +27,7 @@ def test_two_d_mesh():
     fd.width = 2
     fd.depth = 0
     fd.length = 100
-    tds = sm.TwoDSystem()
-    tds.width = 40
-    tds.height = 15
+    tds = sm.TwoDSystem(40, 15)
     tds.add_sp(sp, x=0)
     tds.add_sp(sp2, x=14)
     tds.x_surf = np.array([0, 10, 12, 40])
@@ -97,9 +95,7 @@ def test_two_d_mesh_w_1_profile():
     sp.height = 18
     sp.x = 0
 
-    tds = sm.TwoDSystem()
-    tds.width = 4
-    tds.height = 15
+    tds = sm.TwoDSystem(4, 15)
     tds.add_sp(sp, x=0)
     tds.x_surf = np.array([0])
     tds.y_surf = np.array([0])

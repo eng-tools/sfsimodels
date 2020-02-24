@@ -3,6 +3,7 @@ from sfsimodels.models import SoilProfile, Foundation, SDOFBuilding
 from sfsimodels.exceptions import ModelError
 from sfsimodels import functions as sf
 import uuid
+import numpy as np
 
 
 class SoilStructureSystem(object):
@@ -136,21 +137,24 @@ class SoilStructureSystem(object):
 
 
 class TwoDSystem(object):
-    width = 0
-    height = 0
     _unique_hash = None
 
-    def __init__(self):
-
-        self.x_surf = []
-        self.y_surf = []
+    def __init__(self, width, height, x_surf=None, y_surf=None):
+        self.width = width
+        self.height = height
+        if x_surf is None:
+            self.x_surf = np.array([0, width])
+            self.y_surf = np.array([0, 0])
+        else:
+            self.x_surf = np.array(x_surf)
+            self.y_surf = np.array(y_surf)
 
         self._sps = []
         self._x_sps = []
 
         self._bds = []
         self._x_bds = []
-        self.inputs = ["id", "name", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf"]
+        self.inputs = ["id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf"]
 
     def to_dict(self, **kwargs):
         outputs = OrderedDict()

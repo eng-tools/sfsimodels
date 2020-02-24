@@ -13,7 +13,7 @@ class FiniteElement2DMesh(object):
     profile_indys = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos, x_scale_vals, dp: int = None):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None):
         """
         A finite element mesh of a two-dimension system
 
@@ -33,8 +33,12 @@ class FiniteElement2DMesh(object):
         assert isinstance(tds, TwoDSystem)
         self.tds = tds
         self.dy_target = dy_target
-        self.x_scale_pos = x_scale_pos
-        self.x_scale_vals = x_scale_vals
+        if x_scale_pos is None:
+            x_scale_pos = [0, tds.width]
+        if x_scale_vals is None:
+            x_scale_vals = [1., 1.]
+        self.x_scale_pos = np.array(x_scale_pos)
+        self.x_scale_vals = np.array(x_scale_vals)
         self.dp = dp
         self.xs = list(self.tds.x_sps)
 
