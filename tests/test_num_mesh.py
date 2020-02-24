@@ -79,7 +79,7 @@ def test_two_d_mesh():
 
     # check foundation
     lhs_ind = np.argmin(abs(femesh.x_nodes - bd_x))
-    assert np.isclose(bd_x, femesh.x_nodes[lhs_ind])
+    assert np.isclose(bd_x, femesh.x_nodes[lhs_ind]), femesh.x_nodes[lhs_ind]
     rhs_ind = np.argmin(abs(femesh.x_nodes - bd_x - fd.width))
     assert np.isclose(bd_x + fd.width, femesh.x_nodes[rhs_ind])
 

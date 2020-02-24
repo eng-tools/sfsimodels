@@ -13,7 +13,7 @@ class FiniteElement2DMesh(object):
     profile_indys = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos, x_scale_vals, dp: int=None):
+    def __init__(self, tds, dy_target, x_scale_pos, x_scale_vals, dp: int = None):
         """
         A finite element mesh of a two-dimension system
 
@@ -37,9 +37,9 @@ class FiniteElement2DMesh(object):
         self.x_scale_vals = x_scale_vals
         self.dp = dp
         self.xs = list(self.tds.x_sps)
-        
+
         self.xs.append(tds.width)
-    
+
         self.y_surf_at_sps = np.interp(self.xs, tds.x_surf, tds.y_surf)
         self._soils = []
         self._soil_hashes = []
@@ -56,18 +56,26 @@ class FiniteElement2DMesh(object):
             self.set_to_decimal_places()
         self.set_soil_ids_to_grid()
         self.active_nodes = self.get_active_nodes()
-    
+
     def get_actual_lims(self):
         """Find the x and y coordinates that should be maintained in the FE mesh"""
         x_act = [0]
         y_flat = []
+        fd_lhs_coords = [x for x in self.tds.x_bds]
+        fd_rhs_coords = [self.tds.x_bds[i] + self.tds.bds[i].foundation.width for i in range(len(self.tds.bds))]
+        fd_coords = np.array(fd_lhs_coords + fd_rhs_coords)
         for i in range(len(self.tds.sps)):
             int_yy = [self.tds.sps[i].layer_depth(yy) for yy in range(1, self.tds.sps[i].n_layers + 1)]
             int_yy.append(self.tds.sps[i].height)
-            
+
             # generate x_curr which stores important x-coordinates that are between two soil profiles
             inds = np.where((self.tds.x_surf < self.xs[i + 1]) & (self.tds.x_surf >= self.xs[i]))
-            x_curr = self.tds.x_surf[inds]
+            x_sf_curr = self.tds.x_surf[inds]
+            fd_inds = np.where((fd_coords < self.xs[i + 1]) & (fd_coords >= self.xs[i]))
+            x_fd_curr = fd_coords[fd_inds]
+            x_curr = np.concatenate([x_sf_curr, x_fd_curr])
+            x_curr.sort()
+
             if self.xs[i] not in x_curr:
                 x_curr = np.insert(x_curr, 0, self.xs[i])
             if self.xs[i + 1] not in x_curr:
@@ -77,7 +85,7 @@ class FiniteElement2DMesh(object):
             y_curr_surf = np.interp(x_curr, self.tds.x_surf, self.tds.y_surf)  # array of y-pos at important x for each layer
             x_diffs = x_curr - x_curr[0]
             x_act += list(x_curr[1:])
-            
+
             x_temp = list(x_curr)  # UNUSED
             if i != 0:
                 x_temp[0] += 1.0e-14
@@ -134,7 +142,7 @@ class FiniteElement2DMesh(object):
                 x_start += x_inc
             x_incs = np.array(x_incs) * x_shift / sum(x_incs)
             dxs += list(x_incs)
-    
+
         self.x_nodes = np.cumsum(dxs)
 
     def set_to_decimal_places(self):
@@ -160,7 +168,8 @@ class FiniteElement2DMesh(object):
                 x_angles = [10] + list(sp.x_angles)
                 sp_x = self.tds.x_sps[pid]
                 for ll in range(1, sp.n_layers + 1):
-                    if -y_centres[yy] > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
+                    if -y_centres[yy] > (
+                            sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
                         pass
                     else:
                         unique_hash = sp.layer(ll - 1).unique_hash
