@@ -30,6 +30,7 @@ class Building(PhysicalObject):
     _g = 9.81  # m/s2  # gravity
     _foundation = None
     x_fd = None
+    z_fd = None
 
     def __init__(self, n_storeys, verbose=0, **kwargs):
         super(Building, self).__init__()
@@ -46,7 +47,9 @@ class Building(PhysicalObject):
                 'floor_width',
                 'interstorey_heights',
                 'storey_masses',
-                'foundation_id'
+                'foundation_id',
+                'x_fd',
+                'z_fd'
             ]
         self.inputs += self._extra_class_variables
         self.all_parameters = self.inputs + [
@@ -143,10 +146,32 @@ class Building(PhysicalObject):
     def fd(self):
         return self._foundation
 
-    def set_foundation(self, foundation, x=0.0, two_way=True):
-        self.x_fd = float(x)
+    def set_foundation(self, foundation, x=None, z=None, two_way=True):
+        """
+        Connect a foundation to the building at position (x, y)
+
+        Parameters
+        ----------
+        foundation: sm.Foundation
+            Foundation object to be connected
+        x: float
+            Offset along x-axis of foundation centre line compared to building centre line
+            (+ve is foundation to right of centre)
+        z: float
+            Offset along z-axis of foundation centre line compared to building centre line
+                (+ve is foundation to front of centre)
+        two_way
+
+        Returns
+        -------
+
+        """
         if two_way:
-            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
+            foundation.set_building(self, x=x, z=z, two_way=False)  # set false to avoid infinite loop
+        if x is not None:
+            self.x_fd = float(x)
+        if z is not None:
+            self.z_fd = float(z)
         self._foundation = foundation
 
     @property
@@ -405,10 +430,6 @@ class Frame(object):
                     column_sect_id = str(self._loaded_column_section_ids[ss][bb])
                     sect_dictionary = self._loaded_column_sections[column_sect_id]
                     sf.add_to_obj(self.columns[ss][bb].sections[0], sect_dictionary)
-
-    # @column_sections.setter
-    # def column_sections(self, columns: dict):
-    #     assert len(columns) ==
 
     def set_beam_prop(self, prop, values, repeat="up"):
         """
@@ -696,6 +717,7 @@ class SDOFBuilding(PhysicalObject):
     _mass_ratio = None
     _foundation = None
     x_fd = None
+    z_fd = None
 
     def __init__(self, g=9.8):
         self.inputs = [
@@ -706,7 +728,10 @@ class SDOFBuilding(PhysicalObject):
             "h_eff",
             "mass_eff",
             "t_fixed",
-            "mass_ratio"
+            "mass_ratio",
+            'foundation_id',
+            'x_fd',
+            'z_fd'
         ]
         self._g = g
 
@@ -778,11 +803,39 @@ class SDOFBuilding(PhysicalObject):
     def fd(self):
         return self._foundation
 
-    def set_foundation(self, foundation, x=0.0, two_way=True):
-        self.x_fd = float(x)
+    @property
+    def foundation_id(self):
+        if self._foundation is None:
+            return None
+        return self._foundation.id
+
+    def set_foundation(self, foundation, x=None, z=None, two_way=True):
+        """
+        Connect a foundation to the building at position (x, y)
+
+        Parameters
+        ----------
+        foundation: sm.Foundation
+            Foundation object to be connected
+        x: float
+            Offset along x-axis of foundation centre line compared to building centre line
+            (+ve is foundation to right of centre)
+        z: float
+            Offset along z-axis of foundation centre line compared to building centre line
+                (+ve is foundation to front of centre)
+        two_way
+
+        Returns
+        -------
+
+        """
         if two_way:
-            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
-        self._foundation = foundation  # TODO: allow saving and loading with link
+            foundation.set_building(self, x=x, z=z, two_way=False)  # set false to avoid infinite loop
+        if x is not None:
+            self.x_fd = float(x)
+        if z is not None:
+            self.z_fd = float(z)
+        self._foundation = foundation
 
 
 class NullBuilding(PhysicalObject):
@@ -802,6 +855,7 @@ class NullBuilding(PhysicalObject):
     _g = 9.81  # m/s2  # gravity
     _foundation = None
     x_fd = None
+    z_fd = None
 
     def __init__(self, verbose=0, **kwargs):
         super(NullBuilding, self).__init__()
@@ -812,6 +866,9 @@ class NullBuilding(PhysicalObject):
             "name",
             "base_type",
             "type",
+            'foundation_id',
+            'x_fd',
+            'z_fd'
         ]
         self.inputs += self._extra_class_variables
         self.all_parameters = self.inputs + [
@@ -838,10 +895,38 @@ class NullBuilding(PhysicalObject):
     def fd(self):
         return self._foundation
 
-    def set_foundation(self, foundation, x=0.0, two_way=True):
-        self.x_fd = float(x)
+    @property
+    def foundation_id(self):
+        if self._foundation is None:
+            return None
+        return self._foundation.id
+
+    def set_foundation(self, foundation, x=None, z=None, two_way=True):
+        """
+        Connect a foundation to the building at position (x, y)
+
+        Parameters
+        ----------
+        foundation: sm.Foundation
+            Foundation object to be connected
+        x: float
+            Offset along x-axis of foundation centre line compared to building centre line
+            (+ve is foundation to right of centre)
+        z: float
+            Offset along z-axis of foundation centre line compared to building centre line
+                (+ve is foundation to front of centre)
+        two_way
+
+        Returns
+        -------
+
+        """
         if two_way:
-            foundation.set_building(self, two_way=False)  # set false to avoid infinite loop
+            foundation.set_building(self, x=x, z=z, two_way=False)  # set false to avoid infinite loop
+        if x is not None:
+            self.x_fd = float(x)
+        if z is not None:
+            self.z_fd = float(z)
         self._foundation = foundation
 
 

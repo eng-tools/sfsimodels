@@ -18,10 +18,6 @@ from sfsimodels.functions import clean_float, collect_serial_value, add_to_obj, 
 from sfsimodels.exceptions import DesignError, AnalysisError, ModelError, ModelWarning
 from sfsimodels import sensors
 
-# from sfsimodels.build_model_descriptions import print_all_parameters
-from sfsimodels.models.foundations import PadFoundation, RaftFoundation  # deprecated objects
-from sfsimodels.models.buildings import FrameBuilding, WallBuilding, FrameBuilding2D  # deprecated objects
-
 from sfsimodels import __about__
 
 BASE_UNITS = "N, kg, m, s"

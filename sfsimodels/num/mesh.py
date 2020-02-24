@@ -43,6 +43,7 @@ class FiniteElement2DMesh(object):
         self.xs = list(self.tds.x_sps)
 
         self.xs.append(tds.width)
+        self.xs = np.array(self.xs)
 
         self.y_surf_at_sps = np.interp(self.xs, tds.x_surf, tds.y_surf)
         self._soils = []
@@ -65,9 +66,16 @@ class FiniteElement2DMesh(object):
         """Find the x and y coordinates that should be maintained in the FE mesh"""
         x_act = [0]
         y_flat = []
-        fd_lhs_coords = [x for x in self.tds.x_bds]  # TODO: deal with x_fd and use bd.x as centre
-        fd_rhs_coords = [self.tds.x_bds[i] + self.tds.bds[i].foundation.width for i in range(len(self.tds.bds))]
-        fd_coords = np.array(fd_lhs_coords + fd_rhs_coords)
+        fd_coords = []
+        for i in range(len(self.tds.bds)):
+            x_bd = self.tds.x_bds[i]
+            bd = self.tds.bds[i]
+            fd_centre_x = x_bd + bd.x_fd
+            if bd.fd.width > self.dy_target:
+                fd_coords.append(fd_centre_x)
+            fd_coords.append(fd_centre_x - bd.fd.width / 2)
+            fd_coords.append(fd_centre_x + bd.fd.width / 2)
+        fd_coords = np.array(fd_coords)
         for i in range(len(self.tds.sps)):
             int_yy = [self.tds.sps[i].layer_depth(yy) for yy in range(1, self.tds.sps[i].n_layers + 1)]
             int_yy.append(self.tds.sps[i].height)
@@ -206,6 +214,14 @@ class FiniteElement2DMesh(object):
     def get_indexes_at_xs(self, xs):
         return interp_left(xs, self.x_nodes)
 
+    @property
+    def nny(self):
+        return len(self.y_nodes)
+
+    @property
+    def nnx(self):
+        return len(self.x_nodes)
+
 
 def _example_run():
     vs = 150.0
@@ -231,15 +247,13 @@ def _example_run():
     fd.width = 2
     fd.depth = 0
     fd.length = 100
-    tds = TwoDSystem()
-    tds.width = 40
-    tds.height = 15
+    tds = TwoDSystem(width=40, height=15)
     tds.add_sp(sp, x=0)
     tds.add_sp(sp2, x=14)
     tds.x_surf = np.array([0, 10, 12, 40])
     tds.y_surf = np.array([0, 0, 2, 2])
     bd = sm.NullBuilding()
-    bd.set_foundation(fd)
+    bd.set_foundation(fd, x=0.0)
     tds.add_bd(bd, x=8)
 
     x_scale_pos = np.array([0, 5, 15, 30])

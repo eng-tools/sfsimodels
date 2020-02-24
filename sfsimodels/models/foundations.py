@@ -24,6 +24,8 @@ class Foundation(PhysicalObject):
     type = "foundation"
     _tolerance = 0.0001  # consistency tolerance
     _building = None
+    x_bd = None
+    z_bd = None
 
     _extra_class_inputs = [
         "id",
@@ -35,7 +37,9 @@ class Foundation(PhysicalObject):
         "depth",
         "height",
         "density",
-        "mass"
+        "mass",
+        'x_bd',
+        'z_bd'
     ]
 
     def __str__(self):
@@ -56,7 +60,9 @@ class Foundation(PhysicalObject):
         "depth",
         "height",
         "density",
-        "mass"
+        "mass",
+        'x_bd',
+        'z_bd'
     ]
 
     @property
@@ -74,10 +80,7 @@ class Foundation(PhysicalObject):
 
     @property
     def area(self):
-        """
-        Foundation area in plan
-        :return:
-        """
+        """Foundation area in plan"""
         try:
             return self.length * self.width
         except TypeError:
@@ -85,58 +88,37 @@ class Foundation(PhysicalObject):
 
     @property
     def length(self):
-        """
-        Length of the foundation (typically in the out-of-plane direction)
-        :return:
-        """
+        """Length of the foundation (typically in the out-of-plane direction)"""
         return self._length
 
     @property
     def width(self):
-        """
-        Length of the foundation (typically in the in-plane direction)
-        :return:
-        """
+        """Length of the foundation (typically in the in-plane direction)"""
         return self._width
 
     @property
     def height(self):
-        """
-        Measure of the base of the foundation to the top
-        :return:
-        """
+        """Measure of the base of the foundation to the top"""
         return self._height
 
     @property
     def depth(self):
-        """
-        Measure of the base of the foundation to the surface of the soil
-        :return:
-        """
+        """Measure of the base of the foundation to the surface of the soil"""
         return self._depth
 
     @property
     def mass(self):
-        """
-        The mass of the whole foundation
-        :return:
-        """
+        """The mass of the whole foundation"""
         return self._mass
 
     @property
     def density(self):
-        """
-        The mass density of the foundation [kg/m3]
-        :return:
-        """
+        """The mass density of the foundation [kg/m3]"""
         return self._density
 
     @property
     def weight(self):
-        """
-        The weight of the foundation [N]
-        :return:
-        """
+        """The weight of the foundation [N]"""
         return self.mass * 9.8
 
     @length.setter
@@ -205,9 +187,29 @@ class Foundation(PhysicalObject):
     def building(self):
         return self._building
 
-    def set_building(self, building, two_way=True):
+    def set_building(self, building, x=None, z=None, two_way=True):
+        """
+        Connect a building to the foundation at position (x, y)
+
+        Parameters
+        ----------
+        building: sm.Building
+        x: float
+            Offset along x-axis of building centre line compared to foundation centre line
+            (+ve is building to right of centre)
+        z: float
+            Offset along y-axis of building centre line compared to foundation centre line
+            (+ve is building to right of centre)
+        two_way: bool
+            If true then also add the foundation to the building
+        """
+
         if two_way:
-            building.set_foundation(self, two_way=False)
+            building.set_foundation(self, x=x, z=z, two_way=False)
+        if x is not None:
+            self.x_bd = float(x)
+        if z is not None:
+            self.z_bd = float(z)
         self._building = building
 
 
@@ -277,10 +279,7 @@ class PadFoundation(Foundation):
 
     @property
     def i_ww(self):
-        """
-        Second moment of inertia around the width axis.
-        :return:
-        """
+        """Second moment of inertia around the width axis."""
         d_values = []
         for i in range(self.n_pads_l):
             d_values.append(self.pad_position_l(i))
@@ -291,10 +290,7 @@ class PadFoundation(Foundation):
 
     @property
     def i_ll(self):
-        """
-        Second moment of inertia around the length axis.
-        :return:
-        """
+        """Second moment of inertia around the length axis."""
         d_values = []
         for i in range(self.n_pads_w):
             d_values.append(self.pad_position_w(i))
@@ -305,34 +301,22 @@ class PadFoundation(Foundation):
 
     @property
     def n_pads(self):
-        """
-        Total number of pad footings
-        :return:
-        """
+        """Total number of pad footings"""
         return self.n_pads_w * self.n_pads_l
 
     @property
     def pad_area(self):
-        """
-        Area of a pad
-        :return:
-        """
+        """Area of a pad"""
         return self.pad_length * self.pad_width
 
     @property
     def pad_i_ww(self):
-        """
-        Second moment of inertia of a single pad around the width axis.
-        :return:
-        """
+        """Second moment of inertia of a single pad around the width axis."""
         return self.pad_length ** 3 * self.pad_width / 12
 
     @property
     def pad_i_ll(self):
-        """
-        Second moment of inertia of a single pad around the length axis.
-        :return:
-        """
+        """Second moment of inertia of a single pad around the length axis."""
         return self.pad_width ** 3 * self.pad_length / 12
 
     @property
@@ -345,8 +329,10 @@ class PadFoundation(Foundation):
         Determines the position of the ith pad in the length direction.
         Assumes equally spaced pads.
 
-        :param i: ith number of pad in length direction (0-indexed)
-        :return:
+        Parameters
+        ----------
+        i: int
+            Ith number of pad in length direction (0-indexed)
         """
         if i >= self.n_pads_l:
             raise ModelError("pad index out-of-bounds")
@@ -357,8 +343,10 @@ class PadFoundation(Foundation):
         Determines the position of the ith pad in the width direction.
         Assumes equally spaced pads.
 
-        :param i: ith number of pad in width direction (0-indexed)
-        :return:
+        Parameters
+        ----------
+        i: int
+            Ith number of pad in width direction (0-indexed)
         """
         if i >= self.n_pads_w:
             raise ModelError("pad index out-of-bounds")

@@ -189,6 +189,6 @@ def interp_left(x0, x, y=None):
         y = np.arange(len(x))
     else:
         y = np.array(y)
-    assert min(x0) >= x[0]
+    assert np.min(x0) >= x[0], (np.min(x0), x[0])
     inds = np.searchsorted(x, x0, side='right') - 1
     return y[inds]

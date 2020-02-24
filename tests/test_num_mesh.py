@@ -33,7 +33,7 @@ def test_two_d_mesh():
     tds.x_surf = np.array([0, 10, 12, 40])
     tds.y_surf = np.array([0, 0, 2, 2])
     bd = sm.NullBuilding()
-    bd.set_foundation(fd)
+    bd.set_foundation(fd, x=0.0)
     bd_x = 8.
     tds.add_bd(bd, x=bd_x)
 
@@ -76,10 +76,10 @@ def test_two_d_mesh():
     assert femesh.soils[sl_ind].g_mod == 400
 
     # check foundation
-    lhs_ind = np.argmin(abs(femesh.x_nodes - bd_x))
-    assert np.isclose(bd_x, femesh.x_nodes[lhs_ind]), femesh.x_nodes[lhs_ind]
-    rhs_ind = np.argmin(abs(femesh.x_nodes - bd_x - fd.width))
-    assert np.isclose(bd_x + fd.width, femesh.x_nodes[rhs_ind])
+    lhs_ind = np.argmin(abs(femesh.x_nodes - (bd_x - fd.width / 2)))
+    assert np.isclose(bd_x - fd.width / 2, femesh.x_nodes[lhs_ind]), (bd_x - fd.width / 2, femesh.x_nodes[lhs_ind])
+    rhs_ind = np.argmin(abs(femesh.x_nodes - (bd_x + fd.width / 2)))
+    assert np.isclose(bd_x + fd.width / 2, femesh.x_nodes[rhs_ind])
 
 
 def test_two_d_mesh_w_1_profile():
