@@ -13,7 +13,7 @@ class FiniteElement2DMesh(object):
     profile_indys = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0):
         """
         A finite element mesh of a two-dimension system
 
@@ -60,6 +60,8 @@ class FiniteElement2DMesh(object):
         if self.dp is not None:
             self.set_to_decimal_places()
         self.set_soil_ids_to_grid()
+        if not fd_eles:
+            self.exclude_fd_eles()
         self.active_nodes = self.get_active_nodes()
 
     def get_actual_lims(self):
@@ -208,11 +210,11 @@ class FiniteElement2DMesh(object):
     def soils(self):
         return self._soils
 
-    def get_indexes_at_depths(self, depths):
-        return interp_left(-np.array(depths), -self.y_nodes)
+    def get_indexes_at_depths(self, depths, low=None):
+        return interp_left(-np.array(depths), -self.y_nodes, low=low)
 
-    def get_indexes_at_xs(self, xs):
-        return interp_left(xs, self.x_nodes)
+    def get_indexes_at_xs(self, xs, low=None):
+        return interp_left(xs, self.x_nodes, low=low)
 
     @property
     def nny(self):
@@ -221,6 +223,24 @@ class FiniteElement2DMesh(object):
     @property
     def nnx(self):
         return len(self.x_nodes)
+
+    def exclude_fd_eles(self):
+        for i, bd in enumerate(self.tds.bds):
+            fd = bd.fd
+            fcx = self.tds.x_bds[i] + bd.x_fd
+            fcy = np.interp(fcx, self.tds.x_surf, self.tds.y_surf)
+            xs = np.array([fcx - fd.width / 2, fcx + fd.width / 2])
+            ys = np.array([fcy - fd.depth, fcy - fd.depth + fd.height])
+            xsi, xei = self.get_indexes_at_xs(xs)
+            yei, ysi = self.get_indexes_at_depths(ys, low='min')
+            print('xi: ', xsi, xei)
+            print('yi: ', ysi, yei)
+            # create foundation nodes a soil mesh nodes
+            # along the base
+            j = 0
+            for xx in range(xsi, xei):
+                for yy in range(ysi, yei):
+                    self.soil_grid[xx][yy] = self._inactive_value
 
 
 def _example_run():

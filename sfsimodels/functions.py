@@ -169,7 +169,7 @@ def get_value_of_a_get_method(obj, method, extras=None):
     return value
 
 
-def interp_left(x0, x, y=None):
+def interp_left(x0, x, y=None, low=None):
     """
     Interpolation takes the lower value
 
@@ -181,6 +181,9 @@ def interp_left(x0, x, y=None):
         Existing values on x-axis
     y: array_like
         Existing y-axis values
+    low: str or float or int
+        What to do if x0 is less than x[0], if ='min' then clip x0 to x[0],
+        if float or int then clip to this value, else raise error
     Returns
     -------
 
@@ -189,6 +192,11 @@ def interp_left(x0, x, y=None):
         y = np.arange(len(x))
     else:
         y = np.array(y)
-    assert np.min(x0) >= x[0], (np.min(x0), x[0])
+    if low is None:
+        assert np.min(x0) >= x[0], (np.min(x0), x[0])
+    elif low == 'min':
+        x0 = np.clip(x0, x[0], None)
+    else:
+        x0 = np.clip(x0, low, None)
     inds = np.searchsorted(x, x0, side='right') - 1
     return y[inds]
