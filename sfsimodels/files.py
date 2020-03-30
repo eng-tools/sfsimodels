@@ -17,7 +17,7 @@ def _json_default(o):
     raise TypeError
 
 
-def load_json(ffp, custom=None, verbose=0):
+def load_json(ffp, custom=None, default_to_base=False, verbose=0):
     """
     Given a json file it creates a dictionary of sfsi objects
 
@@ -27,7 +27,7 @@ def load_json(ffp, custom=None, verbose=0):
     :return: dict
     """
     data = json.load(open(ffp))
-    return ecp_dict_to_objects(data, custom, verbose=verbose)
+    return ecp_dict_to_objects(data, custom, default_to_base=default_to_base, verbose=verbose)
 
 
 def load_json_and_meta(ffp, custom=None, verbose=0):
@@ -77,7 +77,7 @@ deprecated_types = OrderedDict([
 ])
 
 
-def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
+def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbose=0):
     """
     Given an ecp dictionary, build a dictionary of sfsi objects
 
@@ -151,7 +151,9 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, verbose=0):
             try:
                 obj_class = obj_map["%s-%s" % (base_type, obj["type"])]
             except KeyError:
-                if obj["type"] in deprecated_types:
+                if default_to_base and f'{base_type}-{base_type}' in obj_map:
+                    obj_class = obj_map[f'{base_type}-{base_type}']
+                elif obj["type"] in deprecated_types:
                     try:
                         obj_class = obj_map["%s-%s" % (base_type, deprecated_types[obj["type"]])]
                     except KeyError:
