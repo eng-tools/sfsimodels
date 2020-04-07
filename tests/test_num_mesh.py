@@ -26,6 +26,7 @@ def test_two_d_mesh():
     fd = sm.RaftFoundation()
     fd.width = 2
     fd.depth = 0
+    fd.height = 0
     fd.length = 100
     tds = sm.TwoDSystem(40, 15)
     tds.add_sp(sp, x=0)

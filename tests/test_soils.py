@@ -361,6 +361,15 @@ def test_non_normal_g():
     assert not np.isclose(sl0.unit_sat_weight, sl1.unit_sat_weight), (sl0.unit_sat_weight, sl1.unit_sat_weight)
 
 
+def test_stress_dependent_soil_set_get_g_mod():
+    g_mod = 68.0e6
+    esig_v0 = 50.0e3
+    sl = models.StressDependentSoil()
+    sl.phi = 30.
+    sl.a = 0.5
+    sl.set_g0_mod_at_v_eff_stress(esig_v0, g_mod)
+    assert np.isclose(g_mod, sl.get_g_mod_at_v_eff_stress(esig_v0))
+
 if __name__ == '__main__':
     test_non_normal_g()
     # test_e_critical()

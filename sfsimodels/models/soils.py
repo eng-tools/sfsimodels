@@ -848,6 +848,7 @@ class StressDependentSoil(Soil):
     _p_atm = 101000.0  # Pa
     type = "stress_dependent_soil"
     _a = 0.5  # stress factor
+    _g_mod_p0 = 0.0  # shear modulus at zero confining stress
 
     def __init__(self, pw=9800, liq_mass_density=None, g=9.8, **kwargs):
 
@@ -889,6 +890,17 @@ class StressDependentSoil(Soil):
             self._add_to_stack("a", float(value))
 
     @property
+    def g_mod_p0(self):
+        return self._g_mod_p0
+
+    @g_mod_p0.setter
+    def g_mod_p0(self, value):
+        value = clean_float(value)
+        self._g_mod_p0 = value
+        if value is not None:
+            self._add_to_stack("g_mod_p0", float(value))
+
+    @property
     def p_atm(self):
         return self._p_atm
 
@@ -901,10 +913,23 @@ class StressDependentSoil(Soil):
 
     def get_g_mod_at_v_eff_stress(self, v_eff_stress):
         k0 = 1 - np.sin(self.phi_r)
-        return self.g0_mod * self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a
+        return self.g0_mod * self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a + self.g_mod_p0
+
+    def set_g0_mod_at_v_eff_stress(self, v_eff_stress, g_mod, g_mod_p0=None):
+        if g_mod_p0 is not None:
+            self.g_mod_p0 = g_mod_p0
+        k0 = 1 - np.sin(self.phi_r)
+        m = self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a
+        self.g0_mod = (g_mod - self.g_mod_p0) / m
 
     def get_g_mod_at_m_eff_stress(self, m_eff_stress):
-        return self.g0_mod * self.p_atm * (m_eff_stress / self.p_atm) ** self.a
+        return self.g0_mod * self.p_atm * (m_eff_stress / self.p_atm) ** self.a + self.g_mod_p0
+
+    def set_g0_mod_at_m_eff_stress(self, m_eff_stress, g_mod, g_mod_p0=None):
+        if g_mod_p0 is not None:
+            self.g_mod_p0 = g_mod_p0
+        m = self.p_atm * (m_eff_stress / self.p_atm) ** self.a
+        self.g0_mod = (g_mod - self.g_mod_p0) / m
 
     def get_shear_vel_at_v_eff_stress(self, v_eff_stress, saturated):
         try:
@@ -1117,6 +1142,10 @@ class SoilProfile(PhysicalObject):
     @property
     def layers(self):
         return self._layers
+
+    @property
+    def layer_objects(self):
+        return list(self._layers.values())
 
     @layers.setter
     def layers(self, layers):
