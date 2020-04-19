@@ -792,8 +792,9 @@ class Soil(PhysicalObject):
             if value is not None:
                 curr_value = getattr(self, item)
                 if curr_value is not None and not ct.isclose(curr_value, value, rel_tol=0.001):
-                    raise ModelError("new %s is inconsistent with current value (%.3f, %.3f)" % (item, curr_value,
-                                                                                                           value))
+                    #raise ModelError("new %s is inconsistent with current value (%.3f, %.3f)" % (item, curr_value,
+                     #                                                                                      value))
+                    raise ModelError(f"new {item} is inconsistent with current value ({curr_value}, {value})")
                 setattr(self, item, value)
 
     def _calc_unit_void_volume(self):
@@ -1375,6 +1376,8 @@ class SoilProfile(PhysicalObject):
             thickness = self.get_layer_height(i + 1)
             if thickness is None:
                 raise ValueError("thickness of layer {0} is None, check if soil_profile.height is set".format(i + 1))
+            if thickness <= 0:  # below soil profile height
+                continue
             n_slices = max(int(thickness / incs[i]), 1)
             slice_thickness = float(thickness) / n_slices
             for j in range(n_slices):

@@ -2,10 +2,14 @@
 History
 =======
 
-0.9.2X (2020-2-XX)
+0.9.23 (2020-4-19)
 --------------------
+* Added option to provide shear modulus at zero effective stress for stress dependent soil.
+* Can load ecp file and if model not defined then can set flag to load the `base_type` model.
+* Added mesh generation tool for creating meshes for finite-element analyses based on new TwoDSystem object.
 * Added `NullBuilding` object to create a building with no attributes
 * Added option for linking a building and a foundation using `building.set_foundation(foundation, two_way=True)` and `foundation.set_building(building)`, where if `two_way` is true then vice-versa link also created.
+* Fixed issue were checking_tools would raise error for zero vs almost zero.
 
 0.9.22 (2020-2-17)
 --------------------
