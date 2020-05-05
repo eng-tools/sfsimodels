@@ -219,7 +219,6 @@ def test_get_parameter_at_depth_in_soil_profile():
     sp = models.SoilProfile()
     sp.add_layer(0, sl1)
     sp.add_layer(3, sl2)
-    print(sp.get_parameter_at_depth(2, 'g_mod'))
     assert np.isclose(sp.get_parameter_at_depth(2, 'g_mod'), sl1_gmod)
     assert sp.get_parameter_at_depth(4, 'g_mod') is None
     assert np.isclose(sp.get_parameter_at_depth(4, 'cohesion'), sl2_cohesion)
@@ -337,7 +336,6 @@ def test_soil_profile_split_complex():
     sl2.g_mod = 40e6
     sp.layer(2).unit_dry_weight = sl1_unit_dry_weight
     sp.gen_split(props=["shear_vel"])
-    print(sp.split["shear_vel"])
     assert None not in sp.split['shear_vel']
 
 

@@ -3,8 +3,6 @@ import copy
 # from sfsimodels.loader import add_inputs_to_object
 import types
 from sfsimodels.exceptions import ModelError
-from sfsimodels.models.units import Units
-from sfsimodels.models.coordinates import Coords
 from sfsimodels import functions as sf
 import uuid
 import hashlib
@@ -12,24 +10,19 @@ import json
 json.encoder.FLOAT_REPR = lambda f: ("%.5g" % f)
 
 
-class PhysicalObject(object):
+class BaseECPModel(object):
     _id = None
     name = None
     _counter = 0
-    type = "physical_object"
     _unique_hash = None
-    # inputs = ()
+
     _tolerance = 0.0001  # consistency tolerance
     skip_list = ()
-    _units = None
-    # _coords = None
-
-    def __iter__(self):  # real signature unknown
-        return self
-
-    # def __init__(self, **kwargs):
-    #     # super(PhysicalObject, self).__init__()
-    #     print("Initialised")
+    #
+    # def __iter__(self):  # real signature unknown
+    #     return self
+    #
+    #
 
     @property
     def attributes(self):
@@ -44,12 +37,12 @@ class PhysicalObject(object):
         all_attributes.sort()
         return all_attributes
 
-    def __next__(self):
-        self._counter += 1
-        all_attributes = self.attributes
-        if self._counter == len(all_attributes):
-            raise StopIteration
-        return all_attributes[self._counter]
+    # def __next__(self):
+    #     self._counter += 1
+    #     all_attributes = self.attributes
+    #     if self._counter == len(all_attributes):
+    #         raise StopIteration
+    #     return all_attributes[self._counter]
 
     def set(self, values):
         """
@@ -96,7 +89,7 @@ class PhysicalObject(object):
                 value = self.__getattribute__(item)
                 if not export_none and value is None:
                     continue
-                outputs[item] = sf.collect_serial_value(value, export_none=export_none)
+                outputs[item] = sf.collect_serial_value(value)
         with_hash = kwargs.get('with_hash', True)
         if with_hash:
             outputs['unique_hash'] = self.unique_hash
@@ -108,51 +101,3 @@ class PhysicalObject(object):
             # self._unique_hash = uuid.uuid1()
             self._unique_hash = hashlib.md5(json.dumps(self.to_dict(with_hash=False)).encode('utf-8')).hexdigest()
         return self._unique_hash
-
-    @property
-    def id(self):
-        return self._id
-
-    @id.setter
-    def id(self, value):
-        if value not in [None, ""]:
-            self._id = int(value)
-
-    @property
-    def units(self):
-        return self._units
-
-    @units.setter
-    def units(self, units_obj):
-        assert isinstance(units_obj, Units)
-        self._units = units_obj
-
-    # @property
-    # def coords(self):
-    #     return self._coords
-    #
-    # @coords.setter
-    # def coords(self, coords_obj):
-    #     assert isinstance(coords_obj, Coords)
-    #     self._coords = coords_obj
-
-
-class CustomObject(PhysicalObject):
-    """
-    An object to describe structures.
-    """
-    base_type = "custom_object"
-    type = "custom_object"
-
-    def __init__(self):
-        self.inputs = [
-            "id",
-            "name",
-            "base_type",
-            "type",
-            "units"
-            ]
-
-    @property
-    def ancestor_types(self):
-        return ["custom"]

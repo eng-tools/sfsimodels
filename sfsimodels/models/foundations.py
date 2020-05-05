@@ -70,15 +70,6 @@ class Foundation(PhysicalObject):
         return super(Foundation, self).ancestor_types + ["foundation"]
 
     @property
-    def id(self):
-        return self._id
-
-    @id.setter
-    def id(self, value):
-        if value not in [None, ""]:
-            self._id = int(value)
-
-    @property
     def area(self):
         """Foundation area in plan"""
         try:

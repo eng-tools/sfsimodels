@@ -2,6 +2,12 @@
 History
 =======
 
+0.9.2X (2020-X-X)
+--------------------
+* Added `Coords` object, which defines coordinates in x, y, z directions
+* Added `Units` and `GlobalUnits`
+* Added `Load` and `LoadAtCoords` objects
+
 0.9.23 (2020-4-19)
 --------------------
 * Added option to provide shear modulus at zero effective stress for stress dependent soil.

@@ -51,7 +51,6 @@ def test_pad_density_setter():
     expected_area = (2 * 2) * (3 * 2)
     assert fd.area == expected_area
     expected_mass = expected_area * 0.5 * 3
-    print((fd.mass, expected_mass))
     assert np.isclose(fd.mass, expected_mass, rtol=0.0001), (fd.mass, expected_mass)
 
 

@@ -23,7 +23,7 @@ def clean_float(value):
     return float(value)
 
 
-def collect_serial_value(value):
+def collect_serial_value(value, export_none=False):
     """
     Introspective function that returns a serialisable value
 
@@ -36,7 +36,7 @@ def collect_serial_value(value):
     elif isinstance(value, np.int64):
         return int(value)
     elif hasattr(value, "to_dict"):
-        return value.to_dict()
+        return value.to_dict(export_none=export_none)
     elif hasattr(value, "__len__"):
         tolist = getattr(value, "tolist", None)
         if callable(tolist):
@@ -44,12 +44,12 @@ def collect_serial_value(value):
             return value
         else:
             if hasattr(value, "to_dict"):
-                value = value.to_dict()
+                value = value.to_dict(export_none=export_none)
                 return value
             else:
                 values = []
                 for item in value:
-                    values.append(collect_serial_value(item))
+                    values.append(collect_serial_value(item, export_none=export_none))
                 return values
     else:
         return value

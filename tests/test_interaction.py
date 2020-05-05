@@ -71,7 +71,6 @@ def test_save_and_load_w_linked_building_and_soil():
     assert wb.foundation is None
     fd.set_building(wb, two_way=True)
     assert wb.foundation.length == 4
-    print(wb.foundation_id)
 
     ecp_output = sm.Output()
     ecp_output.add_to_dict(wb)
@@ -81,11 +80,9 @@ def test_save_and_load_w_linked_building_and_soil():
     ecp_output.units = "N, kg, m, s"
     ecp_output.comments = ""
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
-    print(p_str)
     objs = sm.loads_json(p_str)
     building = objs["building"][1]
     foundation = objs["foundation"][1]
-    print(building.foundation.length)
     assert np.isclose(building.floor_length, 18.0)
 
 

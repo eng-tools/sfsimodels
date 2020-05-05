@@ -216,7 +216,8 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
 
 class Output(object):
     name = ""
-    units = ""
+    units = None
+    global_units = None
     doi = ""
     comments = ""
     compression = True
