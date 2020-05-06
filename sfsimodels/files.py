@@ -1,5 +1,5 @@
 import json
-from sfsimodels.models import soils, buildings, foundations, systems, abstract_models
+from sfsimodels.models import soils, buildings, foundations, systems, abstract_models, loads
 from collections import OrderedDict
 from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
@@ -114,7 +114,9 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
         "section-section": buildings.Section,
         "custom_object-custom_object": abstract_models.CustomObject,
         "system-system": systems.SoilStructureSystem,  # deprecated type
-        "system-sfs": systems.SoilStructureSystem
+        "system-sfs": systems.SoilStructureSystem,
+        "load-load": loads.Load,
+        "load-load_at_coords": loads.LoadAtCoords
     }
 
     # merge and overwrite the object map with custom maps

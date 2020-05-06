@@ -100,6 +100,7 @@ class Load(PhysicalObject):
 
 
 class LoadAtCoords(Coords, Load):
+    type = 'load_at_coords'
 
     def __init__(self, x=None, y=None, z=None, p_x=None, p_y=None, p_z=None, t_xx=None, t_yy=None, t_zz=None):
         Coords.__init__(self, x, y, z)
