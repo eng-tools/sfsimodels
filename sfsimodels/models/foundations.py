@@ -136,24 +136,36 @@ class Foundation(PhysicalObject):
             return
         self._depth = float(value)
 
+    def override_density(self, value):
+        self._density = float(value)
+        mass = self._calc_mass()
+        if mass is not None and not ct.isclose(mass, self.mass):
+            self.mass = mass
+
     @density.setter
-    def density(self, value, override=False):
+    def density(self, value):
         if value is None or value == "":
             return
         density = self._calc_density()
-        if density is not None and not np.isclose(density, value, rtol=self._tolerance) and not override:
+        if density is not None and not np.isclose(density, value, rtol=self._tolerance):
             raise ModelError("Density inconsistent with set mass")
         self._density = float(value)
         mass = self._calc_mass()
         if mass is not None and not ct.isclose(mass, self.mass):
             self.mass = mass
 
+    def override_mass(self, value):
+        self._mass = float(value)
+        density = self._calc_density()
+        if density is not None and not ct.isclose(density, self.density, rel_tol=self._tolerance):
+            self.density = density
+
     @mass.setter
-    def mass(self, value, override=False):
+    def mass(self, value):
         if value is None or value == "":
             return
         mass = self._calc_mass()
-        if mass is not None and not ct.isclose(mass, value, rel_tol=self._tolerance) and not override:
+        if mass is not None and not ct.isclose(mass, value, rel_tol=self._tolerance):
             raise ModelError("Mass inconsistent with set density")
         self._mass = float(value)
         density = self._calc_density()

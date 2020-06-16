@@ -7,6 +7,7 @@ History
 * Added `Coords` object, which defines coordinates in x, y, z directions
 * Added `Units` and `GlobalUnits`
 * Added `Load` and `LoadAtCoords` objects
+* Better loading of ecp files - can now deal with non-defaults kwargs, e.g. changing `liq_mass_density` in a Soil object
 
 0.9.23 (2020-4-19)
 --------------------

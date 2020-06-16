@@ -5,6 +5,7 @@ from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
 from sfsimodels.__about__ import __version__
 import numpy as np
+from inspect import signature
 
 
 standard_types = ["soil", "soil_profile", "foundation", "building", "section", "system", "custom_type"]
@@ -58,6 +59,42 @@ def loads_json(p_str, custom=None, meta=False, verbose=0):
         return ecp_dict_to_objects(data, custom, verbose=verbose), md
     else:
         return ecp_dict_to_objects(data, custom, verbose=verbose)
+
+
+def get_matching_args_and_kwargs(in_dict, sm_obj, custom=None, overrides=None):
+    if custom is None:
+        custom = {}
+    if overrides is None:
+        overrides = {}
+    sig = signature(sm_obj)
+    kwargs = OrderedDict()
+    args = []
+    missing = []
+    sig_vals = sig.parameters.values()
+    for p in sig_vals:
+        if p.name in custom:
+            pname = custom[p.name]
+        else:
+            pname = p.name
+        if pname == 'kwargs':
+            continue
+        if pname in overrides:
+            val = overrides[pname]
+        else:
+            try:
+                val = in_dict[pname]
+            except KeyError as e:
+                if p.default == p.empty:
+                    missing.append((pname, len(args)))
+                    val = None  # needs to be replaced
+                else:
+                    val = p.default
+        if p.default == p.empty:
+            args.append(val)
+        else:
+            if val is not None:
+                kwargs[p.name] = val
+    return args, kwargs, missing
 
 
 # Deprecated name
@@ -164,37 +201,47 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
                 else:
                     raise KeyError("Map for Model: '%s' index: '%s' and type: '%s' not available, "
                                    "add '%s-%s' to custom dict" % (base_type, m_id, base_type, base_type, obj["type"]))
-            try:
-                new_instance = obj_class()
-            except TypeError as e:
-                if "required positional argument:" in str(e):
-                    parameters = [str(e).split("argument: ")[-1]]
-                elif "required positional arguments:" in str(e):
-                    p_str = str(e).split("arguments: ")[-1]
-                    if ", and " in p_str:  # if more than 2
-                        partial = p_str.split(", and ")
-                        parameters = partial[0].split(", ") + partial[-1:]
-                    else:  # if one
-                        parameters = p_str.split(" and ")
-                else:
-                    raise TypeError('In {0}: {1}'.format(obj_class, e))
-                params = []
-                for parameter in parameters:
-                    parameter = parameter[1:-1]
-                    try:
-                        params.append(data_models[mtype][m_id][parameter])
-                    except KeyError as e2:  # To be removed and just raise exception
-                        deprecation("Your file is out of date, "
-                                    "run sfsimodels.migrate_ecp(<file-path>, <out-file-path>).")
-                        if mtype == "building":
-                            params = [len(data_models[mtype][m_id]["storey_masses"])]  # n_storeys
-                            if "frame" in data_models[mtype][m_id]["type"]:
-                                params.append(len(data_models[mtype][m_id]["bay_lengths"]))
-                        else:
-                            raise KeyError("Can't find required positional argument: {0} for {1} id: {2}".format(
-                                parameter, mtype, m_id
-                            ))
-                new_instance = obj_class(*params)
+            # try:
+            args, kwargs, missing = get_matching_args_and_kwargs(data_models[mtype][m_id], obj_class)
+            if len(missing):
+                for m_item in missing:
+                    name = m_item[0]
+                    m_indy = m_item[1]
+                    if name == 'n_storeys':
+                        args[m_indy] = len(data_models[mtype][m_id]["storey_masses"])
+                    elif name == 'n_bays':
+                        args[m_indy] = len(data_models[mtype][m_id]["bay_lengths"])
+            new_instance = obj_class(*args, **kwargs)
+
+            # except TypeError as e:
+            #     if "required positional argument:" in str(e):
+            #         parameters = [str(e).split("argument: ")[-1]]
+            #     elif "required positional arguments:" in str(e):
+            #         p_str = str(e).split("arguments: ")[-1]
+            #         if ", and " in p_str:  # if more than 2
+            #             partial = p_str.split(", and ")
+            #             parameters = partial[0].split(", ") + partial[-1:]
+            #         else:  # if one
+            #             parameters = p_str.split(" and ")
+            #     else:
+            #         raise TypeError('In {0}: {1}'.format(obj_class, e))
+            #     params = []
+            #     for parameter in parameters:
+            #         parameter = parameter[1:-1]
+            #         try:
+            #             params.append(data_models[mtype][m_id][parameter])
+            #         except KeyError as e2:  # To be removed and just raise exception
+            #             deprecation("Your file is out of date, "
+            #                         "run sfsimodels.migrate_ecp(<file-path>, <out-file-path>).")
+            #             if mtype == "building":
+            #                 params = [len(data_models[mtype][m_id]["storey_masses"])]  # n_storeys
+            #                 if "frame" in data_models[mtype][m_id]["type"]:
+            #                     params.append(len(data_models[mtype][m_id]["bay_lengths"]))
+            #             else:
+            #                 raise KeyError("Can't find required positional argument: {0} for {1} id: {2}".format(
+            #                     parameter, mtype, m_id
+            #                 ))
+            #     new_instance = obj_class(*params)
 
             add_to_obj(new_instance, data_models[mtype][m_id], objs=objs, verbose=verbose)
             # print(mtype, m_id)

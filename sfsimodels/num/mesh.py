@@ -224,7 +224,7 @@ class FiniteElement2DMesh(object):
     def nnx(self):
         return len(self.x_nodes)
 
-    def exclude_fd_eles(self):
+    def exclude_fd_eles(self):  # TODO: support axis='width' or 'length'
         for i, bd in enumerate(self.tds.bds):
             fd = bd.fd
             fcx = self.tds.x_bds[i] + bd.x_fd
