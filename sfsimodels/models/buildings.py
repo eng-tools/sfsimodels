@@ -548,12 +548,21 @@ class FrameBuilding(Frame, Building):
     type = "frame_building"
 
     def __init__(self, n_storeys, n_bays):
+        """
+        A building that has frames aligned along the length axis
+
+        :param n_storeys:
+        :param n_bays:
+        """
         Frame.__init__(self, n_storeys, n_bays)
         Building.__init__(self, n_storeys)
         # super(BuildingFrame, self).__init__(n_storeys, n_bays)  # run parent class initialiser function
         self._extra_class_inputs = ["n_seismic_frames",
-                           "n_gravity_frames"]
+                           "n_gravity_frames",
+                                    "horz2vert_mass"]
         self.inputs = self.inputs + self._extra_class_inputs
+        self.horz2vert_mass = 1.0
+        self.x_offset = 0.0  # distance between centre of frame and centre of floor
         # Frame.__init__(self, n_storeys, n_bays)
         # Building.__init__(self, n_storeys, n_bays)
 
@@ -578,6 +587,24 @@ class FrameBuilding(Frame, Building):
     @n_gravity_frames.setter
     def n_gravity_frames(self, value):
         self._n_gravity_frames = value
+
+    @property
+    def n_frames(self):
+        return self.n_gravity_frames + self.n_seismic_frames
+
+    def get_column_vert_loads(self):
+        n_total = np.sum(self.storey_masses) * 9.8
+        edge = (self.floor_length - np.sum(self.bay_lengths)) / 2
+        trib_lens = np.zeros(self.n_cols)
+        trib_lens[0] = self.bay_lengths[0] / 2 + edge + self.x_offset
+        trib_lens[-1] = self.bay_lengths[-1] / 2 + edge - self.x_offset
+        trib_lens[1:-1] = (self.bay_lengths[1:] + self.bay_lengths[:-1]) / 2
+
+        tw = self.floor_width / (self.n_frames - 1)
+        trib_widths = tw * np.ones(self.n_frames + 1)
+        trib_widths[0] = tw / 2
+        trib_widths[-1] = tw / 2
+        return n_total * (trib_lens[:, np.newaxis] * trib_widths[np.newaxis, :]) / self.floor_area
 
 
 class FrameBuilding2D(Frame, Building):

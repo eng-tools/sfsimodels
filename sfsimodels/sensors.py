@@ -107,6 +107,8 @@ def get_surface_height(si):
         for m_number in si[mtype]:
             if si[mtype][m_number]["Y-CODE"] == "S":
                 return si[mtype][m_number]["y"]
+            if si[mtype][m_number]["Y-CODE"] == "0":
+                return si[mtype][m_number]["y"]
     return None
 
 

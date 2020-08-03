@@ -8,6 +8,8 @@ History
 * Added `Units` and `GlobalUnits`
 * Added `Load` and `LoadAtCoords` objects
 * Better loading of ecp files - can now deal with non-defaults kwargs, e.g. changing `liq_mass_density` in a Soil object
+* Added method for computing column vertical loads (`get_column_vert_loads`) to Frame object
+* Added PadFooting object, and PadFoundation now as a PadFooting object to store pad footing attributes
 
 0.9.23 (2020-4-19)
 --------------------

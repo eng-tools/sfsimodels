@@ -216,6 +216,24 @@ class Foundation(PhysicalObject):
         self._building = building
 
 
+class StripFoundation(Foundation):
+    """
+    An extension to the Foundation Object to describe Strip foundations
+
+    A strip foundation has an infinite length, so everything is computed for a unit length
+    """
+    ftype = "raft"
+    type = "foundation_raft"
+    _extra_class_inputs = []
+
+    def __str__(self):
+        return "FoundationRaft id: {0}, name: {1}".format(self.id, self.name)
+
+    def __init__(self):
+        super(StripFoundation, self).__init__()
+        self.inputs = self.inputs + self._extra_class_inputs
+
+
 class RaftFoundation(Foundation):
     """
     An extension to the Foundation Object to describe Raft foundations
@@ -251,6 +269,40 @@ class RaftFoundation(Foundation):
         """
         return self.length * self.width ** 3 / 12
 
+class PadFooting(Foundation):
+    """
+        An extension to the Foundation Object to describe Raft foundations
+        """
+    ftype = "pad_footing"
+    type = "pad_footing"
+    _extra_class_inputs = []
+
+    def __str__(self):
+        return "PadFooting id: {0}, name: {1}".format(self.id, self.name)
+
+    def __init__(self):
+        super(PadFooting, self).__init__()
+        self.inputs = self.inputs + self._extra_class_inputs
+
+    @property
+    def ancestor_types(self):
+        return super(RaftFoundation, self).ancestor_types + ["pad_footing"]
+
+    @property
+    def i_ww(self):
+        """
+        Contact moment-area around the width axis
+        :return:
+        """
+        return self.width * self.length ** 3 / 12
+
+    @property
+    def i_ll(self):
+        """
+        Contact moment-area around the length axis
+        :return:
+        """
+        return self.length * self.width ** 3 / 12
 
 class PadFoundation(Foundation):
     """
@@ -258,10 +310,8 @@ class PadFoundation(Foundation):
     """
     ftype = "pad"
     type = "foundation_pad"
-    n_pads_l = 4  # Number of pads in length direction
-    n_pads_w = 3  # Number of pads in width direction
-    pad_length = 1.0  # m  # TODO: make parameters protected
-    pad_width = 1.0  # m
+    n_pads_l = None  # Number of pads in length direction
+    n_pads_w = None  # Number of pads in width direction
     _extra_class_inputs = [
         "n_pads_l",
         "n_pads_w",
@@ -275,6 +325,7 @@ class PadFoundation(Foundation):
     def __init__(self):
         super(PadFoundation, self).__init__()
         self.inputs += self._extra_class_inputs
+        self._pad = PadFooting()
 
     @property
     def ancestor_types(self):
@@ -301,6 +352,30 @@ class PadFoundation(Foundation):
         area_d_sqrd = sum(self.pad_area * d_values ** 2) * self.n_pads_l
         i_second = self.pad_i_ll * self.n_pads
         return area_d_sqrd + i_second
+
+    @property
+    def pad(self):
+        return self._pad
+
+    @pad.setter
+    def pad(self, obj):
+        self._pad = obj
+
+    @property
+    def pad_length(self):
+        return self.pad.length
+
+    @pad_length.setter
+    def pad_length(self, value):
+        self.pad.length = value
+
+    @property
+    def pad_width(self):
+        return self.pad.width
+
+    @pad_width.setter
+    def pad_width(self, value):
+        self.pad.width = value
 
     @property
     def n_pads(self):

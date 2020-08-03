@@ -32,7 +32,11 @@ def output_to_table(obj, olist='inputs', oformat='latex', table_ends=False, pref
     for item in property_list:
         if hasattr(obj, item):
             value = getattr(obj, item)
-            value_str = format_value(value)
+            try:
+                value_str = format_value(value)
+            except TypeError:
+                value_str = ''
+                pass
             if oformat == "latex":
                 delimeter = " & "
             else:

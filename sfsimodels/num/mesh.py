@@ -13,7 +13,7 @@ class FiniteElement2DMesh(object):
     profile_indys = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, fd_eles=0):
         """
         A finite element mesh of a two-dimension system
 
@@ -56,7 +56,10 @@ class FiniteElement2DMesh(object):
                     self._soils.append(sl)
         self.get_actual_lims()
         self.set_y_nodes()
-        self.set_x_nodes()
+        if x_nodes is not None:
+            self.x_nodes = x_nodes
+        else:
+            self.set_x_nodes()
         if self.dp is not None:
             self.set_to_decimal_places()
         self.set_soil_ids_to_grid()
@@ -260,7 +263,7 @@ def _example_run():
     sp2.add_layer(7, sl)
     sp2.add_layer(12, sl)
     sp2.height = 20
-    sp.x_angles = [0.0, 0.05, 0.0]
+    sp.x_angles = [0.05, 0.0, 0.0]
     sp2.x_angles = [0.0, 0.00, 0.0]
 
     fd = sm.RaftFoundation()
