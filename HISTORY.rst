@@ -2,7 +2,7 @@
 History
 =======
 
-0.9.2X (2020-X-X)
+0.9.24 (2020-08-05)
 --------------------
 * Added `Coords` object, which defines coordinates in x, y, z directions
 * Added `Units` and `GlobalUnits`
