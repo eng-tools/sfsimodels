@@ -269,6 +269,7 @@ class RaftFoundation(Foundation):
         """
         return self.length * self.width ** 3 / 12
 
+
 class PadFooting(Foundation):
     """
         An extension to the Foundation Object to describe Raft foundations
@@ -286,7 +287,7 @@ class PadFooting(Foundation):
 
     @property
     def ancestor_types(self):
-        return super(RaftFoundation, self).ancestor_types + ["pad_footing"]
+        return super(PadFooting, self).ancestor_types + ["pad_footing"]
 
     @property
     def i_ww(self):
@@ -303,6 +304,7 @@ class PadFooting(Foundation):
         :return:
         """
         return self.length * self.width ** 3 / 12
+
 
 class PadFoundation(Foundation):
     """
@@ -360,6 +362,8 @@ class PadFoundation(Foundation):
     @pad.setter
     def pad(self, obj):
         self._pad = obj
+        self._pad.depth = self.depth
+        self._pad.height = self.height
 
     @property
     def pad_length(self):
@@ -429,6 +433,30 @@ class PadFoundation(Foundation):
         if i >= self.n_pads_w:
             raise ModelError("pad index out-of-bounds")
         return (self.width - self.pad_width) / (self.n_pads_w - 1) * i + self.pad_width / 2
+
+    @property
+    def height(self):
+        """Measure of the base of the foundation to the top"""
+        return self._height
+
+    @height.setter
+    def height(self, value):
+        if value is None or value == "":
+            return
+        self._height = float(value)
+        self._pad.height = float(value)
+
+    @property
+    def depth(self):
+        """Measure of the base of the foundation to the surface of the soil"""
+        return self._height
+
+    @depth.setter
+    def depth(self, value):
+        if value is None or value == "":
+            return
+        self._depth = float(value)
+        self._pad.depth = float(value)
 
 
 class FoundationPad(PadFoundation):

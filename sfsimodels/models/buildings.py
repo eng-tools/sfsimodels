@@ -593,6 +593,10 @@ class FrameBuilding(Frame, Building):
         return self.n_gravity_frames + self.n_seismic_frames
 
     def get_column_vert_loads(self):
+        """
+        return [len-axis][width-axis]
+        :return:
+        """
         n_total = np.sum(self.storey_masses) * 9.8
         edge = (self.floor_length - np.sum(self.bay_lengths)) / 2
         trib_lens = np.zeros(self.n_cols)
