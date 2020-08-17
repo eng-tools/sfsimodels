@@ -1372,6 +1372,8 @@ class SoilProfile(PhysicalObject):
 
         cum_thickness = 0
         for i in range(self.n_layers):
+            if self.layer_depth(i + 1) >= self.height:
+                break
             sl = self.layer(i + 1)
             thickness = self.get_layer_height(i + 1)
             if thickness is None:

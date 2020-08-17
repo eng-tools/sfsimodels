@@ -4,7 +4,7 @@ from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left
 
 
-class FiniteElement2DMesh(object):
+class FiniteElementOrth2DMesh(object):
     x_act = None
     y_flat = None
     x_nodes = None
@@ -65,7 +65,7 @@ class FiniteElement2DMesh(object):
         self.set_soil_ids_to_grid()
         if not fd_eles:
             self.exclude_fd_eles()
-        self.active_nodes = self.get_active_nodes()
+        self._active_nodes = None
 
     def get_actual_lims(self):
         """Find the x and y coordinates that should be maintained in the FE mesh"""
@@ -198,16 +198,22 @@ class FiniteElement2DMesh(object):
                         break
 
     def get_active_nodes(self):
-        active_nodes = np.ones((len(self.x_nodes), len(self.y_nodes)), dtype=int)  # Start with all active
+        # active_nodes = np.ones((len(self.x_nodes), len(self.y_nodes)), dtype=int)  # Start with all active
         # Pad soil_grid with inactive values around edge
         sg_w_pad = self._inactive_value * np.ones((len(self.soil_grid) + 2, len(self.soil_grid[0]) + 2))
         sg_w_pad[1:-1, 1:-1] = self.soil_grid
         # Then compute the average soil_grid from four elements
         node_grid = (sg_w_pad[:-1, :-1] + sg_w_pad[:-1, 1:] + sg_w_pad[1:, :-1] + sg_w_pad[1:, 1:]) / 4
         # if average is equal to inactive then node is not active
-        inds = np.where(node_grid == self._inactive_value)
-        active_nodes[inds] = 0
-        return active_nodes
+        # inds = np.where(node_grid == self._inactive_value)
+        return np.where(node_grid == self._inactive_value, 0, 1)
+
+    
+    @property
+    def active_nodes(self):
+        if self._active_nodes is None:
+            self._active_nodes = self.get_active_nodes()
+        return self._active_nodes
 
     @property
     def soils(self):
@@ -244,6 +250,13 @@ class FiniteElement2DMesh(object):
             for xx in range(xsi, xei):
                 for yy in range(ysi, yei):
                     self.soil_grid[xx][yy] = self._inactive_value
+                    
+    # def is_node_active(self, xx, yy):
+    #     return self.soil_grid[xx][yy] != self._inactive_value
+
+
+class FiniteElement2DMesh(FiniteElementOrth2DMesh):
+    pass
 
 
 def _example_run():

@@ -449,7 +449,7 @@ class PadFoundation(Foundation):
     @property
     def depth(self):
         """Measure of the base of the foundation to the surface of the soil"""
-        return self._height
+        return self._depth
 
     @depth.setter
     def depth(self, value):

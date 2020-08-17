@@ -49,8 +49,10 @@ class Building(PhysicalObject):
                 'storey_masses',
                 'foundation_id',
                 'x_fd',
-                'z_fd'
+                'z_fd',
+                'material'
             ]
+        self.material = None
         self.inputs += self._extra_class_variables
         self.all_parameters = self.inputs + [
         ]

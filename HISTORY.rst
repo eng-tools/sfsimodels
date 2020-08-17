@@ -2,6 +2,14 @@
 History
 =======
 
+0.9.25 (2020-08-17)
+--------------------
+* Fixed issue where SoilProfile split did not stop at soil profile height
+* Added `material` to `Building` object
+* Changed `Concrete` to `ReinforcedConcrete`
+* Fixed bug with PadFoundation where `height` was returned when `depth` was requested
+* For mesh the new class name is `FiniteElementOrth2DMesh` since the mesh is orthogonal. Also `active_nodes` is now cached
+
 0.9.24 (2020-08-05)
 --------------------
 * Added `Coords` object, which defines coordinates in x, y, z directions
