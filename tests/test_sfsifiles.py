@@ -41,6 +41,45 @@ def test_load_and_save_structure():
     assert np.isclose(structure.mass_eff, objs['building'][1].mass_eff)
 
 
+def test_load_and_save_foundation_w_pads():
+    fd = models.PadFoundation()
+    fd.width = 12  # m
+    fd.length = 14  # m
+    fd.depth = 0.6  # m
+    fd.height = 1.0  # m
+    fd.mass = 0.0  # kg
+    fd.pad.length = 1.1
+    fd.pad.width = 1.1
+    fd.n_pads_l = 3
+    fd.n_pads_w = 3
+    fd.set_pad_pos_in_length_dir_as_equally_spaced()
+    fd.set_pad_pos_in_width_dir_as_equally_spaced()
+    tie_beams_sect = sm.sections.RCBeamSection()
+    tie_beams_sect.depth = fd.height
+    tie_beams_sect.width = fd.height
+    tie_beams_sect.rc_mat = sm.materials.ReinforcedConcreteMaterial()
+    tie_beams_sect.cracked_ratio = 0.6
+    fd.tie_beam_sect_in_width_dir = tie_beams_sect
+    fd.tie_beam_sect_in_length_dir = tie_beams_sect
+
+    ecp_output = files.Output()
+    ecp_output.add_to_dict(fd)
+    ecp_output.name = "test data"
+    ecp_output.units = "N, kg, m, s"
+    ecp_output.comments = ""
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    objs = files.loads_json(p_str)
+    fd_new = objs['foundation'][1]
+    fd_pms = ['width', 'length', 'depth', 'height', 'n_pads_l', 'n_pads_w']
+    for item in fd_pms:
+        np.isclose(getattr(fd, item), getattr(fd_new, item))
+    assert np.sum(abs(fd.pad_pos_in_length_dir - fd_new.pad_pos_in_length_dir)) < 1.0e-6
+    assert np.sum(abs(fd.pad_pos_in_width_dir - fd_new.pad_pos_in_width_dir)) < 1.0e-6
+    pad_pms = ['width', 'length', 'depth', 'height']
+    for item in pad_pms:
+        np.isclose(getattr(fd.pad, item), getattr(fd_new.pad, item))
+
+
 def test_save_and_load_soil():
     # Set the void ratio and specific gravity
     sl = sm.Soil()
@@ -355,7 +394,7 @@ def test_load_frame_w_hinges():
     assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
 
 
-def test_load_olf_file_w_frame_w_hinges():
+def test_load_old_file_w_frame_w_hinges():
     # Define special class for section
     class CustomBeamSection(sfsimodels.models.sections.Section):
         diametertop = None
@@ -396,6 +435,7 @@ def test_load_olf_file_w_frame_w_hinges():
     bd = objs["building"][1]
     assert np.isclose(bd.beams[0][0].s[0].myplus_section, 97.03)
     assert np.isclose(bd.beams[1][1].s[0].myplus_section, 127.85), bd.beams[1][1].s[0].myplus_section
+
 
 class Custom3Req(sm.CustomObject):
     type = "custom3"
@@ -440,7 +480,7 @@ if __name__ == '__main__':
     # test_save_and_load_building()
     # test_load_and_save_structure()
     # test_save_and_load_soil_w_diff_liq_mass_density()
-    test_load_olf_file_w_frame_w_hinges()
+    test_load_and_save_foundation_w_pads()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()

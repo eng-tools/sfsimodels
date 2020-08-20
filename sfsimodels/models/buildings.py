@@ -508,6 +508,10 @@ class Frame(object):
             raise ModelError("bay_lengths does not match number of bays (%i)." % self.n_bays)
         self._bay_lengths = np.array(bay_lengths)
 
+    def get_column_positions(self):  # could override in frame building if floor length is longer than bay lengths
+
+        return np.cumsum(np.pad(self.bay_lengths, (1, 0), "constant")) - np.sum(self.bay_lengths) / 2
+
 
 class FrameBuilding(Frame, Building):
     _n_seismic_frames = None

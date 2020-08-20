@@ -330,7 +330,9 @@ class PadFoundation(Foundation):
         "pad_length",
         "pad_width",
         "tie_beam_sect_in_width_dir",
-        "tie_beam_sect_in_length_dir"
+        "tie_beam_sect_in_length_dir",
+        "pad_pos_in_length_dir",
+        "pad_pos_in_width_dir"
     ]
 
     def __str__(self):
@@ -341,7 +343,9 @@ class PadFoundation(Foundation):
         self.inputs += self._extra_class_inputs
         self._pad = PadFooting()
         self._tie_beam_sect_in_width_dir = None  # Should be a section object
-        self._tie_beam_width_in_length_dir = None
+        self._tie_beam_sect_in_length_dir = None
+        self._pad_pos_in_length_dir = None
+        self._pad_pos_in_width_dir = None
 
     @property
     def ancestor_types(self):
@@ -420,11 +424,9 @@ class PadFoundation(Foundation):
         """Contact area of the whole foundation in plan"""
         return self.n_pads * self.pad_area
 
-    def pad_position_l(self, i):
+    def get_pad_pos_in_length_dir(self, i):
         """
         Determines the centre position of the ith pad in the length direction.
-
-        Assumes equally spaced pads and that pad outer edges give the foundation length.
 
         Parameters
         ----------
@@ -433,13 +435,43 @@ class PadFoundation(Foundation):
         """
         if i >= self.n_pads_l:
             raise ModelError("pad index out-of-bounds")
-        return (self.length - self.pad_length) / (self.n_pads_l - 1) * i + self.pad_length / 2
+        if self._pad_pos_in_length_dir is None:
+            raise ModelError('pad positions not set')
 
-    def pad_position_w(self, i):
+        return self._pad_pos_in_length_dir[i]
+
+    def set_pad_pos_in_length_dir_as_equally_spaced(self):
+        """
+        Sets the centre position of the pad footings in length direction
+
+        Assumes equally spaced pads and that pad outer edges give the foundation length.
+
+        Returns
+        -------
+
+        """
+        xs = np.arange(self.n_pads_l)
+        self._pad_pos_in_length_dir = (self.length - self.pad_length) / (self.n_pads_l - 1) * xs + self.pad_length / 2
+
+    @property
+    def pad_pos_in_length_dir(self):
+        return self._pad_pos_in_length_dir
+
+    @pad_pos_in_length_dir.setter
+    def pad_pos_in_length_dir(self, values):
+        if self.n_pads_l is not None:
+            assert len(values) == self.n_pads_l
+        else:
+            self.n_pads_l = len(values)
+        self._pad_pos_in_length_dir = values
+
+    def pad_position_l(self, i):
+        deprecation('pad_position_l has deprecated - use get_pad_pos_in_length_dir')
+        return self.get_pad_pos_in_length_dir(i)
+
+    def get_pad_pos_in_width_dir(self, i):
         """
         Determines the centre position of the ith pad in the width direction.
-
-        Assumes equally spaced pads and that pad outer edges give the foundation width.
 
         Parameters
         ----------
@@ -448,7 +480,39 @@ class PadFoundation(Foundation):
         """
         if i >= self.n_pads_w:
             raise ModelError("pad index out-of-bounds")
-        return (self.width - self.pad_width) / (self.n_pads_w - 1) * i + self.pad_width / 2
+        if self._pad_pos_in_width_dir is None:
+            raise ModelError('pad positions not set')
+
+        return self._pad_pos_in_width_dir[i]
+
+    def set_pad_pos_in_width_dir_as_equally_spaced(self):
+        """
+        Sets the centre position of the pad footings in width direction
+
+        Assumes equally spaced pads and that pad outer edges give the foundation width.
+
+        Returns
+        -------
+
+        """
+        xs = np.arange(self.n_pads_w)
+        self._pad_pos_in_width_dir = (self.width - self.pad_width) / (self.n_pads_w - 1) * xs + self.pad_width / 2
+
+    @property
+    def pad_pos_in_width_dir(self):
+        return self._pad_pos_in_width_dir
+
+    @pad_pos_in_width_dir.setter
+    def pad_pos_in_width_dir(self, values):
+        if self.n_pads_w is not None:
+            assert len(values) == self.n_pads_w
+        else:
+            self.n_pads_w = len(values)
+        self._pad_pos_in_width_dir = values
+
+    def pad_position_w(self, i):
+        deprecation('pad_position_w has deprecated - use get_pad_pos_in_width_dir')
+        return self.get_pad_pos_in_width_dir(i)
 
     @property
     def height(self):
@@ -473,6 +537,22 @@ class PadFoundation(Foundation):
             return
         self._depth = float(value)
         self._pad.depth = float(value)
+
+    @property
+    def tie_beam_sect_in_width_dir(self):
+        return self._tie_beam_sect_in_width_dir
+
+    @tie_beam_sect_in_width_dir.setter
+    def tie_beam_sect_in_width_dir(self, value):
+        self._tie_beam_sect_in_width_dir = value
+
+    @property
+    def tie_beam_sect_in_length_dir(self):
+        return self._tie_beam_sect_in_length_dir
+
+    @tie_beam_sect_in_length_dir.setter
+    def tie_beam_sect_in_length_dir(self, value):
+        self._tie_beam_sect_in_length_dir = value
 
 
 class FoundationPad(PadFoundation):

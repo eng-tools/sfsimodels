@@ -42,7 +42,7 @@ class RCBeamSection(Section):
     id = None
     type = "rc_section"
     base_type = "section"
-    cracked_ratio = 1.0
+    cracked_ratio = None
     _moment_cracked = None
     _moment_yield = None
     _moment_ult = None

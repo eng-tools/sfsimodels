@@ -23,10 +23,12 @@ def test_pad_foundation():
     fd.length = 15
     fd.pad_length = 3
     fd.n_pads_l = 4
+    fd.set_pad_pos_in_length_dir_as_equally_spaced()
     assert fd.pad_position_l(2) == 9.5
     fd.width = 11
     fd.pad_width = 2
     fd.n_pads_w = 4
+    fd.set_pad_pos_in_width_dir_as_equally_spaced()
     assert fd.pad_position_w(1) == 4.0
     assert fd.pad_i_ww == 3. ** 3 * 2 / 12
     assert fd.pad_i_ll == 2. ** 3 * 3 / 12
