@@ -69,6 +69,13 @@ class Foundation(PhysicalObject):
     def ancestor_types(self):
         return super(Foundation, self).ancestor_types + ["foundation"]
 
+    def get_oop_axis(self, ip_axis):
+        if ip_axis == 'length':
+            return 'width'
+        elif ip_axis == 'width':
+            return 'length'
+        return None
+
     @property
     def area(self):
         """Foundation area in plan"""
@@ -223,7 +230,8 @@ class StripFoundation(Foundation):
     A strip foundation has an infinite length, so everything is computed for a unit length
     """
     ftype = "raft"
-    type = "foundation_raft"
+    # type = "foundation_raft"
+    type = "strip_foundation"
     _extra_class_inputs = []
 
     def __str__(self):
@@ -239,7 +247,8 @@ class RaftFoundation(Foundation):
     An extension to the Foundation Object to describe Raft foundations
     """
     ftype = "raft"
-    type = "foundation_raft"
+    # type = "foundation_raft"
+    type = "raft_foundation"
     _extra_class_inputs = []
 
     def __str__(self):
@@ -311,7 +320,8 @@ class PadFoundation(Foundation):
     An extension to the Foundation Object to describe Pad foundations
     """
     ftype = "pad"
-    type = "foundation_pad"
+    # type = "foundation_pad"
+    type = "pad_foundation"
     n_pads_l = None  # Number of pads in length direction
     n_pads_w = None  # Number of pads in width direction
     _extra_class_inputs = [
@@ -319,6 +329,8 @@ class PadFoundation(Foundation):
         "n_pads_w",
         "pad_length",
         "pad_width",
+        "tie_beam_sect_in_width_dir",
+        "tie_beam_sect_in_length_dir"
     ]
 
     def __str__(self):
@@ -328,6 +340,8 @@ class PadFoundation(Foundation):
         super(PadFoundation, self).__init__()
         self.inputs += self._extra_class_inputs
         self._pad = PadFooting()
+        self._tie_beam_sect_in_width_dir = None  # Should be a section object
+        self._tie_beam_width_in_length_dir = None
 
     @property
     def ancestor_types(self):
@@ -408,8 +422,9 @@ class PadFoundation(Foundation):
 
     def pad_position_l(self, i):
         """
-        Determines the position of the ith pad in the length direction.
-        Assumes equally spaced pads.
+        Determines the centre position of the ith pad in the length direction.
+
+        Assumes equally spaced pads and that pad outer edges give the foundation length.
 
         Parameters
         ----------
@@ -422,8 +437,9 @@ class PadFoundation(Foundation):
 
     def pad_position_w(self, i):
         """
-        Determines the position of the ith pad in the width direction.
-        Assumes equally spaced pads.
+        Determines the centre position of the ith pad in the width direction.
+
+        Assumes equally spaced pads and that pad outer edges give the foundation width.
 
         Parameters
         ----------

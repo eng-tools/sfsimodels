@@ -7,7 +7,7 @@ def test_model_inputs():
                 dm.FrameBuilding(1, 2),
                 dm.WallBuilding(1),
                 dm.Soil(),
-                dm.material.Concrete()]
+                dm.materials.ReinforcedConcreteMaterial()]
     for model in p_models:
         for parameter in model.inputs:
             assert hasattr(model, parameter), parameter

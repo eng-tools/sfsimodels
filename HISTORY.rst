@@ -2,6 +2,11 @@
 History
 =======
 
+0.9.XX (2020-08-XX)
+--------------------
+* Improved handling of sections and materials
+* Added `get_oop_axis` method to foundations to get the out-of-plane axis
+
 0.9.25 (2020-08-17)
 --------------------
 * Fixed issue where SoilProfile split did not stop at soil profile height

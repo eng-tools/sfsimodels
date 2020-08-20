@@ -1,14 +1,14 @@
 import numpy as np
-from sfsimodels.models.material import Concrete
+from sfsimodels.models.materials import ReinforcedConcreteMaterial
 
 
 def test_youngs():
-    concrete = Concrete()
-    assert np.isclose(concrete.youngs_concrete, 25084388909.2, rtol=0.0001)
+    concrete = ReinforcedConcreteMaterial()
+    assert np.isclose(concrete.e_mod_conc, 25084388909.2, rtol=0.0001)
 
 
 def can_iterate():
-    concrete = Concrete()
+    concrete = ReinforcedConcreteMaterial()
     for item in concrete:
         pass
 

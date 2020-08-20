@@ -6,6 +6,7 @@ from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models import SeismicHazard, Foundation, Soil
 from sfsimodels.exceptions import ModelError, deprecation
 from sfsimodels import functions as sf
+from sfsimodels.models.sections import Section
 
 
 class Building(PhysicalObject):
@@ -181,42 +182,6 @@ class Building(PhysicalObject):
         if self._foundation is None:
             return None
         return self._foundation.id
-
-
-class Section(PhysicalObject):  # not used?
-    id = None
-    type = "section"
-    base_type = "section"
-    _depth = None
-    _width = None
-
-    def __init__(self):
-        self.inputs = ["depth",
-                       "width"]
-
-    @property
-    def depth(self):
-        return self._depth
-
-    @depth.setter
-    def depth(self, value):
-        self._depth = value
-
-    @property
-    def width(self):
-        return self._width
-
-    @width.setter
-    def width(self, value):
-        self._width = value
-
-    @property
-    def i_rot_1(self):
-        return self._width * self._depth ** 3 / 12
-
-    @property
-    def i_rot_2(self):
-        return self._width ** 3 * self._depth / 12
 
 
 class Element(PhysicalObject):

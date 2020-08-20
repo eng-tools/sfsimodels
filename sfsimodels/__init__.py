@@ -3,13 +3,15 @@ from sfsimodels.models.hazards import SeismicHazard
 from sfsimodels.models.foundations import Foundation, PadFoundation, RaftFoundation
 from sfsimodels.models.soils import Soil, CriticalSoil, discretize_soil_profile, SoilProfile, StressDependentSoil
 from sfsimodels.models.buildings import Building, FrameBuilding, WallBuilding, SDOFBuilding, FrameBuilding2D, \
-    Section, NullBuilding
+    NullBuilding
+from sfsimodels.models.sections import Section
+from sfsimodels.models import sections
+from sfsimodels.models import materials
 
 # deprecated
 from sfsimodels.models.soils import SoilStressDependent, SoilCritical
 from sfsimodels.models.foundations import FoundationPad, FoundationRaft
 
-from sfsimodels.models import material
 from sfsimodels.models.systems import SoilStructureSystem, TwoDSystem
 from sfsimodels.models.time import TimeSeries
 from sfsimodels.models.coordinates import Coords, GlobalCoords, PositionalCoords

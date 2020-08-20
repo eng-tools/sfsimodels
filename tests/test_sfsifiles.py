@@ -1,6 +1,7 @@
 import os
 from collections import OrderedDict
 
+import sfsimodels.models.sections
 from tests import load_test_data as ltd
 from sfsimodels import files
 import numpy as np
@@ -313,7 +314,7 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 
 def test_load_frame_w_hinges():
     # Define special class for section
-    class CustomBeamSection(sm.Section):
+    class CustomBeamSection(sfsimodels.models.sections.Section):
         diametertop = None
         fylong = None
         filongtop = None
@@ -356,7 +357,7 @@ def test_load_frame_w_hinges():
 
 def test_load_olf_file_w_frame_w_hinges():
     # Define special class for section
-    class CustomBeamSection(sm.Section):
+    class CustomBeamSection(sfsimodels.models.sections.Section):
         diametertop = None
         fylong = None
         filongtop = None
