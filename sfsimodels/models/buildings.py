@@ -200,8 +200,9 @@ class Element(PhysicalObject):
     def set_section_prop(self, prop, prop_value, sections=None):
         if sections is None:
             sections = range(len(self.sections))
-        for sect_i in sections:
-            setattr(self.sections[sect_i], prop, prop_value)
+            prop_value = [prop_value] * len(self.sections)
+        for i, sect_i in enumerate(sections):
+            setattr(self.sections[sect_i], prop, prop_value[i])
 
     def add_inputs_to_section(self, props, sections=None):
         if sections is None:
@@ -292,8 +293,8 @@ class Frame(object):
         return ["frame"]
 
     def _allocate_beams_and_columns(self):
-        self._beams = [[Element(self._custom_beam_section) for i in range(self.n_bays)] for ss in range(self.n_storeys)]
-        self._columns = [[Element(self._custom_column_section) for i in range(self.n_cols)] for ss in range(self.n_storeys)]
+        self._beams = np.array([[Element(self._custom_beam_section) for i in range(self.n_bays)] for ss in range(self.n_storeys)])
+        self._columns = np.array([[Element(self._custom_column_section) for i in range(self.n_cols)] for ss in range(self.n_storeys)])
 
     @property
     def beams(self):
@@ -310,6 +311,9 @@ class Frame(object):
     @n_bays.setter
     def n_bays(self, value):
         assert self._n_bays == value
+
+    def get_n_cols(self):
+        return self.n_bays + 1
 
     @property
     def n_storeys(self):
@@ -398,7 +402,7 @@ class Frame(object):
                     sect_dictionary = self._loaded_column_sections[column_sect_id]
                     sf.add_to_obj(self.columns[ss][bb].sections[0], sect_dictionary)
 
-    def set_beam_prop(self, prop, values, repeat="up"):
+    def set_beam_prop(self, prop, values, repeat="up", sections=None):
         """
         Specify the properties of the beam
 
@@ -411,22 +415,25 @@ class Frame(object):
         repeat: str
             If 'up' then duplicate up the structure, if 'all' the duplicate for all columns
         """
+        si = 0
+        if sections is not None:
+            si = 1
         values = np.array(values)
         if repeat == "up":
-            assert len(values.shape) == 1
+            assert len(values.shape) == 1 + si
             values = [values for ss in range(self.n_storeys)]
         elif repeat == "all":
-            assert len(values.shape) == 0
+            assert len(values.shape) == 0 + si
             values = [[values for i in range(self.n_bays)] for ss in range(self.n_storeys)]
         else:
-            assert len(values.shape) == 2
+            assert len(values.shape) == 2 + si
         if len(values[0]) != self.n_bays:
             raise ModelError("beam depths does not match number of bays (%i)." % self.n_bays)
         for ss in range(self.n_storeys):
             for i in range(self.n_bays):
-                self._beams[ss][i].set_section_prop(prop, values[0][i])
+                self._beams[ss][i].set_section_prop(prop, values[ss][i], sections=sections)
 
-    def set_column_prop(self, prop, values, repeat="up"):
+    def set_column_prop(self, prop, values, repeat="up", sections=None):
         """
         Specify the properties of the columns
 
@@ -439,22 +446,29 @@ class Frame(object):
         repeat: str
             If 'up' then duplicate up the structure, if 'all' the duplicate for all columns
         """
+        si = 0
+        if sections is not None:
+            si = 1
         values = np.array(values)
         if repeat == "up":
-            assert len(values.shape) == 1
+            assert len(values.shape) == 1 + si
             values = [values for ss in range(self.n_storeys)]
         elif repeat == 'all':
-            assert len(values.shape) == 0
+            assert len(values.shape) == 0 + si
             values = [[values for i in range(self.n_cols)] for ss in range(self.n_storeys)]
         else:
-            assert len(values.shape) == 2
+            assert len(values.shape) == 2 + si
         if len(values[0]) != self.n_cols:
             raise ModelError("column props does not match n_cols (%i)." % self.n_cols)
         for ss in range(self.n_storeys):
             for i in range(self.n_cols):
-                self._columns[ss][i].set_section_prop(prop, values[0][i])
+                self._columns[ss][i].set_section_prop(prop, values[ss][i], sections=sections)
 
     def beams_at_storey(self, storey):
+        """Get the beams at a particular storey"""
+        return self._beams[storey - 1]
+
+    def get_beams_at_storey(self, storey):
         """Get the beams at a particular storey"""
         return self._beams[storey - 1]
 
