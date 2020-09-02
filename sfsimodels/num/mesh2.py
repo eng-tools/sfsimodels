@@ -193,6 +193,7 @@ class FiniteElement2DMesh(object):
                         unique_hash = sp.layer(ll).unique_hash
                         self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
                         break
+        
 
     def get_active_nodes(self):
         active_nodes = np.ones((len(self.x_nodes), len(self.y_nodes)), dtype=int)  # Start with all active

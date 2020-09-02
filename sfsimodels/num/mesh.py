@@ -75,11 +75,12 @@ class FiniteElementOrth2DMesh(object):
         for i in range(len(self.tds.bds)):
             x_bd = self.tds.x_bds[i]
             bd = self.tds.bds[i]
+            lip = getattr(bd.fd, bd.fd.ip_axis)
             fd_centre_x = x_bd + bd.x_fd
-            if bd.fd.width > self.dy_target:
+            if lip > self.dy_target:
                 fd_coords.append(fd_centre_x)
-            fd_coords.append(fd_centre_x - bd.fd.width / 2)
-            fd_coords.append(fd_centre_x + bd.fd.width / 2)
+            fd_coords.append(fd_centre_x - lip / 2)
+            fd_coords.append(fd_centre_x + lip / 2)
         fd_coords = np.array(fd_coords)
         for i in range(len(self.tds.sps)):
             int_yy = [self.tds.sps[i].layer_depth(yy) for yy in range(1, self.tds.sps[i].n_layers + 1)]
@@ -208,6 +209,14 @@ class FiniteElementOrth2DMesh(object):
         # inds = np.where(node_grid == self._inactive_value)
         return np.where(node_grid == self._inactive_value, 0, 1)
 
+    @property
+    def inactive_value(self):
+        return self._inactive_value
+
+    @inactive_value.setter
+    def inactive_value(self, value):
+        self._inactive_value = value
+
     
     @property
     def active_nodes(self):
@@ -238,7 +247,8 @@ class FiniteElementOrth2DMesh(object):
             fd = bd.fd
             fcx = self.tds.x_bds[i] + bd.x_fd
             fcy = np.interp(fcx, self.tds.x_surf, self.tds.y_surf)
-            xs = np.array([fcx - fd.width / 2, fcx + fd.width / 2])
+            lip = getattr(bd.fd, bd.fd.ip_axis)
+            xs = np.array([fcx - lip / 2, fcx + lip / 2])
             ys = np.array([fcy - fd.depth, fcy - fd.depth + fd.height])
             xsi, xei = self.get_indexes_at_xs(xs)
             yei, ysi = self.get_indexes_at_depths(ys, low='min')
@@ -283,6 +293,7 @@ def _example_run():
     fd.width = 2
     fd.depth = 0
     fd.length = 100
+    fd.ip_axis = 'width'
     tds = TwoDSystem(width=40, height=15)
     tds.add_sp(sp, x=0)
     tds.add_sp(sp2, x=14)

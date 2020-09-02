@@ -2,11 +2,12 @@
 History
 =======
 
-0.9.XX (2020-08-XX)
+0.9.26 (2020-09-03)
 --------------------
 * Improved handling of sections and materials
 * Added `get_oop_axis` method to foundations to get the out-of-plane axis
 * PadFoundation can now handle irregular spacing of footings
+* Meshing can handle foundation out-of-plane input
 
 0.9.25 (2020-08-17)
 --------------------

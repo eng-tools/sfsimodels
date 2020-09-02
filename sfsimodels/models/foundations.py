@@ -451,6 +451,8 @@ class PadFoundation(Foundation):
 
         """
         xs = np.arange(self.n_pads_l)
+        if self.n_pads_l == 1:
+            return np.array([self.length / 2])
         self._pad_pos_in_length_dir = (self.length - self.pad_length) / (self.n_pads_l - 1) * xs + self.pad_length / 2
 
     @property
@@ -496,6 +498,8 @@ class PadFoundation(Foundation):
 
         """
         xs = np.arange(self.n_pads_w)
+        if self.n_pads_w == 1:
+            return np.array([self.width / 2])
         self._pad_pos_in_width_dir = (self.width - self.pad_width) / (self.n_pads_w - 1) * xs + self.pad_width / 2
 
     @property
