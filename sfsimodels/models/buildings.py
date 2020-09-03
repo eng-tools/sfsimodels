@@ -184,18 +184,34 @@ class Building(PhysicalObject):
         return self._foundation.id
 
 
-class Element(PhysicalObject):
+class BeamColumnElement(PhysicalObject):
+    base_type = "beam_column_element"
+    type = "beam_column_element"
     section_lengths = None
 
     def __init__(self, section_class=None):
+        self.inputs = ['sections']
         if section_class is None:
-            self.sections = [Section()]
+            self._sections = [Section()]
         else:
-            self.sections = [section_class()]
+            self._sections = [section_class()]
 
     @property
     def s(self):
-        return self.sections
+        return self._sections
+
+    @property
+    def sections(self):
+        return self._sections
+
+    @sections.setter
+    def sections(self, sections):
+        self._sections = []
+        for section in sections:
+            if isinstance(section, dict):
+                self._sections.append(section['section'])  # load from ecp file
+            else:
+                self._sections.append(section)
 
     def set_section_prop(self, prop, prop_value, sections=None):
         if sections is None:
@@ -221,11 +237,25 @@ class Element(PhysicalObject):
     def get_section_prop(self, prop, section_i=0):
         return getattr(self.sections[section_i], prop)
 
-    def to_dict(self, extra=(), **kwargs):
-        output = []
-        for i in range(len(self.sections)):
-            output.append(self.sections[i].to_dict(extra=extra))
-        return []
+    def add_to_dict(self, models_dict, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = OrderedDict()
+        if "section" not in models_dict:
+            models_dict["section"] = OrderedDict()
+        profile_dict = self.to_dict(**kwargs)
+        profile_dict["sections"] = []
+        for i, section in enumerate(self.sections):
+            models_dict["section"][self.sections[i].unique_hash] = self.sections[i].to_dict(**kwargs)
+            profile_dict["sections"].append({
+                "section_id": str(i),
+                "section_unique_hash": str(self.sections[i].unique_hash),
+                # "depth": float(section)
+            })
+        models_dict["beam_column_element"][self.unique_hash] = profile_dict
+
+
+class Element(BeamColumnElement):
+    pass
 
 
 class Frame(object):
@@ -236,6 +266,7 @@ class Frame(object):
     _loaded_beam_sections = None  # should not be accessed by end user
     _loaded_column_section_ids = None  # should not be accessed by end user
     _loaded_column_sections = None  # should not be accessed by end user
+    loading_pre_reqs = ('beam_column_element', )
 
     def __init__(self, n_storeys, n_bays):
         if not hasattr(self, "inputs"):
@@ -252,10 +283,38 @@ class Frame(object):
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
 
+    def add_to_dict(self, models_dict, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = OrderedDict()
+        if "beam_column_element" not in models_dict:
+            models_dict["beam_column_element"] = OrderedDict()
+        profile_dict = self.to_dict(**kwargs)
+        profile_dict["beams"] = []
+        for i, storey in enumerate(self.beams):
+            profile_dict["beams"].append([])
+            for j, beam in enumerate(storey):
+                self.beams[i][j].add_to_dict(models_dict, **kwargs)
+                profile_dict["beams"][i].append({
+                    "beam_column_element_id": str(i),
+                    "beam_column_element_unique_hash": str(self.beams[i][j].unique_hash),
+                    # "depth": float(section)
+                })
+        profile_dict["columns"] = []
+        for i, storey in enumerate(self.columns):
+            profile_dict["columns"].append([])
+            for j, col in enumerate(storey):
+                self.columns[i][j].add_to_dict(models_dict, **kwargs)
+                profile_dict["columns"][i].append({
+                    "beam_column_element_id": str(i),
+                    "beam_column_element_unique_hash": str(self.columns[i][j].unique_hash),
+                    # "depth": float(section)
+                })
+        models_dict[self.base_type][self.unique_hash] = profile_dict
+
     def to_dict(self, extra=(), **kwargs):
         outputs = OrderedDict()
         skip_list = []
-        # skip_list = ["beams", "columns"]  # TODO: uncomment this
+        skip_list = ["beams", "columns"]
         # skip_list = ["beams"]
         full_inputs = self.inputs + list(extra)
         for item in full_inputs:
@@ -293,16 +352,34 @@ class Frame(object):
         return ["frame"]
 
     def _allocate_beams_and_columns(self):
-        self._beams = np.array([[Element(self._custom_beam_section) for i in range(self.n_bays)] for ss in range(self.n_storeys)])
-        self._columns = np.array([[Element(self._custom_column_section) for i in range(self.n_cols)] for ss in range(self.n_storeys)])
+        self._beams = np.array([[BeamColumnElement(self._custom_beam_section) for i in range(self.n_bays)] for ss in range(self.n_storeys)])
+        self._columns = np.array([[BeamColumnElement(self._custom_column_section) for i in range(self.n_cols)] for ss in range(self.n_storeys)])
 
     @property
     def beams(self):
         return self._beams
 
+    @beams.setter
+    def beams(self, beams):
+        for i, storey in enumerate(beams):
+            for j, beam in enumerate(storey):
+                if isinstance(beam, dict):
+                    self._beams[i][j] = beam['beam_column_element']
+                else:
+                    self._beams[i][j] = beam
+
     @property
     def columns(self):
         return self._columns
+
+    @columns.setter
+    def columns(self, columns):
+        for i, storey in enumerate(columns):
+            for j, columns in enumerate(storey):
+                if isinstance(columns, dict):
+                    self._columns[i][j] = columns['beam_column_element']
+                else:
+                    self._columns[i][j] = columns
 
     @property
     def n_bays(self):
@@ -347,7 +424,7 @@ class Frame(object):
         if self._loaded_beam_section_ids is not None:
             self._assign_loaded_beams()
 
-    def _assign_loaded_beams(self):
+    def _assign_loaded_beams(self):  # This is now deprecated in favour of element based loading
         for ss in range(self.n_storeys):
             for bb in range(self.n_bays):
                 sect_is = self._loaded_beam_section_ids[ss][bb]

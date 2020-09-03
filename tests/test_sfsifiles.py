@@ -173,9 +173,26 @@ def test_save_and_load_building():
     ecp_output.comments = ""
     p_d = ecp_output.to_dict()
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
-    a = open("temp.json", "w")
-    a.write(p_str)
-    a.close()
+    mods = sm.loads_json(p_str)
+    bd2 = mods['building'][1]
+    print(bd2)
+    # a = open("temp.json", "w")
+    # a.write(p_str)
+    # a.close()
+
+
+def test_save_and_load_an_element():
+    ele = models.buildings.BeamColumnElement()
+    ele.sections = [models.sections.RCBeamSection()]
+    ele.set_section_prop('width', 0.5)
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(ele)
+    p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
+    mods = sm.loads_json(p_str)
+    ele2 = mods['beam_column_element'][1]
+    s2 = mods['section'][1]
+    assert ele2.s[0].width == 0.5, ele2.s[0].width
+    assert s2.width == 0.5
 
 
 def test_save_and_load_wall_building():
@@ -242,7 +259,7 @@ def test_save_and_load_2d_frame_building():
 
     objs = sm.loads_json(p_str)
     building = objs["buildings"][1]
-    assert np.isclose(building.beams[0][0].sections[0].depth, 0.5)
+    assert np.isclose(building.beams[0][0].sections[0].depth, 0.5), building.beams[0][0].sections[0].depth
     assert np.isclose(building.beams[0][1].sections[0].depth, 0.6)
 
     assert building.beams[0][0].s[0].a_custom_property == 11, building.beams[0][0].sections[0].a_custom_property
@@ -480,7 +497,11 @@ if __name__ == '__main__':
     # test_save_and_load_building()
     # test_load_and_save_structure()
     # test_save_and_load_soil_w_diff_liq_mass_density()
-    test_load_and_save_foundation_w_pads()
+    # test_load_and_save_foundation_w_pads()
+    # test_save_and_load_soil_profile()
+    # test_save_and_load_an_element()
+    # test_save_and_load_building()
+    test_save_and_load_2d_frame_building()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()

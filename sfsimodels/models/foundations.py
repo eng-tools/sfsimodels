@@ -356,7 +356,7 @@ class PadFoundation(Foundation):
         """Second moment of inertia around the width axis."""
         d_values = []
         for i in range(self.n_pads_l):
-            d_values.append(self.pad_position_l(i))
+            d_values.append(self.get_pad_pos_in_length_dir(i))
         d_values = np.array(d_values) - self.length / 2
         area_d_sqrd = sum(self.pad_area * d_values ** 2) * self.n_pads_w
         i_second = self.pad_i_ww * self.n_pads
@@ -367,7 +367,7 @@ class PadFoundation(Foundation):
         """Second moment of inertia around the length axis."""
         d_values = []
         for i in range(self.n_pads_w):
-            d_values.append(self.pad_position_w(i))
+            d_values.append(self.get_pad_pos_in_width_dir(i))
         d_values = np.array(d_values) - self.width / 2
         area_d_sqrd = sum(self.pad_area * d_values ** 2) * self.n_pads_l
         i_second = self.pad_i_ll * self.n_pads
@@ -452,7 +452,8 @@ class PadFoundation(Foundation):
         """
         xs = np.arange(self.n_pads_l)
         if self.n_pads_l == 1:
-            return np.array([self.length / 2])
+            self._pad_pos_in_length_dir = np.array([self.length / 2])
+            return
         self._pad_pos_in_length_dir = (self.length - self.pad_length) / (self.n_pads_l - 1) * xs + self.pad_length / 2
 
     @property
@@ -461,6 +462,9 @@ class PadFoundation(Foundation):
 
     @pad_pos_in_length_dir.setter
     def pad_pos_in_length_dir(self, values):
+        if values is None:
+            self._pad_pos_in_length_dir = values
+            return
         if self.n_pads_l is not None:
             assert len(values) == self.n_pads_l
         else:
@@ -499,7 +503,8 @@ class PadFoundation(Foundation):
         """
         xs = np.arange(self.n_pads_w)
         if self.n_pads_w == 1:
-            return np.array([self.width / 2])
+            self._pad_pos_in_width_dir = np.array([self.width / 2])
+            return
         self._pad_pos_in_width_dir = (self.width - self.pad_width) / (self.n_pads_w - 1) * xs + self.pad_width / 2
 
     @property
@@ -508,6 +513,9 @@ class PadFoundation(Foundation):
 
     @pad_pos_in_width_dir.setter
     def pad_pos_in_width_dir(self, values):
+        if values is None:
+            self._pad_pos_in_width_dir = values
+            return
         if self.n_pads_w is not None:
             assert len(values) == self.n_pads_w
         else:

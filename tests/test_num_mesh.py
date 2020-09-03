@@ -28,6 +28,7 @@ def test_two_d_mesh():
     fd.depth = 0
     fd.height = 0
     fd.length = 100
+    fd.ip_axis = 'width'
     tds = sm.TwoDSystem(40, 15)
     tds.add_sp(sp, x=0)
     tds.add_sp(sp2, x=14)

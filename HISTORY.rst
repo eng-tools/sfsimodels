@@ -2,7 +2,7 @@
 History
 =======
 
-0.9.26 (2020-09-03)
+0.9.27 (2020-09-03)
 --------------------
 * Improved handling of sections and materials
 * Added `get_oop_axis` method to foundations to get the out-of-plane axis

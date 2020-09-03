@@ -134,6 +134,9 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
         "soil-stress_dependent_soil": soils.StressDependentSoil,
         "soil-soil_stress_dependent": soils.StressDependentSoil,
         "soil_profile-soil_profile": soils.SoilProfile,
+        "beam_column_element-beam_column_element": buildings.BeamColumnElement,
+        "section-section": sections.Section,
+        "section-rc_beam_section": sections.RCBeamSection,
         "building-building": buildings.Building,
         "building-null_building": buildings.NullBuilding,
         "building-frame_building": buildings.FrameBuilding,
@@ -151,8 +154,6 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
         "foundation-foundation_pad": foundations.PadFoundation,  # deprecated type
         "foundation-pad_footing": foundations.PadFooting,
         "foundation-strip_foundation": foundations.StripFoundation,
-        "section-section": sections.Section,
-        "section-rc_beam_section": sections.RCBeamSection,
         "custom_object-custom_object": abstract_models.CustomObject,
         "system-system": systems.SoilStructureSystem,  # deprecated type
         "system-sfs": systems.SoilStructureSystem,
@@ -181,7 +182,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
             del data_models[mtype]
         for m_id in data_models[base_type]:
             data_models[base_type][m_id]["base_type"] = base_type
-
+    load_later = {}
     for mtype in data_models:
         base_type = mtype
         if base_type in exception_list:
@@ -217,10 +218,24 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
                     elif name == 'n_bays':
                         args[m_indy] = len(data_models[mtype][m_id]["bay_lengths"])
             new_instance = obj_class(*args, **kwargs)
-
-            add_to_obj(new_instance, data_models[mtype][m_id], objs=objs, verbose=verbose)
+            try:
+                add_to_obj(new_instance, data_models[mtype][m_id], objs=objs, verbose=verbose)
+            except KeyError as e:
+                if hasattr(new_instance, 'loading_pre_reqs'):
+                    if new_instance.base_type not in load_later:
+                        load_later[new_instance.base_type] = []
+                    load_later[new_instance.base_type].append([new_instance, data_models[mtype][m_id], verbose])
+                    continue
+                else:
+                    raise KeyError(e)
             # print(mtype, m_id)
             objs[base_type][int(data_models[mtype][m_id]["id"])] = new_instance
+    ll_types = list(load_later)
+    now_loaded = []
+    for ll_type in ll_types:
+        if ll_type not in now_loaded:
+            load_last_objects(objs, load_later, ll_type, now_loaded)
+
 
     # Deal with all the exceptions
     # for mtype in data_models:
@@ -238,6 +253,18 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
     return objs
 
 
+def load_last_objects(objs, load_later, ll_type, now_loaded):
+    # if ll_type not in load_later:
+    ll_objs = load_later[ll_type]
+    for obj_pms in ll_objs:
+        for pre_req in obj_pms[0].loading_pre_reqs:
+            if pre_req not in objs:
+                load_last_objects(objs, load_later, pre_req, now_loaded)  # could get into infinite loop if prereqs dependent on each other
+        add_to_obj(obj_pms[0], obj_pms[1], objs=objs, verbose=obj_pms[2])
+        objs[ll_type][int(obj_pms[1]["id"])] = obj_pms[0]
+        now_loaded.append(ll_type)
+
+
 class Output(object):
     name = ""
     units = None
@@ -248,8 +275,8 @@ class Output(object):
     reset_ids = True
 
     def __init__(self):
-        self.unordered_models = OrderedDict()
-        self.id2hash_dict = OrderedDict()
+        self.unordered_models = {}
+        self.id2hash_dict = {}
 
     @property
     def sfsimodels_version(self):
@@ -279,7 +306,7 @@ class Output(object):
         else:
             raise ModelError("Object does not have attribute 'base_type' or 'type', cannot add to output.")
         if mtype not in self.unordered_models:  # Catch any custom objects
-            self.unordered_models[mtype] = OrderedDict()
+            self.unordered_models[mtype] = {}
 
         if hasattr(an_object, "add_to_dict"):
             an_object.add_to_dict(self.unordered_models, export_none=export_none)
@@ -368,8 +395,7 @@ class Output(object):
             self.unordered_models[mtype] = OrderedDict()
         self.unordered_models[mtype][m_id] = serialisable_dict
 
-    @property
-    def models(self):
+    def get_models(self):
         """Unhashed"""
         self.replace_conflicting_ids()
         models_dict = OrderedDict()
@@ -393,7 +419,10 @@ class Output(object):
     def to_dict(self):
         outputs = OrderedDict()
         for item in self.parameters():
-            outputs[item] = self.__getattribute__(item)
+            if item == 'models':
+                outputs[item] = self.get_models()
+            else:
+                outputs[item] = self.__getattribute__(item)
         return outputs
 
     def to_file(self, ffp, indent=4, name=None, units=None, comments=None):
