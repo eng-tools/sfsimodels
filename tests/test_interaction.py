@@ -83,6 +83,8 @@ def test_save_and_load_w_linked_building_and_soil():
     objs = sm.loads_json(p_str)
     building = objs["building"][1]
     foundation = objs["foundation"][1]
+    assert foundation.width == 6
+    assert building.foundation.width == 6, building.fd
     assert np.isclose(building.floor_length, 18.0)
 
 

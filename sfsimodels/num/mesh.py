@@ -99,6 +99,18 @@ class FiniteElementOrth2DMesh(object):
             if self.xs[i + 1] not in x_curr:
                 x_curr = np.insert(x_curr, len(x_curr), self.xs[i + 1])
 
+            for bb in range(len(self.tds.bds)):
+                x_bd = self.tds.x_bds[bb]
+                bd = self.tds.bds[bb]
+                fd = bd.fd
+                x_lhs = x_bd + bd.x_fd - fd.width / 2
+                x_rhs = x_bd + bd.x_fd + fd.width / 2
+                y_base_foundation = np.interp(x_bd + bd.x_fd, self.tds.x_surf, self.tds.y_surf) - fd.depth
+                if self.xs[i] < x_lhs < self.xs[i + 1]:
+                    y_flat.append(y_base_foundation)
+                elif self.xs[i] < x_rhs < self.xs[i + 1]:
+                    y_flat.append(y_base_foundation)
+
             # Surface
             y_curr_surf = np.interp(x_curr, self.tds.x_surf, self.tds.y_surf)  # array of y-pos at important x for each layer
             x_diffs = x_curr - x_curr[0]

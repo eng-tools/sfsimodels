@@ -138,6 +138,9 @@ class SoilStructureSystem(object):
 
 class TwoDSystem(object):
     _unique_hash = None
+    base_type = 'system'
+    type = 'two_d_system'
+    name = None
 
     def __init__(self, width, height, x_surf=None, y_surf=None):
         self.width = width
@@ -158,7 +161,7 @@ class TwoDSystem(object):
 
     def to_dict(self, **kwargs):
         outputs = OrderedDict()
-        skip_list = []
+        skip_list = ['sps', 'bds']
         for item in self.inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
@@ -168,6 +171,49 @@ class TwoDSystem(object):
                     value = self.__getattribute__(item)
                     outputs[item] = sf.collect_serial_value(value)
         return outputs
+
+    def add_to_dict(self, models_dict, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = OrderedDict()
+        if "soil_profile" not in models_dict:
+            models_dict["soil_profile"] = OrderedDict()
+        if "building" not in models_dict:
+            models_dict["building"] = OrderedDict()
+        if "foundation" not in models_dict:
+            models_dict["foundation"] = OrderedDict()
+        profile_dict = self.to_dict(**kwargs)
+        profile_dict["sps"] = []
+        for i, sp in enumerate(self.sps):
+            sp.add_to_dict(models_dict, **kwargs)
+            if sp.id is None:
+                sp.id = i + 1
+            sp.set_soil_ids_to_layers()
+            profile_dict["sps"].append({
+                "soil_profile_id": str(sp.id),
+                "soil_profile_unique_hash": str(sp.unique_hash),
+            })
+        profile_dict["bds"] = []
+        for i, bd in enumerate(self.bds):
+            if bd.id is None:
+                bd.id = i + 1
+            if bd.fd is not None:
+                if bd.fd.id is None:
+                    bd.fd.id = i + 1
+                if hasattr(bd.fd, "add_to_dict"):
+                    bd.fd.add_to_dict(models_dict, **kwargs)
+                else:
+                    models_dict["foundation"][bd.fd.unique_hash] = bd.fd.to_dict(**kwargs)
+            if hasattr(bd, "add_to_dict"):
+                bd.add_to_dict(models_dict, **kwargs)
+            else:
+                models_dict["building"][bd.unique_hash] = bd.to_dict(**kwargs)
+            profile_dict["bds"].append({
+                "building_id": str(bd.id),
+                "building_hash": str(bd.unique_hash),
+            })
+
+
+        models_dict[self.base_type][self.unique_hash] = profile_dict
 
     def add_sp(self, sp, x):
         self._x_sps.append(x)
