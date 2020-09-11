@@ -11,7 +11,7 @@ def test_add_layer_to_soil_profile():
     soil_profile.add_layer(3, soil)
     soil_profile.add_layer(5, soil)
     soil_profile.add_layer(2.5, soil)
-    layer_order = [0, 2.5, 3, 5]
+    layer_order = [2.5, 3, 5]
     ind = 0
     for layer in soil_profile.layers:
         assert layer == layer_order[ind]
@@ -20,6 +20,7 @@ def test_add_layer_to_soil_profile():
 
 def test_vertical_stress_soil_profile():
     soil_profile = models.SoilProfile()
+    soil_profile.add_layer(0, models.Soil())
     soil_profile.add_layer(2, models.Soil())
     soil_profile.add_layer(5, models.Soil())
     unit_weights = [15000.0, 20000.0, 15000.0]
@@ -71,6 +72,44 @@ def test_soil_profile_vertical_total_stress():
     with pytest.raises(exceptions.AnalysisError):
         soil_profile.get_v_eff_stress_at_depth(5)
     soil_profile.layer(2).unit_sat_weight = 20000
+    expected = 3 * 18000 + 1 * 21000 + 1 * 20000
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), expected, rtol=0.0001)
+
+
+
+def test_soil_profile_vertical_total_stress_w_surface_layer():
+    soil_1 = models.Soil()
+    soil_1.phi = 33.
+    soil_1.cohesion = 50000
+    soil_1.unit_dry_weight = 18000
+    soil_profile = models.SoilProfile()
+
+    soil_profile.add_layer(-3, sm.Soil())
+    soil_profile.add_layer(-1, soil_1)
+    sl = soil_profile.layer(1)
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), 5 * 18000, rtol=0.0001)
+    soil_profile.gwl = 3.
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(3), 3 * 18000, rtol=0.0001)
+    with pytest.raises(exceptions.AnalysisError):
+        soil_profile.get_v_eff_stress_at_depth(4)
+    sl_id = soil_profile.get_layer_index_by_depth(1.5)
+    soil_profile.layer(sl_id).unit_sat_weight = 21000
+    expected = 3 * 18000 + 2 * 21000
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), expected, rtol=0.0001)
+    soil_2 = models.Soil()
+    soil_2.phi = 33.
+    soil_2.cohesion = 50000
+    soil_2.unit_dry_weight = 16000
+
+    # CONSIDER TWO LAYER SOIL PROFILE
+    soil_profile.add_layer(4., soil_2)
+    soil_profile.gwl = 10000  # Dry first
+    assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), 4 * 18000 + 1 * 16000, rtol=0.0001)
+    soil_profile.gwl = 3.
+    with pytest.raises(exceptions.AnalysisError):
+        soil_profile.get_v_eff_stress_at_depth(5)
+    sl_id = soil_profile.get_layer_index_by_depth(4.5)
+    soil_profile.layer(sl_id).unit_sat_weight = 20000
     expected = 3 * 18000 + 1 * 21000 + 1 * 20000
     assert np.isclose(soil_profile.get_v_total_stress_at_depth(5), expected, rtol=0.0001)
 
@@ -156,6 +195,17 @@ def test_get_layer_index_by_depth():
     assert sp.get_layer_index_by_depth(1) == 1
     assert sp.get_layer_index_by_depth(3) == 2
     assert sp.get_layer_index_by_depth(4) == 2
+
+
+def test_can_move_layer():
+    sl1 = models.Soil()
+    sl2 = models.Soil()
+    sp = models.SoilProfile()
+    sp.add_layer(0.0, sl1)
+    sp.add_layer(3.0, sl2)
+    assert sp.get_layer_depth(2) == 3.0
+    sp.move_layer(2, 4.0)
+    assert sp.get_layer_depth(2) == 4.0
 
 
 def test_can_remove_layers():

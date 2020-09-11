@@ -118,7 +118,8 @@ def get_depth_by_code(si, sensor_code, coords='auto', surface=None):
 
     :param si:
     :param sensor_code:
-    :param coords:
+    :param coords: str
+        options: 'auto', '+ve' or '-ve' or 'rev+ve'
     :param surface:
     :return:
     """

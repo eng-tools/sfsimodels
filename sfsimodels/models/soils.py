@@ -990,7 +990,7 @@ class SoilProfile(PhysicalObject):
 
     def __init__(self):
         super(PhysicalObject, self).__init__()  # run parent class initialiser function
-        self._layers = OrderedDict([(0.0, Soil())])  # [depth to top of layer, Soil object]
+        self._layers = OrderedDict([(-1e6, Soil())])  # [depth to top of layer, Soil object]
         self.skip_list = ["layers"]
         self.split = OrderedDict()
 
@@ -1026,7 +1026,8 @@ class SoilProfile(PhysicalObject):
         :param depth: depth from surface to top of soil layer
         :param soil: Soil object
         """
-
+        if -1e6 in list(self._layers):
+            del self._layers[-1e6]
         self._layers[depth] = soil
         self._sort_layers()
         if self.hydrostatic:
@@ -1169,6 +1170,13 @@ class SoilProfile(PhysicalObject):
         key = list(self._layers.keys())[layer_int - 1]
         self._layers[key] = soil
 
+    def move_layer(self, new_depth, layer_int):
+        key = list(self._layers.keys())[layer_int - 1]
+        soil = self._layers[key]
+        self._layers[new_depth] = soil
+        del self._layers[key]
+        self._sort_layers()
+
     def layer(self, index):
         index = int(index)
         if index == 0:
@@ -1267,17 +1275,20 @@ class SoilProfile(PhysicalObject):
         else:
             total_stress = 0.0
         depths = self.depths
+        z_surface = 0
         end = 0
         for layer_int in range(1, len(depths) + 1):
             l_index = layer_int - 1
             if z_c > depths[layer_int - 1]:
                 if l_index < len(depths) - 1 and z_c > depths[l_index + 1]:
-                    height = depths[l_index + 1] - depths[l_index]
                     bottom_depth = depths[l_index + 1]
+
                 else:
                     end = 1
-                    height = z_c - depths[l_index]
                     bottom_depth = z_c
+                if bottom_depth <= z_surface:
+                    continue
+                height = bottom_depth - max(depths[l_index], z_surface)
 
                 if bottom_depth <= self.gwl:
                     total_stress += height * self.layer(layer_int).get_unit_weight_or('dry')

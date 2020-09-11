@@ -158,6 +158,7 @@ class TwoDSystem(object):
         self._bds = []
         self._x_bds = []
         self.inputs = ["id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf"]
+        self.gwl = 1e6  # can be coordinates
 
     def to_dict(self, **kwargs):
         outputs = OrderedDict()
@@ -244,3 +245,6 @@ class TwoDSystem(object):
         if self._unique_hash is None:
             self._unique_hash = uuid.uuid1()
         return self._unique_hash
+
+    def get_y_surface_at_x(self, x):
+        return np.interp(x, self.x_surf, self.y_surf)
