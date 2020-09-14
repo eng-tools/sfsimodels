@@ -2,6 +2,8 @@
 History
 =======
 
+* Added in plane axis (`ip_axis`) and out-of-plane axis (`oop_axis`) parameters for foundation.
+
 0.9.27 (2020-09-03)
 --------------------
 * Improved handling of sections and materials

@@ -26,6 +26,8 @@ class Foundation(PhysicalObject):
     _building = None
     x_bd = None
     z_bd = None
+    ip_axis = None
+    oop_axis = None
 
     _extra_class_inputs = [
         "id",
@@ -39,7 +41,8 @@ class Foundation(PhysicalObject):
         "density",
         "mass",
         'x_bd',
-        'z_bd'
+        'z_bd',
+        'ip_axis'
     ]
 
     def __str__(self):
@@ -70,6 +73,7 @@ class Foundation(PhysicalObject):
         return super(Foundation, self).ancestor_types + ["foundation"]
 
     def get_oop_axis(self, ip_axis):
+        # deprecated
         if ip_axis == 'length':
             return 'width'
         elif ip_axis == 'width':
@@ -192,6 +196,42 @@ class Foundation(PhysicalObject):
             return None
         except ZeroDivisionError:
             return None
+
+    @property
+    def ip_axis(self):
+        return self._ip_axis
+
+    @ip_axis.setter
+    def ip_axis(self, ip_axis):
+        if ip_axis is None:
+            self._ip_axis = None
+            self._oop_axis = None
+            return
+        elif ip_axis == 'width':
+            self._oop_axis = 'length'
+        elif ip_axis == 'length':
+            self._oop_axis = 'width'
+        else:
+            raise ModelError("ip_axis must be either 'width', 'length' or None")
+        self._ip_axis = ip_axis
+
+    @property
+    def oop_axis(self):
+        return self._oop_axis
+
+    @oop_axis.setter
+    def oop_axis(self, oop_axis):
+        if oop_axis is None:
+            self._ip_axis = None
+            self._oop_axis = None
+            return
+        elif oop_axis == 'width':
+            self._ip_axis = 'length'
+        elif oop_axis == 'length':
+            self._ip_axis = 'width'
+        else:
+            raise ModelError("oop_axis must be either 'width', 'length' or None")
+        self._oop_axis = oop_axis
 
     @property
     def building(self):
