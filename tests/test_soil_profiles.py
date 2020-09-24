@@ -204,7 +204,7 @@ def test_can_move_layer():
     sp.add_layer(0.0, sl1)
     sp.add_layer(3.0, sl2)
     assert sp.get_layer_depth(2) == 3.0
-    sp.move_layer(2, 4.0)
+    sp.move_layer(4.0, 2)
     assert sp.get_layer_depth(2) == 4.0
 
 

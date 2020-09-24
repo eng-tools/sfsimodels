@@ -62,7 +62,9 @@ class PhysicalObject(object):
 
     def deepcopy(self):
         """ Make a clone of the object """
-        return copy.deepcopy(self)
+        obj = copy.deepcopy(self)
+        obj.clear_unique_hash()
+        return obj
 
     @property
     def ancestor_types(self):
@@ -107,6 +109,13 @@ class PhysicalObject(object):
         if self._unique_hash is None:
             # self._unique_hash = uuid.uuid1()
             self._unique_hash = hashlib.md5(json.dumps(self.to_dict(with_hash=False)).encode('utf-8')).hexdigest()
+        return self._unique_hash
+
+    def clear_unique_hash(self):
+        self._unique_hash = None
+
+    def recompute_unique_hash(self):
+        self._unique_hash = hashlib.md5(json.dumps(self.to_dict(with_hash=False)).encode('utf-8')).hexdigest()
         return self._unique_hash
 
     @property

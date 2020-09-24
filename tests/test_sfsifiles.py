@@ -490,6 +490,24 @@ def test_save_and_load_soil_w_diff_liq_mass_density():
     objs = sm.loads_json(p_str)
 
 
+def test_save_and_load_two_soil_profiles():
+    sl = models.Soil(liq_mass_density=1.0)
+    sl.e_curr = 0.65
+    sl.specific_gravity = 2.65
+    sp = models.SoilProfile()
+    sp.add_layer(0, sl)
+    sp.add_layer(2, sl)
+    sp2 = sp.deepcopy()
+    sp2.move_layer(3, 2)
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(sp)
+    ecp_output.add_to_dict(sp2)
+    p_str = json.dumps(ecp_output.to_dict(), indent=4)
+    print(p_str)
+    objs = sm.loads_json(p_str)
+    assert len(objs['soil_profile']) == 2
+
+
 
 if __name__ == '__main__':
     # test_load_json()
@@ -501,7 +519,7 @@ if __name__ == '__main__':
     # test_save_and_load_soil_profile()
     # test_save_and_load_an_element()
     # test_save_and_load_building()
-    test_save_and_load_2d_frame_building()
+    test_save_and_load_two_soil_profiles()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()

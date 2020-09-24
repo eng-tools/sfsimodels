@@ -991,7 +991,7 @@ class SoilProfile(PhysicalObject):
     def __init__(self):
         super(PhysicalObject, self).__init__()  # run parent class initialiser function
         self._layers = OrderedDict([(-1e6, Soil())])  # [depth to top of layer, Soil object]
-        self.skip_list = ["layers"]
+        self.skip_list = []
         self.split = OrderedDict()
 
     def __str__(self):
