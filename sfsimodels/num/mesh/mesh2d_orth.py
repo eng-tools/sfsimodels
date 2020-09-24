@@ -4,13 +4,81 @@ from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left
 
 
+# class FiniteElementOrth2DMesh(object):
+#     x_act = None
+#     y_flat = None
+#     x_nodes = None
+#     y_nodes = None
+#     soils = None
+#     x_index_to_sp_index = None
+#     _inactive_value = 1000000
+#
+#     def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, fd_eles=0):
+#         """
+#         A finite element mesh of a two-dimension system
+#
+#         Parameters
+#         ----------
+#         tds: TwoDSystem
+#             A two dimensional system of models
+#         dy_target: float
+#             Target height of elements
+#         x_scale_pos: array_like
+#             x-positions used to provide scale factors for element widths
+#         x_scale_vals: array_like
+#             scale factors for element widths
+#         dp: int
+#             Number of decimal places
+#         """
+
 class FiniteElementOrth2DMesh(object):
+    def __init__(self, x_nodes, y_nodes, soil_grid, soils, inactive_value=1e6):
+        self.x_nodes = x_nodes
+        self.y_nodes = y_nodes
+        self.soil_grid = soil_grid
+        self._soils = soils
+        self.inactive_value = inactive_value
+
+    def get_active_nodes(self):
+        # Pad soil_grid with inactive values around edge
+        sg_w_pad = self.inactive_value * np.ones((len(self.soil_grid) + 2, len(self.soil_grid[0]) + 2))
+        sg_w_pad[1:-1, 1:-1] = self.soil_grid
+        # Then compute the average soil_grid from four elements
+        node_grid = (sg_w_pad[:-1, :-1] + sg_w_pad[:-1, 1:] + sg_w_pad[1:, :-1] + sg_w_pad[1:, 1:]) / 4
+        # if average is equal to inactive then node is not active
+        return np.where(node_grid == self.inactive_value, 0, 1)
+
+    @property
+    def soils(self):
+        return self._soils
+
+    def get_indexes_at_depths(self, depths, low=None):
+        return interp_left(-np.array(depths), -self.y_nodes, low=low)
+
+    def get_indexes_at_xs(self, xs, low=None):
+        return interp_left(xs, self.x_nodes, low=low)
+
+    @property
+    def nny(self):
+        return len(self.y_nodes)
+
+    @property
+    def nnx(self):
+        return len(self.x_nodes)
+
+    def set_to_decimal_places(self, dp):
+        """Adjusts the node coordinates to a certain number of decimal places"""
+        self.y_nodes = np.round(self.y_nodes, dp)
+        self.x_nodes = np.round(self.x_nodes, dp)
+
+
+class FiniteElementOrth2DMeshConstructor(object):
     x_act = None
     y_flat = None
     x_nodes = None
     y_nodes = None
     soils = None
-    profile_indys = None
+    x_index_to_sp_index = None
     _inactive_value = 1000000
 
     def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, fd_eles=0):
@@ -63,9 +131,11 @@ class FiniteElementOrth2DMesh(object):
         if self.dp is not None:
             self.set_to_decimal_places()
         self.set_soil_ids_to_grid()
+        self.create_mesh()
         if not fd_eles:
             self.exclude_fd_eles()
         self._active_nodes = None
+
 
     def get_actual_lims(self):
         """Find the x and y coordinates that should be maintained in the FE mesh"""
@@ -186,11 +256,11 @@ class FiniteElementOrth2DMesh(object):
         y_centres = (self.y_nodes[:-1] + self.y_nodes[1:]) / 2
         surf_centres = np.interp(x_centres, self.tds.x_surf, self.tds.y_surf)
         self.soil_grid = np.zeros((len(x_centres), len(y_centres)), dtype=int)
-        self.profile_indys = interp_left(x_centres, self.tds.x_sps, np.arange(0, len(self.tds.x_sps)))
-        self.profile_indys = np.array(self.profile_indys, dtype=int)
+        self.x_index_to_sp_index = interp_left(x_centres, self.tds.x_sps, np.arange(0, len(self.tds.x_sps)))
+        self.x_index_to_sp_index = np.array(self.x_index_to_sp_index, dtype=int)
         for xx in range(len(self.soil_grid)):
             for yy in range(len(self.soil_grid[0])):
-                pid = self.profile_indys[xx]
+                pid = self.x_index_to_sp_index[xx]
                 sp = self.tds.sps[pid]
                 if y_centres[yy] > surf_centres[xx]:
                     self.soil_grid[xx][yy] = self._inactive_value
@@ -254,7 +324,10 @@ class FiniteElementOrth2DMesh(object):
     def nnx(self):
         return len(self.x_nodes)
 
-    def exclude_fd_eles(self):  # TODO: support axis='width' or 'length'
+    def create_mesh(self):
+        self.femesh = FiniteElementOrth2DMesh(self.x_nodes, self.y_nodes, self.soil_grid, self.soils)
+
+    def exclude_fd_eles(self):
         for i, bd in enumerate(self.tds.bds):
             fd = bd.fd
             fcx = self.tds.x_bds[i] + bd.x_fd
@@ -272,13 +345,7 @@ class FiniteElementOrth2DMesh(object):
             for xx in range(xsi, xei):
                 for yy in range(ysi, yei):
                     self.soil_grid[xx][yy] = self._inactive_value
-                    
-    # def is_node_active(self, xx, yy):
-    #     return self.soil_grid[xx][yy] != self._inactive_value
-
-
-class FiniteElement2DMesh(FiniteElementOrth2DMesh):
-    pass
+                    self.femesh.soil_grid[xx][yy] = self.femesh.inactive_value
 
 
 def _example_run():
@@ -317,7 +384,8 @@ def _example_run():
 
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
-    femesh = FiniteElement2DMesh(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    fc = FiniteElementOrth2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    femesh = fc.femesh
 
 
 if __name__ == '__main__':

@@ -41,14 +41,15 @@ def test_two_d_mesh():
 
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
-    femesh = sm.num.mesh.FiniteElement2DMesh(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    fc = sm.num.mesh.FiniteElementOrth2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    femesh = fc.femesh
 
     x_ind = femesh.get_indexes_at_xs([4.])[0]
     y_ind = femesh.get_indexes_at_depths([1.99])[0]
     sl_ind = femesh.soil_grid[x_ind][y_ind]
     assert sl_ind == 1000000
-    assert femesh.active_nodes[x_ind][y_ind] == 0
-    p_ind = femesh.profile_indys[x_ind]
+    assert femesh.get_active_nodes()[x_ind][y_ind] == 0
+    p_ind = fc.x_index_to_sp_index[x_ind]
     assert p_ind == 0
     y_ind = femesh.get_indexes_at_depths([-3])[0]
     sl_ind = femesh.soil_grid[x_ind][y_ind]
@@ -59,10 +60,10 @@ def test_two_d_mesh():
     y_ind = femesh.get_indexes_at_depths([-12.5])[0]
     sl_ind = femesh.soil_grid[x_ind][y_ind]
     assert femesh.soils[sl_ind].g_mod == 400
-    assert femesh.active_nodes[x_ind][y_ind] == 1
+    assert femesh.get_active_nodes()[x_ind][y_ind] == 1
 
     x_ind = femesh.get_indexes_at_xs([16.])[0]
-    p_ind = femesh.profile_indys[x_ind]
+    p_ind = fc.x_index_to_sp_index[x_ind]
     assert p_ind == 1
     y_ind = femesh.get_indexes_at_depths([1.99])[0]
     sl_ind = femesh.soil_grid[x_ind][y_ind]
@@ -104,7 +105,8 @@ def test_two_d_mesh_w_1_profile():
 
     x_scale_pos = np.array([0])
     x_scale_vals = np.array([2.])
-    femesh = sm.num.mesh.FiniteElement2DMesh(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    fc = sm.num.mesh.FiniteElementOrth2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    femesh = fc.femesh
     ind = np.argmin(abs(femesh.y_nodes + 5.0))
     assert np.isclose(-5.0, femesh.y_nodes[ind])
     ind = np.argmin(abs(femesh.y_nodes + 12.0))

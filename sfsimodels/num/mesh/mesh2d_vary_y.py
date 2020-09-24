@@ -23,7 +23,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
     x_nodes = None
     y_nodes = None
     _soils = None
-    profile_indys = None
+    x_index_to_sp_index = None
     _inactive_value = 1000000
 
     def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0):
@@ -563,11 +563,11 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         self.y_centres = y_centres
         surf_centres = np.interp(x_centres, self.tds.x_surf, self.tds.y_surf)
         self.soil_grid = np.zeros((len(y_centres), len(y_centres[0])), dtype=int)
-        self.profile_indys = interp_left(x_centres, self.tds.x_sps, np.arange(0, len(self.tds.x_sps)))
-        self.profile_indys = np.array(self.profile_indys, dtype=int)
+        self.x_index_to_sp_index = interp_left(x_centres, self.tds.x_sps, np.arange(0, len(self.tds.x_sps)))
+        self.x_index_to_sp_index = np.array(self.x_index_to_sp_index, dtype=int)
         for xx in range(len(self.soil_grid)):
             for yy in range(len(self.soil_grid[0])):
-                pid = self.profile_indys[xx]
+                pid = self.x_index_to_sp_index[xx]
                 sp = self.tds.sps[pid]
                 if y_centres[xx][yy] > surf_centres[xx]:
                     self.soil_grid[xx][yy] = self._inactive_value
@@ -646,7 +646,7 @@ class FiniteElementVaryY2DMesh(object):
 
     @property
     def nny(self):
-        return len(self.y_nodes)
+        return len(self.y_nodes[0])
 
     @property
     def nnx(self):
