@@ -167,6 +167,61 @@ def test_mesh_vary_y():
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
     fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
     femesh = fc.femesh
+    show = 0
+    femesh = fc.femesh
+    if show:
+
+        import sys
+        import pyqtgraph as pg
+        from pyqtgraph.Qt import QtGui, QtCore
+        import o3plot
+        win = pg.plot()
+        win.setWindowTitle('ECP definition')
+        win.setXRange(0, tds.width)
+        win.setYRange(-tds.height, max(tds.y_surf))
+
+        o3plot.plot_finite_element_mesh_onto_win(win, femesh)
+
+        xcs = list(fc.yd)
+        xcs.sort()
+        xcs = np.array(xcs)
+        for i in range(len(xcs)):
+            win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+
+        # o3plot.plot_two_d_system(win, tds)
+        # #
+        for i, sd in enumerate(fc.sds):
+            print(i)
+            x0 = sd[0][0]
+            x1 = sd[0][1]
+            y0 = sd[1][0]
+            y1 = sd[1][1]
+            win.plot(sd[0], sd[1], pen='r')
+            x0_ind = femesh.get_nearest_node_index_at_x(x0)
+            x1_ind = femesh.get_nearest_node_index_at_x(x1)
+            y0_ind = femesh.get_nearest_node_index_at_depth(y0, x0)
+            y1_ind = femesh.get_nearest_node_index_at_depth(y1, x1)
+            win.plot([femesh.x_nodes[x0_ind], femesh.x_nodes[x1_ind]],
+                     [femesh.y_nodes[x0_ind][y0_ind], femesh.y_nodes[x1_ind][y1_ind]],
+                     pen='b')
+        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+            QtGui.QApplication.instance().exec_()
+    dhs = np.diff(femesh.y_nodes, axis=1)
+    assert np.min(-dhs) > 0.3 * 0.5, np.min(-dhs)
+    assert np.max(-dhs) < 0.3 * 2, np.min(-dhs)
+    sds = fc.sds
+    for sd in sds:
+        x0 = sd[0][0]
+        x1 = sd[0][1]
+        y0 = sd[1][0]
+        y1 = sd[1][1]
+        y0_ind = femesh.get_nearest_node_index_at_depth(y0, x0)
+        y1_ind = femesh.get_nearest_node_index_at_depth(y1, x1)
+        if y0 == 0 and y1 == 2:
+            assert y0_ind - 6 == y1_ind, (sd, y0_ind - 6, y1_ind)
+        else:
+            assert y0_ind == y1_ind, (sd, y0_ind, y1_ind)
+
 
 if __name__ == '__main__':
-    test_two_d_mesh()
+    test_mesh_vary_y()

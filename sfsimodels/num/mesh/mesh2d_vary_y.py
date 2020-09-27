@@ -1,5 +1,5 @@
 import numpy as np
-
+from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left, interp2d
 
@@ -599,33 +599,40 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             fcx = self.tds.x_bds[i] + bd.x_fd
             fcy = np.interp(fcx, self.tds.x_surf, self.tds.y_surf)
             lip = getattr(fd, fd.ip_axis)
-            xs = np.array([fcx - lip / 2, fcx + lip / 2])
-            ys = np.array([fcy - fd.depth, fcy - fd.depth + fd.height])
-            xsi, xei = self.femesh.get_indexes_at_xs(xs)
-            yei = self.femesh.get_indexes_at_depths(ys[:1], xs[0], low='min')[0]
-            ysi = self.femesh.get_indexes_at_depths(ys[1:], xs[1], low='min')[0]
+            x0 = fcx - lip / 2
+            x1 = fcx + lip / 2
+            y_top = fcy - fd.depth
+            y_bot = fcy - fd.depth + fd.height
+            xsi = self.femesh.get_nearest_node_index_at_x(x0)
+            xei = self.femesh.get_nearest_node_index_at_x(x1)
+            yei = self.femesh.get_nearest_node_index_at_depth(y_top, x0)
+            ysi = self.femesh.get_nearest_node_index_at_depth(y_bot, x0)
             # create foundation nodes a soil mesh nodes
             # along the base
             j = 0
-            for xx in range(xsi, xei):
-                for yy in range(ysi, yei):
+            for xx in range(int(xsi), int(xei)):
+                for yy in range(int(ysi), int(yei)):
                     self.soil_grid[xx][yy] = self._inactive_value
                     self.femesh.soil_grid[xx][yy] = self.femesh.inactive_value
 
 
-class FiniteElementVaryY2DMesh(object):
+class FiniteElementVaryY2DMesh(PhysicalObject):
+    base_type = 'femesh'
+    type = 'vary_2d'
+
     def __init__(self, x_nodes, y_nodes, soil_grid, soils, inactive_value=1e6):
-        self.x_nodes = x_nodes
-        self.y_nodes = y_nodes
-        self.soil_grid = soil_grid
+        self._x_nodes = x_nodes
+        self._y_nodes = y_nodes
+        self._soil_grid = soil_grid
         self._soils = soils
         self.inactive_value = inactive_value
+        self.inputs = ['x_nodes', 'y_nodes', 'soil_grid', 'soils']
 
     def get_active_nodes(self):
-        active_nodes = np.ones((len(self.x_nodes), len(self.y_nodes[0])), dtype=int)  # Start with all active
+        active_nodes = np.ones((len(self._x_nodes), len(self._y_nodes[0])), dtype=int)  # Start with all active
         # Pad soil_grid with inactive values around edge
-        sg_w_pad = self.inactive_value * np.ones((len(self.soil_grid) + 2, len(self.soil_grid[0]) + 2))
-        sg_w_pad[1:-1, 1:-1] = self.soil_grid
+        sg_w_pad = self.inactive_value * np.ones((len(self._soil_grid) + 2, len(self._soil_grid[0]) + 2))
+        sg_w_pad[1:-1, 1:-1] = self._soil_grid
         # Then compute the average soil_grid from four elements
         node_grid = (sg_w_pad[:-1, :-1] + sg_w_pad[:-1, 1:] + sg_w_pad[1:, :-1] + sg_w_pad[1:, 1:]) / 4
         # if average is equal to inactive then node is not active
@@ -637,25 +644,71 @@ class FiniteElementVaryY2DMesh(object):
     def soils(self):
         return self._soils
 
-    def get_indexes_at_depths(self, depths, x, low=None):
-        x_ind = self.get_indexes_at_xs([x])[0]
-        return interp_left(-np.array(depths), -self.y_nodes[x_ind], low=low)
+    def get_ele_indexes_at_depths(self, depths, x, low=None):
+        x_ind = self.get_ele_indexes_at_xs([x])[0]
+        return interp_left(-np.array(depths), -self._y_nodes[x_ind], low=low)
 
-    def get_indexes_at_xs(self, xs, low=None):
+    def get_ele_indexes_at_xs(self, xs, low=None):
         return interp_left(xs, self.x_nodes, low=low)
+
+    def get_nearest_node_index_at_depth(self, depth, x):
+        x_ind = self.get_nearest_node_index_at_x(x)
+        return np.argmin(abs(self._y_nodes[x_ind] - depth))
+
+    def get_nearest_node_index_at_x(self, x):
+        return np.argmin(abs(self.x_nodes - x))
 
     @property
     def nny(self):
-        return len(self.y_nodes[0])
+        return len(self._y_nodes[0])
 
     @property
     def nnx(self):
-        return len(self.x_nodes)
+        return len(self._x_nodes)
 
     def set_to_decimal_places(self, dp):
         """Adjusts the node coordinates to a certain number of decimal places"""
-        self.y_nodes = np.round(self.y_nodes, dp)
-        self.x_nodes = np.round(self.x_nodes, dp)
+        self._y_nodes = np.round(self._y_nodes, dp)
+        self._x_nodes = np.round(self._x_nodes, dp)
+
+    @property
+    def x_nodes(self):
+        return self._x_nodes
+
+    @x_nodes.setter
+    def x_nodes(self, x_nodes):
+        if isinstance(x_nodes, str):
+            self._x_nodes = np.loadtxt(x_nodes)
+        else:
+            self._x_nodes = x_nodes
+
+    @property
+    def y_nodes(self):
+        return self._y_nodes
+
+    @y_nodes.setter
+    def y_nodes(self, y_nodes):
+        if isinstance(y_nodes, str):
+            self._y_nodes = np.loadtxt(y_nodes)
+        else:
+            self._y_nodes = y_nodes
+
+    @property
+    def soil_grid(self):
+        return self._soil_grid
+
+    @soil_grid.setter
+    def soil_grid(self, soil_grid):
+        if isinstance(soil_grid, str):
+            self._soil_grid = np.loadtxt(soil_grid)
+        else:
+            self._soil_grid = soil_grid
+
+    def add_to_dict(self, models_dict, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = {}
+        if "soil" not in models_dict:
+            models_dict["soil"] = {}
 
 
 def _example_run():
