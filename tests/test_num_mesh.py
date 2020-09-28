@@ -117,10 +117,12 @@ def test_two_d_mesh_w_1_profile():
 
 def test_remove_close_items():
     y = [-3, 2, 2.01, 2.05, 6]
-    y_new = mesh2d_vary_y.remove_close_items(y, tol=0.05)
+    y_new, pairs = mesh2d_vary_y.remove_close_items(y, tol=0.05)
     assert y_new[0] == -3.
-    assert y_new[1] == 2.
+    assert y_new[1] == 2.05
     assert y_new[2] == 6.
+    assert pairs[0] == (2, 2.01)
+    pairs[0] = (2.01, 2.05)
 
 
 def test_mesh_vary_y():
@@ -224,4 +226,4 @@ def test_mesh_vary_y():
 
 
 if __name__ == '__main__':
-    test_mesh_vary_y()
+    test_remove_close_items()

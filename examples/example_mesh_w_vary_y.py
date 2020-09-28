@@ -59,36 +59,107 @@ if show:
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
     o3plot.plot_two_d_system(win, tds)
-    # o3plot.plot_finite_element_mesh_onto_win(win, femesh)
+    o3plot.show()
 
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
 ##%
 fc.get_special_coords_and_slopes()  # Step 1
 xcs = list(fc.yd)
 xcs.sort()
 xcs = np.array(xcs)
-show = 0
+show = 1
 if show:
     win = pg.plot()
     win.setMinimumSize(900, 300)
-    win.setWindowTitle('ECP definition')
+    win.setWindowTitle('get_special_coords_and_slopes')
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
-    o3plot.plot_two_d_system(win, tds)
-    # o3plot.plot_finite_element_mesh_onto_win(win, femesh)
+    y_sps_surf = np.interp(tds.x_sps, tds.x_surf, tds.y_surf)
+    for i in range(len(tds.sps)):
+        x0 = tds.x_sps[i]
+        if i == len(tds.sps) - 1:
+            x1 = tds.width
+        else:
+            x1 = tds.x_sps[i + 1]
+        xs = np.array([x0, x1])
+        x_angles = list(tds.sps[i].x_angles)
+        sp = tds.sps[i]
+        for ll in range(1, sp.n_layers + 1):
+            ys = y_sps_surf[i] - sp.layer_depth(ll) + x_angles[ll - 1] * (xs - x0)
+            win.plot(xs, ys, pen='w')
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
     for i in range(len(xcs)):
-        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+        xc = xcs[i]
+        xn = xc * np.ones_like(list(fc.yd[xc]))
+        win.plot(xn, list(fc.yd[xc]), symbol='o', symbolPen='r')
 
     o3plot.show()
 
 ##%
 fc.set_init_y_blocks()
-show = 0
+show = 1
 if show:
     win = pg.plot()
     win.setMinimumSize(900, 300)
-    win.setWindowTitle('ECP definition')
+    win.setWindowTitle('set_init_y_blocks')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+
+    for i in range(len(xcs)):
+        xc = xcs[i]
+        h_blocks = np.diff(fc.yd[xc])
+        dhs = h_blocks / fc.y_blocks[xc]
+        y_node_steps = [0]
+        for hh in range(len(fc.y_blocks[xc])):
+            y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
+        y_node_coords = np.cumsum(y_node_steps) - tds.height
+        xn = xc * np.ones_like(list(fc.yd[xc]))
+        win.plot(xn, list(fc.yd[xc]), symbol='o', pen='r')
+        xn = xc * np.ones_like(y_node_coords)
+        win.plot(xn, y_node_coords, symbol='+')
+        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+
+    o3plot.show()
+
+##%
+fc.adjust_blocks_to_be_consistent_with_slopes()  # TODO: This is failing
+show = 1
+if show:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('adjust_blocks_to_be_consistent_with_slopes')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+
+    for i in range(len(xcs)):
+        xc = xcs[i]
+        h_blocks = np.diff(fc.yd[xc])
+        dhs = h_blocks / fc.y_blocks[xc]
+        y_node_steps = [0]
+        for hh in range(len(fc.y_blocks[xc])):
+            y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
+        y_node_coords = np.cumsum(y_node_steps) - tds.height
+        xn = xc * np.ones_like(list(fc.yd[xc]))
+        win.plot(xn, list(fc.yd[xc]), symbol='o', pen='r')
+        xn = xc * np.ones_like(y_node_coords)
+        win.plot(xn, y_node_coords, symbol='+')
+        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+
+    o3plot.show()
+##%
+fc.trim_grid_to_target_dh()
+show = 1
+if show:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('trim_grid_to_target_dh')
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
     o3plot.plot_two_d_system(win, tds)
@@ -111,7 +182,79 @@ if show:
     o3plot.show()
 
 ##%
-fc.adjust_blocks_to_be_consistent_with_slopes()
+fc.build_req_y_node_positions()
+show = 1
+if show:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('build_req_y_node_positions')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    o3plot.plot_two_d_system(win, tds)
+
+    for i in range(len(xcs)):
+        xc = xcs[i]
+        h_blocks = np.diff(fc.yd[xc])
+        dhs = h_blocks / fc.y_blocks[xc]
+        y_node_steps = [0]
+        for hh in range(len(fc.y_blocks[xc])):
+            y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
+        y_node_coords = np.cumsum(y_node_steps) - tds.height
+
+        xn = xc * np.ones_like(list(fc.req_y_coords_at_xcs[i]))
+        win.plot(xn, list(fc.req_y_coords_at_xcs[i]), symbol='x', symbolPen='r')
+        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+
+    o3plot.show()
+##%
+fc.build_y_coords_at_xcs()
+show = 0
+if show:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('ECP definition')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    for i in range(len(xcs)):
+        xc = xcs[i]
+        h_blocks = np.diff(fc.yd[xc])
+        dhs = h_blocks / fc.y_blocks[xc]
+        y_node_steps = [0]
+        for hh in range(len(fc.y_blocks[xc])):
+            y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
+        y_node_coords = np.cumsum(y_node_steps) - tds.height
+        xn = xc * np.ones_like(list(fc.req_y_coords_at_xcs[i]))
+        win.plot(xn, list(fc.req_y_coords_at_xcs[i]), symbol='x', symbolPen='y')
+        xn = xc * np.ones_like(list(fc.y_coords_at_xcs[i]))
+        win.plot(xn, list(fc.y_coords_at_xcs[i]), symbol='+', symbolPen='r')
+        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+
+    o3plot.show()
+
+
+##%
+fc.set_x_nodes()
+show = 0
+if show:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('ECP definition')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    for i in range(len(fc.x_nodes)):
+        win.addItem(pg.InfiniteLine(fc.x_nodes[i], angle=90, pen='r'))
+    o3plot.show()
+
+##%
+fc.build_y_coords_grid()
+fc.set_soil_ids_to_grid()
+fc.create_mesh()
 show = 1
 if show:
     win = pg.plot()
@@ -119,23 +262,10 @@ if show:
     win.setWindowTitle('ECP definition')
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
-    o3plot.plot_two_d_system(win, tds)
-    y_node_nums_at_xcs = [list(np.cumsum(fc.y_blocks[xcs])) for xcs in fc.y_blocks]
-
-    for i in range(len(xcs)):
-        xc = xcs[i]
-        h_blocks = np.diff(fc.yd[xc])
-        dhs = h_blocks / fc.y_blocks[xc]
-        y_node_steps = [0]
-        for hh in range(len(fc.y_blocks[xc])):
-            y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
-        y_node_coords = np.cumsum(y_node_steps) - tds.height
-        xn = xc * np.ones_like(list(fc.yd[xc]))
-        win.plot(xn, list(fc.yd[xc]), symbol='o', pen='r')
-        xn = xc * np.ones_like(y_node_coords)
-        win.plot(xn, y_node_coords, symbol='+')
-        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
-
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    # for i in range(len(fc.x_nodes)):
+    #     win.addItem(pg.InfiniteLine(fc.x_nodes[i], angle=90, pen='r'))
+    o3plot.plot_finite_element_mesh_onto_win(win, fc.femesh)
     o3plot.show()
-
-
