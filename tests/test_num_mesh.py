@@ -145,7 +145,7 @@ def test_mesh_vary_y():
     sp2.add_layer(7, sl5)
     sp2.add_layer(12, sl0)
     sp2.height = 20
-    sp.x_angles = [0.01, 0.05, 0.0]
+    sp.x_angles = [0.0, 0.01, 0.05]
     sp2.x_angles = [0.0, 0.00, 0.0]
 
     fd = sm.RaftFoundation()

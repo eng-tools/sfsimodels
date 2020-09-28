@@ -98,7 +98,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         if self.tds.width not in yd:
             yd[self.tds.width] = []
 
-        sds = []  # slope dict (stored left-to-right and bottom-to-top)  # TODO: include foundation
+        sds = []  # slope dict (stored left-to-right and bottom-to-top)
         for i in range(len(self.tds.bds)):
             x_bd = self.tds.x_bds[i]
             bd = self.tds.bds[i]
@@ -123,40 +123,62 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             else:
                 x_next = self.tds.x_sps[i + 1] - x_off
 
-            y_curr_surf = np.interp(x_curr, self.tds.x_surf, self.tds.y_surf)
+            # get important x-coordinates that are between two soil profiles
+            if x_curr not in yd:
+                yd[x_curr] = []
+            if x_next not in yd:
+                yd[x_next] = []
+            x_coords = np.array(list(yd))
+            inds = np.where((x_coords >= x_curr) & (x_coords <= x_next))
+            xs = np.sort(x_coords[inds])
+            y_surf_at_xs = np.interp(xs, self.tds.x_surf, self.tds.y_surf)
+            y_curr_surf = y_surf_at_xs[0]
             # Depths from defined soil profile
             int_yy = []
             angles = []
             for yy in range(1, self.tds.sps[i].n_layers + 1):
-                if self.tds.sps[i].layer_depth(yy) >= 0:
-                    int_yy.append(-self.tds.sps[i].layer_depth(yy) + y_curr_surf)
-                    angles.append(self.tds.sps[i].x_angles[yy-1])
-            angles = np.array(angles)[:-1]
+                # if self.tds.sps[i].layer_depth(yy) >= 0:
+                int_yy.append(-self.tds.sps[i].layer_depth(yy) + y_curr_surf)
+                angles.append(self.tds.sps[i].x_angles[yy-1])
+            angles = np.array(angles)
             # angs = np.array(self.tds.sps[i].x_angles)[:-1]
             # angles = np.array(self.tds.sps[i].x_angles)[:-1]
-            if x_curr not in yd:
-                yd[x_curr] = []  # initialise and add surface
-            if int_yy[0] not in yd[x_curr]:
-                yd[x_curr].append(int_yy[0])
-            if x_next not in yd:
-                yd[x_next] = []
-            x_coords = np.array(list(yd))
 
-            # get important x-coordinates that are between two soil profiles
-            inds = np.where((x_coords >= x_curr) & (x_coords <= x_next))
-            xs = np.sort(x_coords[inds])
-            x_diffs = xs - x_curr
-
-            int_yy = np.array(int_yy)[1:]
-            if len(int_yy) == 0:
-                continue
-            ys_curr = int_yy[:, np.newaxis] + angles[:, np.newaxis] * x_diffs[np.newaxis, :]
-            for j in range(len(xs)):
-                yd[xs[j]] += list(ys_curr[:, j])
+            if xs[0] not in yd:
+                yd[xs[0]] = []
             for j in range(len(xs) - 1):
-                for k in range(len(ys_curr)):
-                    slope = [[xs[j], xs[j + 1]], [ys_curr[::-1][k][j], ys_curr[::-1][k][j + 1]]]
-                    sds.append(slope)
+                x0 = xs[j]
+                x_next = xs[j]
+                if x_next not in yd:
+                    yd[x_next] = []
+                x0_diff = x0 - x_curr
+                xn_diff = x_next - x_curr
+                if y_surf_at_xs[j] not in yd[x0]:
+                    yd[x0].append(y_surf_at_xs[j])
+                if y_surf_at_xs[j+1] not in yd[x_next]:
+                    yd[x_next].append(y_surf_at_xs[j+1])
+                for k in range(len(int_yy)):
+                    y_curr = int_yy[k] + angles[k] * x0_diff
+                    if y_curr < y_surf_at_xs[j] and y_curr not in yd[x0]:
+                        yd[x0].append(y_curr)
+                    y_next = int_yy[k] + angles[k] * xn_diff
+                    if y_next < y_surf_at_xs[j+1] and y_next not in yd[x_next]:
+                        yd[x_next].append(y_next)
+                    if y_curr < y_surf_at_xs[j] and y_next < y_surf_at_xs[j+1]:
+                        sds.append([[x0, x_next], [y_curr, y_next]])
+
+            # x_diffs = xs - x_curr
+            #
+            # int_yy = np.array(int_yy)[1:]
+            # if len(int_yy) == 0:
+            #     continue
+            # ys_curr = int_yy[:, np.newaxis] + angles[:, np.newaxis] * x_diffs[np.newaxis, :]
+            # for j in range(len(xs)):
+            #     yd[xs[j]] += list(ys_curr[:, j])
+            # for j in range(len(xs) - 1):
+            #     for k in range(len(ys_curr)):
+            #         slope = [[xs[j], xs[j + 1]], [ys_curr[::-1][k][j], ys_curr[::-1][k][j + 1]]]
+            #         sds.append(slope)
 
         for x in yd:
             yd[x].append(-self.tds.height)

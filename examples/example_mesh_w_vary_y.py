@@ -19,20 +19,21 @@ sl3 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.34)
 sl4 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.35)
 sl5 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.36)
 sp = sm.SoilProfile()
-sp.add_layer(-1.5, sl1)
+h_face = 1.8
+sp.add_layer(0, sl1)
 sp.add_layer(3.5, sl2)
-sp.add_layer(5.5, sl3)
+sp.add_layer(5.7, sl3)
 sp2 = sm.SoilProfile()
 sp2.add_layer(0, sl4)
-sp2.add_layer(3.8, sl5)
-sp2.add_layer(6.0, sl0)
+sp2.add_layer(3.7, sl5)
+sp2.add_layer(6.5, sl0)
 sp2.height = 20
-sp.x_angles = [0.05, 0.01, 0.0]
+sp.x_angles = [0.2, 0.07, 0.0]
 sp2.x_angles = [0.0, 0.00, 0.0]
 
 fd = sm.RaftFoundation()
 fd.width = 3
-fd.depth = 0.7
+fd.depth = 0.6
 fd.ip_axis = 'width'
 fd.height = 0.7
 fd.length = 100
@@ -40,7 +41,7 @@ tds = sm.TwoDSystem(width=30, height=7.5)
 tds.add_sp(sp, x=0)
 tds.add_sp(sp2, x=17)
 tds.x_surf = np.array([0, 12, 14, tds.width])
-tds.y_surf = np.array([0, 0, 1.5, 1.5])
+tds.y_surf = np.array([0, 0, h_face, h_face])
 bd = sm.NullBuilding()
 bd.set_foundation(fd, x=0.0)
 tds.add_bd(bd, x=20)
