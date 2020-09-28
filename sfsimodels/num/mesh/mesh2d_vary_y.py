@@ -98,6 +98,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         if self.tds.width not in yd:
             yd[self.tds.width] = []
 
+        sds = []  # slope dict (stored left-to-right and bottom-to-top)  # TODO: include foundation
         for i in range(len(self.tds.bds)):
             x_bd = self.tds.x_bds[i]
             bd = self.tds.bds[i]
@@ -109,11 +110,12 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             x_right = fd_centre_x + bd.fd.width / 2
             if x_left not in yd:
                 yd[x_left] = []
-            yd[x_left] += [y_surf, bd.fd.depth + y_surf]
+            yd[x_left] += [y_surf, -bd.fd.depth + y_surf]
             if x_right not in yd:
                 yd[x_right] = []
-            yd[x_right] += [y_surf, bd.fd.depth + y_surf]
-        sds = []  # slope dict (stored left-to-right and bottom-to-top)  # TODO: include foundation
+            yd[x_right] += [y_surf, -bd.fd.depth + y_surf]
+            sds.append([[x_left, x_right], [-bd.fd.depth + y_surf, -bd.fd.depth + y_surf]])
+
         for i in range(len(self.tds.sps)):
             x_curr = self.tds.x_sps[i]
             if i == len(self.tds.sps) - 1:

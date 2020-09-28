@@ -48,7 +48,7 @@ tds.add_bd(bd, x=20)
 x_scale_pos = np.array([0, 5, 15, 30])
 x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
 ##%
-fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos,
+fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)
 show = 0
 if show:
@@ -92,12 +92,8 @@ if show:
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
     o3plot.plot_two_d_system(win, tds)
-    y_coords_at_xcs = [list(fc.yd[xc]) for xc in xcs]
     y_node_nums_at_xcs = [list(np.cumsum(fc.y_blocks[xcs])) for xcs in fc.y_blocks]
 
-    # for xcs in fc.y_blocks:
-
-    # o3plot.plot_finite_element_mesh_onto_win(win, femesh)
     for i in range(len(xcs)):
         xc = xcs[i]
         h_blocks = np.diff(fc.yd[xc])
@@ -106,11 +102,12 @@ if show:
         for hh in range(len(fc.y_blocks[xc])):
             y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
         y_node_coords = np.cumsum(y_node_steps) - tds.height
+        xn = xc * np.ones_like(list(fc.yd[xc]))
+        win.plot(xn, list(fc.yd[xc]), symbol='o', pen='r')
         xn = xc * np.ones_like(y_node_coords)
         win.plot(xn, y_node_coords, symbol='+')
         win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
 
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+    o3plot.show()
 
 
