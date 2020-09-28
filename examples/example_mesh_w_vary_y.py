@@ -52,7 +52,7 @@ x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
 show_set_init_y_blocks = 0
 show_ecp_definition = 0
 show_get_special_coords_and_slopes = 0
-show_adjust_blocks_to_be_consistent_with_slopes = 1
+show_adjust_blocks_to_be_consistent_with_slopes = 0
 ##%
 fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)
@@ -128,7 +128,7 @@ if show_set_init_y_blocks:
     o3plot.show()
 
 ##%
-fc.adjust_blocks_to_be_consistent_with_slopes()  # TODO: This is failing
+fc.adjust_blocks_to_be_consistent_with_slopes()  # TODO: Add back add
 if show_adjust_blocks_to_be_consistent_with_slopes:
     win = pg.plot()
     win.setMinimumSize(900, 300)

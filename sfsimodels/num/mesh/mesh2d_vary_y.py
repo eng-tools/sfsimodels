@@ -307,7 +307,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 while sgn != np.sign(diff_nb) and diff_nb != 0:
 
                     nb_below = self.y_blocks[x1_c][ind_y1 - 1]
-                    print(np.sign(diff_nb), nb_below)
+                    if nb_below + np.sign(diff_nb) * -1 == 0:
+                        break
                     new_dh_below = (y1_c - y1_below) / (nb_below + np.sign(diff_nb) * -1)
                     if not (min_dh < new_dh_below < max_dh):
                         break
@@ -315,6 +316,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                     nb1 += np.sign(diff_nb) * -1
                     if y1_c != self.y_surf_at_xcs[x1_c]:
                         nb_above = self.y_blocks[x1_c][ind_y1]
+                        if nb_above + np.sign(diff_nb) * 1 == 0:
+                            break
                         new_dh_above = (y1_above - y1_c) / (nb_above + np.sign(diff_nb) * 1)
                         if not (min_dh < new_dh_above < max_dh):
                             break
@@ -393,6 +396,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
     def trim_grid_to_target_dh(self):
         """Check mesh for potential thin layers and try to remove rows of elements to get elements close to target dh"""
         xcs = self.xcs_sorted
+        opt_low = self.dy_target * (self.min_scale + 1) / 2
+        opt_high = self.dy_target * (self.max_scale + 1) / 2
         # try to trim mesh to be closer to target dh
         opts_tried = []
         for nn in range(10):
@@ -415,30 +420,32 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                     av_dhs[i].append((y_coords_at_xcs[i][j + 1] - y_coords_at_xcs[i][j]) / nb)
 
                 min_dhs.append(min(av_dhs[i]))
-            if min(min_dhs) < self.dy_target:
+            if min(min_dhs) < self.dy_target:  # favour slightly larger elements - could use opt_low
                 x_ind = min_dhs.index(min(min_dhs))
                 y_ind = av_dhs[x_ind].index(min_dhs[x_ind])
-                nb_lowest = y_node_nums_at_xcs[x_ind][y_ind]  # range where element could be removed
-                nb_highest = y_node_nums_at_xcs[x_ind][y_ind + 1]
-                hzone = y_coords_at_xcs[x_ind][y_ind + 1] - y_coords_at_xcs[x_ind][y_ind]
-                max_new_dh = hzone / (nb_highest - nb_lowest - 1)
-                for w in range(len(y_node_nums_at_xcs)):
-                    y_ind = interp_left(nb_lowest, y_node_nums_at_xcs[w])
-                    nb_low = y_node_nums_at_xcs[w][y_ind]
-                    nb_high = y_node_nums_at_xcs[w][y_ind + 1]
-                    hzone = y_coords_at_xcs[w][y_ind + 1] - y_coords_at_xcs[w][y_ind]
-                    if nb_highest > nb_high:
-                        nb_highest = nb_high
-                    new_dh = hzone / (nb_high - nb_low - 1)
-                    if max_new_dh < new_dh:
-                        max_new_dh = new_dh
-                if max_new_dh < self.dy_target * self.max_scale * 0.7:
+                nb_lowest_p = y_node_nums_at_xcs[x_ind][y_ind]  # range where element could be removed
+                nb_highest_p = y_node_nums_at_xcs[x_ind][y_ind + 1]
+                hzone_p = y_coords_at_xcs[x_ind][y_ind + 1] - y_coords_at_xcs[x_ind][y_ind]
+
+                found_opt = 0
+                for opt in range(nb_lowest_p, nb_highest_p):
+                    max_new_dh = hzone_p / (nb_highest_p - nb_lowest_p - 1)
+
                     for w in range(len(y_node_nums_at_xcs)):
-                        y_ind = interp_left(nb_lowest, y_node_nums_at_xcs[w])
-                        self.y_blocks[xcs[w]][y_ind] -= 1
-                        # for k in range(y_ind + 1, len(y_node_nums_at_xcs[w])):
-                        #     y_node_nums_at_xcs[w][k] -= 1
-                else:
+                        y_ind = interp_left(opt, y_node_nums_at_xcs[w])
+                        nb_low = y_node_nums_at_xcs[w][y_ind]
+                        nb_high = y_node_nums_at_xcs[w][y_ind + 1]
+                        hzone = y_coords_at_xcs[w][y_ind + 1] - y_coords_at_xcs[w][y_ind]
+                        new_dh = hzone / (nb_high - nb_low - 1)
+                        if max_new_dh < new_dh:
+                            max_new_dh = new_dh
+                    if max_new_dh < opt_high:
+                        for w in range(len(y_node_nums_at_xcs)):
+                            y_ind = interp_left(opt, y_node_nums_at_xcs[w])
+                            self.y_blocks[xcs[w]][y_ind] -= 1
+                        found_opt = 1
+                        break
+                if not found_opt:
                     opts_tried.append((x_ind, y_ind))
             else:
                 break
@@ -464,30 +471,30 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                     av_dhs[i].append((y_coords_at_xcs[i][j + 1] - y_coords_at_xcs[i][j]) / nb)
 
                 max_dhs.append(max(av_dhs[i]))
-            if max(max_dhs) > self.dy_target * (self.max_scale + 1) / 2:
+            if max(max_dhs) > opt_high:
                 x_ind = max_dhs.index(max(max_dhs))
                 y_ind = av_dhs[x_ind].index(max_dhs[x_ind])
                 nb_lowest = y_node_nums_at_xcs[x_ind][y_ind]  # range where element could be add
                 nb_highest = y_node_nums_at_xcs[x_ind][y_ind + 1]
-                hzone = y_coords_at_xcs[x_ind][y_ind + 1] - y_coords_at_xcs[x_ind][y_ind]
-                min_new_dh = hzone / (nb_highest - nb_lowest + 1)
-                for w in range(len(y_node_nums_at_xcs)):
-                    y_ind = interp_left(nb_lowest, y_node_nums_at_xcs[w])
-                    nb_low = y_node_nums_at_xcs[w][y_ind]
-                    nb_high = y_node_nums_at_xcs[w][y_ind + 1]
-                    hzone = y_coords_at_xcs[w][y_ind + 1] - y_coords_at_xcs[w][y_ind]
-                    if nb_highest > nb_high:
-                        nb_highest = nb_high
-                    new_dh = hzone / (nb_high - nb_low + 1)
-                    if min_new_dh > new_dh:
-                        min_new_dh = new_dh
-                if min_new_dh > self.dy_target * (self.min_scale + 1) / 2:
+                hzone_p = y_coords_at_xcs[x_ind][y_ind + 1] - y_coords_at_xcs[x_ind][y_ind]
+                found_opt = 0
+                for opt in range(nb_lowest, nb_highest):
+                    min_new_dh = hzone_p / (nb_highest - nb_lowest + 1)
                     for w in range(len(y_node_nums_at_xcs)):
                         y_ind = interp_left(nb_lowest, y_node_nums_at_xcs[w])
-                        self.y_blocks[xcs[w]][y_ind] += 1
-                        # for k in range(y_ind + 1, len(y_node_nums_at_xcs[w])):
-                        #     y_node_nums_at_xcs[w][k] -= 1
-                else:
+                        nb_low = y_node_nums_at_xcs[w][y_ind]
+                        nb_high = y_node_nums_at_xcs[w][y_ind + 1]
+                        hzone = y_coords_at_xcs[w][y_ind + 1] - y_coords_at_xcs[w][y_ind]
+                        new_dh = hzone / (nb_high - nb_low + 1)
+                        if min_new_dh > new_dh:
+                            min_new_dh = new_dh
+                    if min_new_dh > opt_low:
+                        for w in range(len(y_node_nums_at_xcs)):
+                            y_ind = interp_left(nb_lowest, y_node_nums_at_xcs[w])
+                            self.y_blocks[xcs[w]][y_ind] += 1
+                        found_opt = 1
+                        break
+                if not found_opt:
                     opts_tried.append((x_ind, y_ind))
             else:
                 break
