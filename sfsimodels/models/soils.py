@@ -985,13 +985,15 @@ class SoilProfile(PhysicalObject):
         "gwl",
         "unit_water_weight",
         "layers",
-        "height"
+        "height",
+        "x_angles"
     ]
 
     def __init__(self):
         super(PhysicalObject, self).__init__()  # run parent class initialiser function
         self._layers = OrderedDict([(-1e6, Soil())])  # [depth to top of layer, Soil object]
         self.skip_list = []
+        self.x_angles = []  # the slope of the top of each layer, first layer slope should be >= ground slope
         self.split = OrderedDict()
 
     def __str__(self):

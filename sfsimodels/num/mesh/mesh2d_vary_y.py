@@ -17,6 +17,14 @@ def remove_close_items(y, tol):
     return y
 
 
+def sort_slopes(sds):
+    """Sort slopes from bottom to top then right to left"""
+    sds = np.array(sds)
+    scores = sds[:, 0, 0] + sds[:, 1, 0] * 1e6
+    inds = np.argsort(scores)
+    return sds[inds]
+
+
 class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
     x_act = None
     y_flat = None
@@ -148,7 +156,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 yd[xs[0]] = []
             for j in range(len(xs) - 1):
                 x0 = xs[j]
-                x_next = xs[j]
+                x_next = xs[j+1]
                 if x_next not in yd:
                     yd[x_next] = []
                 x0_diff = x0 - x_curr
@@ -166,19 +174,6 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                         yd[x_next].append(y_next)
                     if y_curr < y_surf_at_xs[j] and y_next < y_surf_at_xs[j+1]:
                         sds.append([[x0, x_next], [y_curr, y_next]])
-
-            # x_diffs = xs - x_curr
-            #
-            # int_yy = np.array(int_yy)[1:]
-            # if len(int_yy) == 0:
-            #     continue
-            # ys_curr = int_yy[:, np.newaxis] + angles[:, np.newaxis] * x_diffs[np.newaxis, :]
-            # for j in range(len(xs)):
-            #     yd[xs[j]] += list(ys_curr[:, j])
-            # for j in range(len(xs) - 1):
-            #     for k in range(len(ys_curr)):
-            #         slope = [[xs[j], xs[j + 1]], [ys_curr[::-1][k][j], ys_curr[::-1][k][j + 1]]]
-            #         sds.append(slope)
 
         for x in yd:
             yd[x].append(-self.tds.height)
@@ -216,7 +211,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         x_act = list(self.yd)
         x_act.sort()
         self.xcs_sorted = np.array(x_act)
-        self.sds = sds
+        self.sds = sort_slopes(sds)
 
     def set_init_y_blocks(self):
         """For each significant vertical line, assign initial number of elements between each special y-coordinate"""
@@ -306,7 +301,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                     nn = 0
                     while sgn * approx_grid_slope > allowable_slope:
                         nn += 1
-                        # if no issues the adjust blocks
+                        # if no issues then adjust blocks
                         self.y_blocks[x1_c][ind_y1 - 1] += sgn * 1
                         nb1 += sgn * 1
                         diff_nb = nb1 - nb0

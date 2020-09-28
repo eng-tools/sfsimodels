@@ -25,7 +25,7 @@ sp.add_layer(3.5, sl2)
 sp.add_layer(5.7, sl3)
 sp2 = sm.SoilProfile()
 sp2.add_layer(0, sl4)
-sp2.add_layer(3.7, sl5)
+sp2.add_layer(3.9, sl5)
 sp2.add_layer(6.5, sl0)
 sp2.height = 20
 sp.x_angles = [0.2, 0.07, 0.0]
@@ -80,11 +80,38 @@ if show:
     for i in range(len(xcs)):
         win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
 
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+    o3plot.show()
 
 ##%
 fc.set_init_y_blocks()
+show = 0
+if show:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('ECP definition')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    o3plot.plot_two_d_system(win, tds)
+    y_node_nums_at_xcs = [list(np.cumsum(fc.y_blocks[xcs])) for xcs in fc.y_blocks]
+
+    for i in range(len(xcs)):
+        xc = xcs[i]
+        h_blocks = np.diff(fc.yd[xc])
+        dhs = h_blocks / fc.y_blocks[xc]
+        y_node_steps = [0]
+        for hh in range(len(fc.y_blocks[xc])):
+            y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
+        y_node_coords = np.cumsum(y_node_steps) - tds.height
+        xn = xc * np.ones_like(list(fc.yd[xc]))
+        win.plot(xn, list(fc.yd[xc]), symbol='o', pen='r')
+        xn = xc * np.ones_like(y_node_coords)
+        win.plot(xn, y_node_coords, symbol='+')
+        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+
+    o3plot.show()
+
+##%
+fc.adjust_blocks_to_be_consistent_with_slopes()
 show = 1
 if show:
     win = pg.plot()
