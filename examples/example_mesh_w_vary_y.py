@@ -48,11 +48,16 @@ tds.add_bd(bd, x=20)
 
 x_scale_pos = np.array([0, 5, 15, 30])
 x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
+
+show_set_init_y_blocks = 0
+show_ecp_definition = 0
+show_get_special_coords_and_slopes = 0
+show_adjust_blocks_to_be_consistent_with_slopes = 1
 ##%
 fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)
-show = 0
-if show:
+
+if show_ecp_definition:
     win = pg.plot()
     win.setMinimumSize(900, 300)
     win.setWindowTitle('ECP definition')
@@ -63,17 +68,14 @@ if show:
 
 ##%
 fc.get_special_coords_and_slopes()  # Step 1
-xcs = list(fc.yd)
-xcs.sort()
-xcs = np.array(xcs)
-show = 1
-if show:
+if show_get_special_coords_and_slopes:
     win = pg.plot()
     win.setMinimumSize(900, 300)
     win.setWindowTitle('get_special_coords_and_slopes')
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
     y_sps_surf = np.interp(tds.x_sps, tds.x_surf, tds.y_surf)
+
     for i in range(len(tds.sps)):
         x0 = tds.x_sps[i]
         if i == len(tds.sps) - 1:
@@ -89,6 +91,7 @@ if show:
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    xcs = fc.xcs_sorted
     for i in range(len(xcs)):
         xc = xcs[i]
         xn = xc * np.ones_like(list(fc.yd[xc]))
@@ -98,8 +101,7 @@ if show:
 
 ##%
 fc.set_init_y_blocks()
-show = 1
-if show:
+if show_set_init_y_blocks:
     win = pg.plot()
     win.setMinimumSize(900, 300)
     win.setWindowTitle('set_init_y_blocks')
@@ -108,7 +110,7 @@ if show:
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
-
+    xcs = fc.xcs_sorted
     for i in range(len(xcs)):
         xc = xcs[i]
         h_blocks = np.diff(fc.yd[xc])
@@ -127,8 +129,7 @@ if show:
 
 ##%
 fc.adjust_blocks_to_be_consistent_with_slopes()  # TODO: This is failing
-show = 1
-if show:
+if show_adjust_blocks_to_be_consistent_with_slopes:
     win = pg.plot()
     win.setMinimumSize(900, 300)
     win.setWindowTitle('adjust_blocks_to_be_consistent_with_slopes')
@@ -137,7 +138,7 @@ if show:
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
-
+    xcs = fc.xcs_sorted
     for i in range(len(xcs)):
         xc = xcs[i]
         h_blocks = np.diff(fc.yd[xc])
@@ -148,6 +149,11 @@ if show:
         y_node_coords = np.cumsum(y_node_steps) - tds.height
         xn = xc * np.ones_like(list(fc.yd[xc]))
         win.plot(xn, list(fc.yd[xc]), symbol='o', pen='r')
+        nbs = np.cumsum(fc.y_blocks[xc])
+        for cc in range(len(fc.y_blocks[xc])):
+            text = pg.TextItem(f'{nbs[cc]}', anchor=(0, 1))
+            win.addItem(text)
+            text.setPos(xc, fc.yd[xc][cc+1])
         xn = xc * np.ones_like(y_node_coords)
         win.plot(xn, y_node_coords, symbol='+')
         win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
@@ -155,16 +161,17 @@ if show:
     o3plot.show()
 ##%
 fc.trim_grid_to_target_dh()
-show = 1
-if show:
+show_trim_grid_to_target_dh = 1
+if show_trim_grid_to_target_dh:
     win = pg.plot()
     win.setMinimumSize(900, 300)
     win.setWindowTitle('trim_grid_to_target_dh')
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
-    o3plot.plot_two_d_system(win, tds)
-    y_node_nums_at_xcs = [list(np.cumsum(fc.y_blocks[xcs])) for xcs in fc.y_blocks]
-
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    xcs = fc.xcs_sorted
     for i in range(len(xcs)):
         xc = xcs[i]
         h_blocks = np.diff(fc.yd[xc])
@@ -175,6 +182,11 @@ if show:
         y_node_coords = np.cumsum(y_node_steps) - tds.height
         xn = xc * np.ones_like(list(fc.yd[xc]))
         win.plot(xn, list(fc.yd[xc]), symbol='o', pen='r')
+        nbs = np.cumsum(fc.y_blocks[xc])
+        for cc in range(len(fc.y_blocks[xc])):
+            text = pg.TextItem(f'{nbs[cc]}', anchor=(0, 1))
+            win.addItem(text)
+            text.setPos(xc, fc.yd[xc][cc + 1])
         xn = xc * np.ones_like(y_node_coords)
         win.plot(xn, y_node_coords, symbol='+')
         win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
@@ -191,7 +203,7 @@ if show:
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
     o3plot.plot_two_d_system(win, tds)
-
+    xcs = fc.xcs_sorted
     for i in range(len(xcs)):
         xc = xcs[i]
         h_blocks = np.diff(fc.yd[xc])
@@ -218,6 +230,7 @@ if show:
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    xcs = fc.xcs_sorted
     for i in range(len(xcs)):
         xc = xcs[i]
         h_blocks = np.diff(fc.yd[xc])

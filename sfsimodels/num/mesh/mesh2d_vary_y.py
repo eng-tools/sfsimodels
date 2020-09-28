@@ -129,6 +129,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             if x_right not in yd:
                 yd[x_right] = []
             yd[x_right] += [y_surf, -bd.fd.depth + y_surf]
+            sds.append([[x_left, x_right], [y_surf, y_surf]])
             sds.append([[x_left, x_right], [-bd.fd.depth + y_surf, -bd.fd.depth + y_surf]])
 
         for i in range(len(self.tds.sps)):
@@ -297,12 +298,28 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 if abs(slope) < allowable_slope and nb0 == nb1:
                     continue
                 diff_nb = nb1 - nb0
+                y1_below = yd_list[ind_x1][ind_y1 - 1]
+                if y1_c == self.y_surf_at_xcs[x1_c]:  # surface
+                    y1_above = None
+                else:
+                    y1_above = yd_list[ind_x1][ind_y1 + 1]
 
                 while sgn != np.sign(diff_nb) and diff_nb != 0:
-                    self.y_blocks[x1_c][ind_y1 - 1] += np.sign(diff_nb) * -1
+
+                    nb_below = self.y_blocks[x1_c][ind_y1 - 1]
+                    print(np.sign(diff_nb), nb_below)
+                    new_dh_below = (y1_c - y1_below) / (nb_below + np.sign(diff_nb) * -1)
+                    if not (min_dh < new_dh_below < max_dh):
+                        break
+
                     nb1 += np.sign(diff_nb) * -1
                     if y1_c != self.y_surf_at_xcs[x1_c]:
+                        nb_above = self.y_blocks[x1_c][ind_y1]
+                        new_dh_above = (y1_above - y1_c) / (nb_above + np.sign(diff_nb) * 1)
+                        if not (min_dh < new_dh_above < max_dh):
+                            break
                         self.y_blocks[x1_c][ind_y1] += np.sign(diff_nb) * 1
+                    self.y_blocks[x1_c][ind_y1 - 1] += np.sign(diff_nb) * -1
                     diff_nb = nb1 - nb0
                 approx_grid_slope = (dh_dzone - diff_nb * self.dy_target) / (x1 - x0)
                 if sgn != np.sign(approx_grid_slope):
@@ -323,11 +340,6 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 diff_nb = nb1 - nb0
                 if diff_nb:  # if zero then slope matches the line
                     # else check if an adjustment is possible
-                    y1_below = yd_list[ind_x1][ind_y1 - 1]
-                    if y1_c == self.y_surf_at_xcs[x1_c]:  # surface
-                        y1_above = None
-                    else:
-                        y1_above = yd_list[ind_x1][ind_y1 + 1]
                     for nn in range(diff_nb):
                         diff_nb = nb1 - nb0
                         if diff_nb == 0:
@@ -357,7 +369,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                             new_dh_above = (y1_above - y1_c) / (nb_above + nb_sgn * 1)
                             if not (min_dh < new_dh_above < max_dh):
                                 break
-                        # if no issues the adjust blocks
+                        # if no issues then adjust blocks
                         if use_2_below:
                             self.y_blocks[x1_c][ind_y1 - 2] += nb_sgn * -1
                         else:
