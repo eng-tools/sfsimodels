@@ -26,7 +26,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
     x_index_to_sp_index = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True):
         """
         Builds a finite element mesh of a two-dimension system
 
@@ -71,20 +71,21 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 if sl.unique_hash not in self._soil_hashes:
                     self._soil_hashes.append(sl.unique_hash)
                     self._soils.append(sl)
-        self.get_special_coords_and_slopes()
-        self.set_x_nodes()
-        self.set_init_y_blocks()
-        self.adjust_blocks_to_be_consistent_with_slopes()
-        self.trim_grid_to_target_dh()
-        self.build_req_y_node_positions()
-        self.build_y_coords_at_xcs()
-        self.build_y_coords_grid()
-        if self.dp is not None:
-            self.set_to_decimal_places()
-        self.set_soil_ids_to_grid()
-        self.create_mesh()
-        if not fd_eles:
-            self.exclude_fd_eles()
+        if auto_run:
+            self.get_special_coords_and_slopes()  # Step 1
+            self.set_init_y_blocks()
+            self.adjust_blocks_to_be_consistent_with_slopes()
+            self.trim_grid_to_target_dh()
+            self.build_req_y_node_positions()
+            self.build_y_coords_at_xcs()
+            self.set_x_nodes()
+            self.build_y_coords_grid()
+            if self.dp is not None:
+                self.set_to_decimal_places()
+            self.set_soil_ids_to_grid()
+            self.create_mesh()
+            if not fd_eles:
+                self.exclude_fd_eles()
 
     def get_special_coords_and_slopes(self):
         """Find the coordinates, layer boundaries and surface slopes that should be maintained in the FE mesh"""
@@ -229,7 +230,6 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                     # index of the zone with thickest average element, where new element will be added
                     ind_max = np.argmax(dh_options)
                     y_blocks[xc0][ind_max] += 1
-        n_blocks = [sum(y_blocks[xcs]) for xcs in y_blocks]
         self.y_blocks = y_blocks
 
     def adjust_blocks_to_be_consistent_with_slopes(self):
@@ -253,10 +253,10 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 x1 = sd[0][1]
                 y0 = sd[1][0]
                 y1 = sd[1][1]
-                ind_x0 = np.argmin(abs(xcs - x0))
-                ind_x1 = np.argmin(abs(xcs - x1))
-                ind_y0 = np.argmin(abs(np.array(yd_list[ind_x0]) - y0))
-                ind_y1 = np.argmin(abs(np.array(yd_list[ind_x1]) - y1))
+                ind_x0 = int(np.argmin(abs(xcs - x0)))
+                ind_x1 = int(np.argmin(abs(xcs - x1)))
+                ind_y0 = int(np.argmin(abs(np.array(yd_list[ind_x0]) - y0)))
+                ind_y1 = int(np.argmin(abs(np.array(yd_list[ind_x1]) - y1)))
                 x1_c = xcs[ind_x1]
                 y1_c = yd_list[ind_x1][ind_y1]
                 nb0 = csum_y_blocks[ind_x0][ind_y0 - 1]
@@ -292,8 +292,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                         if nn > 10:
                             raise ValueError
                 diff_nb = nb1 - nb0
-                if diff_nb:  # if equal then slope matches the line
-                    # check if an adjustment is possible
+                if diff_nb:  # if zero then slope matches the line
+                    # else check if an adjustment is possible
                     y1_below = yd_list[ind_x1][ind_y1 - 1]
                     if y1_c == self.y_surf_at_xcs[x1_c]:  # surface
                         y1_above = None
@@ -426,10 +426,10 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             x1 = sd[0][1]
             y0 = sd[1][0]
             y1 = sd[1][1]
-            ind_x0 = np.argmin(abs(xcs - x0))
-            ind_x1 = np.argmin(abs(xcs - x1))
-            ind_y0 = np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x0]) - y0))
-            ind_y1 = np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x1]) - y1))
+            ind_x0 = int(np.argmin(abs(xcs - x0)))
+            ind_x1 = int(np.argmin(abs(xcs - x1)))
+            ind_y0 = int(np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x0]) - y0)))
+            ind_y1 = int(np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x1]) - y1)))
             y0_c = req_y_coords_at_xcs[ind_x0][ind_y0]
             nb0 = y_node_nums_at_xcs[ind_x0][ind_y0]
             nb1 = y_node_nums_at_xcs[ind_x1][ind_y1]
