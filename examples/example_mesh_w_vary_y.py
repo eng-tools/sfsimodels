@@ -21,14 +21,14 @@ sl5 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.36)
 sp = sm.SoilProfile()
 h_face = 1.8
 sp.add_layer(0, sl1)
-sp.add_layer(3.5, sl2)
+sp.add_layer(3.4, sl2)
 sp.add_layer(5.7, sl3)
 sp2 = sm.SoilProfile()
 sp2.add_layer(0, sl4)
 sp2.add_layer(3.9, sl5)
 sp2.add_layer(6.5, sl0)
 sp2.height = 20
-sp.x_angles = [0.2, 0.07, 0.0]
+sp.x_angles = [0.17, 0.07, 0.0]
 sp2.x_angles = [0.0, 0.00, 0.0]
 
 fd = sm.RaftFoundation()
@@ -52,7 +52,7 @@ x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
 show_set_init_y_blocks = 0
 show_ecp_definition = 0
 show_get_special_coords_and_slopes = 0
-show_adjust_blocks_to_be_consistent_with_slopes = 0
+show_adjust_blocks_to_be_consistent_with_slopes = 1
 ##%
 fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)

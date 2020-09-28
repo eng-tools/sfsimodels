@@ -62,6 +62,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         """
         self.min_scale = 0.5
         self.max_scale = 2.0
+        self.allowable_slope = 0.25
         assert isinstance(tds, TwoDSystem)
         self.tds = tds
         self.dy_target = dy_target
@@ -275,14 +276,23 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         # Step 3: For each defined slope, check that the grid is consistent with the slope
         #  - cycle through moving left to right and bot to top
         #  - if not consistent then change thickness of elements in zones above and below on right side.
+        mdirs = [1, -1]
+        dd = 0
+        mdir = mdirs[dd]
         for pp in range(5):
-            sds = self.sds
+            sds = self.sds[::mdir]
             for sd in sds:
                 csum_y_blocks = [np.cumsum(self.y_blocks[xcs]) for xcs in self.y_blocks]
-                x0 = sd[0][0]
-                x1 = sd[0][1]
-                y0 = sd[1][0]
-                y1 = sd[1][1]
+                if mdir == 1:
+                    x0 = sd[0][0]
+                    x1 = sd[0][1]
+                    y0 = sd[1][0]
+                    y1 = sd[1][1]
+                else:
+                    x0 = sd[0][1]
+                    x1 = sd[0][0]
+                    y0 = sd[1][1]
+                    y1 = sd[1][0]
                 ind_x0 = int(np.argmin(abs(xcs - x0)))
                 ind_x1 = int(np.argmin(abs(xcs - x1)))
                 ind_y0 = int(np.argmin(abs(np.array(yd_list[ind_x0]) - y0)))
@@ -292,10 +302,10 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 nb0 = csum_y_blocks[ind_x0][ind_y0 - 1]
                 nb1 = csum_y_blocks[ind_x1][ind_y1 - 1]
                 sgn = int(np.sign(y1 - y0))
-                allowable_slope = 0.2
+
                 dh_dzone = y1 - y0
                 slope = dh_dzone / (x1 - x0)
-                if abs(slope) < allowable_slope and nb0 == nb1:
+                if abs(slope) < self.allowable_slope and nb0 == nb1:
                     continue
                 diff_nb = nb1 - nb0
                 y1_below = yd_list[ind_x1][ind_y1 - 1]
@@ -327,9 +337,9 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 approx_grid_slope = (dh_dzone - diff_nb * self.dy_target) / (x1 - x0)
                 if sgn != np.sign(approx_grid_slope):
                     pass  # this can be an issue if it cannot be adjusted
-                if sgn * approx_grid_slope > allowable_slope:
+                if sgn * approx_grid_slope > self.allowable_slope:
                     nn = 0
-                    while sgn * approx_grid_slope > allowable_slope:
+                    while sgn * approx_grid_slope > self.allowable_slope:
                         nn += 1
                         # if no issues then adjust blocks
                         self.y_blocks[x1_c][ind_y1 - 1] += sgn * 1
@@ -349,7 +359,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                             break
                         nb_sgn = np.sign(diff_nb)
                         approx_new_slope = (dh_dzone - (diff_nb - nb_sgn * (nn + 1)) * self.dy_target) / (x1 - x0)
-                        if sgn * approx_new_slope > allowable_slope:
+                        if sgn * approx_new_slope > self.allowable_slope:
                             break
                         nb_below = self.y_blocks[x1_c][ind_y1 - 1]
                         new_nb_below = nb_below + nb_sgn * -1
