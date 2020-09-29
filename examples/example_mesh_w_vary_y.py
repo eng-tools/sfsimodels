@@ -12,7 +12,6 @@ vs = 150.0
 rho = 1.8
 g_mod = vs ** 2 * rho
 
-# sl0 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.31)
 sl1 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.32)
 sl2 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.33)
 sl3 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.34)
@@ -65,22 +64,14 @@ fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_s
                                                        x_scale_vals=x_scale_vals, auto_run=False)
 
 if show_ecp_definition:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('ECP definition')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='ECP definition')
     o3plot.plot_two_d_system(win, tds)
     o3plot.show()
 
 ##%
 fc.get_special_coords_and_slopes()  # Step 1
 if show_get_special_coords_and_slopes:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('get_special_coords_and_slopes')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='get_special_coords_and_slopes')
     y_sps_surf = np.interp(tds.x_sps, tds.x_surf, tds.y_surf)
 
     for i in range(len(tds.sps)):
@@ -109,11 +100,7 @@ if show_get_special_coords_and_slopes:
 ##%
 fc.set_init_y_blocks()
 if show_set_init_y_blocks:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('set_init_y_blocks')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='set_init_y_blocks')
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
@@ -135,13 +122,9 @@ if show_set_init_y_blocks:
     o3plot.show()
 
 ##%
-fc.adjust_blocks_to_be_consistent_with_slopes()  # TODO: Add back add
+fc.adjust_blocks_to_be_consistent_with_slopes()
 if show_adjust_blocks_to_be_consistent_with_slopes:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('adjust_blocks_to_be_consistent_with_slopes')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='adjust_blocks_to_be_consistent_with_slopes')
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
@@ -169,11 +152,7 @@ if show_adjust_blocks_to_be_consistent_with_slopes:
 ##%
 fc.trim_grid_to_target_dh()
 if show_trim_grid_to_target_dh:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('trim_grid_to_target_dh')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='trim_grid_to_target_dh')
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
@@ -202,11 +181,7 @@ if show_trim_grid_to_target_dh:
 ##%
 fc.build_req_y_node_positions()
 if show_build_req_y_node_positions:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('build_req_y_node_positions')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='build_req_y_node_positions')
     o3plot.plot_two_d_system(win, tds)
     xcs = fc.xcs_sorted
     for i in range(len(xcs)):
@@ -228,11 +203,7 @@ if show_build_req_y_node_positions:
 fc.build_y_coords_at_xcs()
 show_build_y_coords_grid_via_propagation = 0
 if show_build_y_coords_grid_via_propagation:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('build_y_coords_at_xcs')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='build_y_coords_at_xcs')
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
@@ -257,11 +228,7 @@ if show_build_y_coords_grid_via_propagation:
 ##%
 fc.set_x_nodes()
 if show_set_x_nodes:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('set_x_nodes')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='set_x_nodes')
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
@@ -276,11 +243,7 @@ if show_set_x_nodes:
 ##%
 fc.build_y_coords_grid_via_propagation()
 if show_build_y_coords_grid_via_propagation:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('build_y_coords_grid_via_propagation')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='build_y_coords_grid_via_propagation')
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
@@ -295,11 +258,7 @@ if show_build_y_coords_grid_via_propagation:
 
 ##%
 if show_set_to_decimal_places:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('set_to_decimal_places')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
+    win = o3plot.create_scaled_window_for_tds(tds, title='set_to_decimal_places')
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
@@ -326,16 +285,7 @@ if show_set_to_decimal_places:
 fc.set_soil_ids_to_grid()
 fc.create_mesh()
 if show_set_soil_ids_to_grid:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('ECP definition')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
-    for i in range(len(fc.sds)):
-        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
-    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
-    # for i in range(len(fc.x_nodes)):
-    #     win.addItem(pg.InfiniteLine(fc.x_nodes[i], angle=90, pen='r'))
+    win = o3plot.create_scaled_window_for_tds(tds, title='set_soil_ids_to_grid')
     o3plot.plot_finite_element_mesh_onto_win(win, fc.femesh)
     o3plot.show()
 

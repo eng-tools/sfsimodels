@@ -279,7 +279,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         # Step 3: For each defined slope, check that the grid is consistent with the slope
         #  - cycle through moving left to right and bot to top
         #  - if not consistent then change thickness of elements in zones above and below on right side.
-        mdirs = [1, -1]
+        mdirs = [1, -1]  # TODO: alternative between forward and reverse add
         dd = 0
         mdir = mdirs[dd]
         for pp in range(5):
