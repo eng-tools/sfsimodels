@@ -12,7 +12,7 @@ vs = 150.0
 rho = 1.8
 g_mod = vs ** 2 * rho
 
-sl0 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.31)
+# sl0 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.31)
 sl1 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.32)
 sl2 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.33)
 sl3 = sm.Soil(g_mod=g_mod, unit_dry_weight=rho * 9.8, poissons_ratio=0.34)
@@ -25,8 +25,8 @@ sp.add_layer(3.4, sl2)
 sp.add_layer(5.7, sl3)
 sp2 = sm.SoilProfile()
 sp2.add_layer(0, sl4)
-sp2.add_layer(3.9, sl5)
-sp2.add_layer(6.5, sl0)
+sp2.add_layer(3.9, sl2)
+sp2.add_layer(6.5, sl5)
 sp2.height = 20
 sp.x_angles = [0.17, 0.07, 0.0]
 sp2.x_angles = [0.0, 0.00, 0.0]
@@ -37,17 +37,17 @@ fd.depth = 0.6
 fd.ip_axis = 'width'
 fd.height = 0.7
 fd.length = 100
-tds = sm.TwoDSystem(width=30, height=7.5)
+tds = sm.TwoDSystem(width=33, height=7.5)
 tds.add_sp(sp, x=0)
 tds.add_sp(sp2, x=17)
 tds.x_surf = np.array([0, 12, 14, tds.width])
 tds.y_surf = np.array([0, 0, h_face, h_face])
 bd = sm.NullBuilding()
 bd.set_foundation(fd, x=0.0)
-tds.add_bd(bd, x=20)
+tds.add_bd(bd, x=22)
 
-x_scale_pos = np.array([0, 5, 15, 30])
-x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
+x_scale_pos = np.array([0, 5, 10, 16, 19, 25, 29])
+x_scale_vals = np.array([2., 1.2, 1.0, 1.2, 0.7, 1.2, 2])
 
 show_set_init_y_blocks = 0
 show_ecp_definition = 0
@@ -55,6 +55,11 @@ show_get_special_coords_and_slopes = 0
 show_adjust_blocks_to_be_consistent_with_slopes = 0
 show_trim_grid_to_target_dh = 0
 show_build_req_y_node_positions = 0
+show_set_x_nodes = 0
+show_build_y_coords_grid_via_propagation = 0
+show_set_to_decimal_places = 0
+show_set_soil_ids_to_grid = 0
+show_exclude_fd_eles = 1
 ##%
 fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)
@@ -251,7 +256,6 @@ if show_build_y_coords_grid_via_propagation:
 
 ##%
 fc.set_x_nodes()
-show_set_x_nodes = 0
 if show_set_x_nodes:
     win = pg.plot()
     win.setMinimumSize(900, 300)
@@ -271,7 +275,6 @@ if show_set_x_nodes:
 
 ##%
 fc.build_y_coords_grid_via_propagation()
-show_build_y_coords_grid_via_propagation = 1
 if show_build_y_coords_grid_via_propagation:
     win = pg.plot()
     win.setMinimumSize(900, 300)
@@ -291,7 +294,6 @@ if show_build_y_coords_grid_via_propagation:
     o3plot.show()
 
 ##%
-show_set_to_decimal_places = 1
 if show_set_to_decimal_places:
     win = pg.plot()
     win.setMinimumSize(900, 300)
@@ -323,8 +325,7 @@ if show_set_to_decimal_places:
 ##%
 fc.set_soil_ids_to_grid()
 fc.create_mesh()
-show = 0
-if show:
+if show_set_soil_ids_to_grid:
     win = pg.plot()
     win.setMinimumSize(900, 300)
     win.setWindowTitle('ECP definition')
@@ -340,17 +341,7 @@ if show:
 
 ##%
 fc.exclude_fd_eles()
-show = 0
-if show:
-    win = pg.plot()
-    win.setMinimumSize(900, 300)
-    win.setWindowTitle('ECP definition')
-    win.setXRange(0, tds.width)
-    win.setYRange(-tds.height, max(tds.y_surf))
-    for i in range(len(fc.sds)):
-        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
-    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
-    # for i in range(len(fc.x_nodes)):
-    #     win.addItem(pg.InfiniteLine(fc.x_nodes[i], angle=90, pen='r'))
+if show_exclude_fd_eles:
+    win = o3plot.create_scaled_window_for_tds(tds, title='exclude_fd_eles')
     o3plot.plot_finite_element_mesh_onto_win(win, fc.femesh)
     o3plot.show()
