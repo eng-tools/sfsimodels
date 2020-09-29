@@ -1,7 +1,7 @@
 import numpy as np
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models.systems import TwoDSystem
-from sfsimodels.functions import interp_left, interp2d
+from sfsimodels.functions import interp_left, interp2d, interp3d
 
 
 def remove_close_items(y, tol):
@@ -41,7 +41,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
     x_index_to_sp_index = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True, use_3d_interp=False):
         """
         Builds a finite element mesh of a two-dimension system
 
@@ -93,9 +93,12 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             self.adjust_blocks_to_be_consistent_with_slopes()
             self.trim_grid_to_target_dh()
             self.build_req_y_node_positions()
-            self.build_y_coords_at_xcs()
             self.set_x_nodes()
-            self.build_y_coords_grid()
+
+            if use_3d_interp:
+                self.build_y_coords_grid_via_3d_interp()
+            else:
+                self.build_y_coords_grid_via_propagation()
             if self.dp is not None:
                 self.set_to_decimal_places()
             self.set_soil_ids_to_grid()
@@ -561,6 +564,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         for i, xc0 in enumerate(xcs):
             req_y_nodes.append(list(np.array(y_node_nums_at_xcs[i]) + 1))
             req_y_nodes[i][0] = 0
+            req_y_nodes[i] = np.array(req_y_nodes[i])
+            req_y_coords_at_xcs[i] = np.array(req_y_coords_at_xcs[i])
         self.req_y_nodes = req_y_nodes
         self.req_y_coords_at_xcs = req_y_coords_at_xcs
 
@@ -595,7 +600,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                         dh = dh_dzone_below + (dh_dzone_above - dh_dzone_below) / (req_n_above - req_n_below) * (j - req_n_below)
                         new_y_vals.append(y_nodes[i-1][j] + dh)
                 else:
-                    ind = req_y_nodes[i].index(j)
+                    ind = np.where(req_y_nodes[i] == j)[0][0]
                     new_y_vals.append(y_coords_at_xcs[i][ind])
             y_nodes.append(new_y_vals)
         y_nodes = np.array(y_nodes)
@@ -622,9 +627,23 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
 
         self.y_coords_at_xcs = y_nodes[:, ::-1]  # invert y-values
 
-    def build_y_coords_grid(self):
-        """Interpolates the position of all nodes based on the coordinates of the significant lines"""
+    def build_y_coords_grid_via_propagation(self):
+        """Interpolates the position of all nodes based on the y-coordinates along the significant lines"""
+        if self.y_coords_at_xcs is None:
+            self.build_y_coords_at_xcs()
+        if self.x_nodes is None:
+            self.set_x_nodes()
         self.y_nodes = interp2d(self.x_nodes, np.array(self.xcs_sorted), self.y_coords_at_xcs)
+
+    def build_y_coords_grid_via_3d_interp(self):
+        """Interpolates the position of all nodes based on the coordinates of the significant positions"""
+        if self.x_nodes is None:
+            self.set_x_nodes()
+        y_node_nums = np.arange(0, self.req_y_nodes[0][-1] + 1)
+        ys = []
+        for i in range(len(self.x_nodes)):
+            ys.append(interp3d(self.x_nodes[i], y_node_nums, self.xcs_sorted, self.req_y_nodes, self.req_y_coords_at_xcs))
+        self.y_nodes = np.array(ys)
 
     def set_x_nodes(self):
         """Determine optimal position of node x-coordinates"""

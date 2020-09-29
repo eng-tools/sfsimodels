@@ -52,7 +52,9 @@ x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
 show_set_init_y_blocks = 0
 show_ecp_definition = 0
 show_get_special_coords_and_slopes = 0
-show_adjust_blocks_to_be_consistent_with_slopes = 1
+show_adjust_blocks_to_be_consistent_with_slopes = 0
+show_trim_grid_to_target_dh = 0
+show_build_req_y_node_positions = 0
 ##%
 fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)
@@ -161,7 +163,6 @@ if show_adjust_blocks_to_be_consistent_with_slopes:
     o3plot.show()
 ##%
 fc.trim_grid_to_target_dh()
-show_trim_grid_to_target_dh = 1
 if show_trim_grid_to_target_dh:
     win = pg.plot()
     win.setMinimumSize(900, 300)
@@ -195,8 +196,7 @@ if show_trim_grid_to_target_dh:
 
 ##%
 fc.build_req_y_node_positions()
-show = 1
-if show:
+if show_build_req_y_node_positions:
     win = pg.plot()
     win.setMinimumSize(900, 300)
     win.setWindowTitle('build_req_y_node_positions')
@@ -218,13 +218,14 @@ if show:
         win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
 
     o3plot.show()
+
 ##%
 fc.build_y_coords_at_xcs()
-show = 0
-if show:
+show_build_y_coords_grid_via_propagation = 0
+if show_build_y_coords_grid_via_propagation:
     win = pg.plot()
     win.setMinimumSize(900, 300)
-    win.setWindowTitle('ECP definition')
+    win.setWindowTitle('build_y_coords_at_xcs')
     win.setXRange(0, tds.width)
     win.setYRange(-tds.height, max(tds.y_surf))
     for i in range(len(fc.sds)):
@@ -250,6 +251,78 @@ if show:
 
 ##%
 fc.set_x_nodes()
+show_set_x_nodes = 0
+if show_set_x_nodes:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('set_x_nodes')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    for i in range(len(fc.x_nodes)):
+        win.addItem(pg.InfiniteLine(fc.x_nodes[i], angle=90, pen='r'))
+    for i in range(len(fc.xcs_sorted)):
+        win.addItem(pg.InfiniteLine(fc.xcs_sorted[i], angle=90, pen=(0, 255, 0, 100)))
+
+    o3plot.show()
+
+
+##%
+fc.build_y_coords_grid_via_propagation()
+show_build_y_coords_grid_via_propagation = 1
+if show_build_y_coords_grid_via_propagation:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('build_y_coords_grid_via_propagation')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    xns = fc.x_nodes
+    for i in range(len(xns)):
+        xc = xns[i]
+        xn = xc * np.ones_like(fc.y_nodes[i])
+        win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen='r', symbolBrush='r', symbolSize=3)
+    for i in range(len(fc.xcs_sorted)):
+        win.addItem(pg.InfiniteLine(fc.xcs_sorted[i], angle=90, pen=(0, 255, 0, 100)))
+    o3plot.show()
+
+##%
+show_set_to_decimal_places = 1
+if show_set_to_decimal_places:
+    win = pg.plot()
+    win.setMinimumSize(900, 300)
+    win.setWindowTitle('set_to_decimal_places')
+    win.setXRange(0, tds.width)
+    win.setYRange(-tds.height, max(tds.y_surf))
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    xns = fc.x_nodes
+    for i in range(len(xns)):
+        xc = xns[i]
+        xn = xc * np.ones_like(fc.y_nodes[i])
+        win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen=0.5, symbolBrush=0.5, symbolSize=3)
+    for i in range(len(fc.xcs_sorted)):
+        win.addItem(pg.InfiniteLine(fc.xcs_sorted[i], angle=90, pen=(0, 255, 0, 100)))
+fc.dp = 2
+fc.set_to_decimal_places()
+if show_set_to_decimal_places:
+    xns = fc.x_nodes
+    for i in range(len(xns)):
+        xc = xns[i]
+        xn = xc * np.ones_like(fc.y_nodes[i])
+        win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen='r', symbolBrush='r', symbolSize=3)
+    for i in range(len(fc.xcs_sorted)):
+        win.addItem(pg.InfiniteLine(fc.xcs_sorted[i], angle=90, pen=(0, 255, 0, 100)))
+    o3plot.show()
+
+##%
+fc.set_soil_ids_to_grid()
+fc.create_mesh()
 show = 0
 if show:
     win = pg.plot()
@@ -260,15 +333,14 @@ if show:
     for i in range(len(fc.sds)):
         win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
     win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
-    for i in range(len(fc.x_nodes)):
-        win.addItem(pg.InfiniteLine(fc.x_nodes[i], angle=90, pen='r'))
+    # for i in range(len(fc.x_nodes)):
+    #     win.addItem(pg.InfiniteLine(fc.x_nodes[i], angle=90, pen='r'))
+    o3plot.plot_finite_element_mesh_onto_win(win, fc.femesh)
     o3plot.show()
 
 ##%
-fc.build_y_coords_grid()
-fc.set_soil_ids_to_grid()
-fc.create_mesh()
-show = 1
+fc.exclude_fd_eles()
+show = 0
 if show:
     win = pg.plot()
     win.setMinimumSize(900, 300)

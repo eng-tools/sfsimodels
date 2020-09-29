@@ -210,13 +210,14 @@ def interp2d(x, xf, f):
     ----------
     x: array_like
         1d array of values to be interpolated
-    xf: 1d array of values
+    xf: array_like
+        1d array of values
     f: array_like
-        2d array of function values size=(len(x), n)
+        2d array of function values size=(len(xf), n)
 
     Returns
     -------
-
+    returns size=(len(x), n)
     Examples
     --------
     >>> f = np.array([[0, 0, 0],
@@ -250,3 +251,58 @@ def interp2d(x, xf, f):
     s0 = np.where(denom > 0, (x - a0) / denom_adj, 1)  # if denom less than 0, then out of bounds
     s1 = 1 - s0
     return s1[:, np.newaxis] * f0 + s0[:, np.newaxis] * f1
+
+
+def interp3d(x, y, xs, ys_at_xs, f):
+    """
+    Can interpolate a table to get an array of values in 2D
+
+    Parameters
+    ----------
+    x: array_like
+        1d array of values to be interpolated
+    y: array_like
+        1d array of values to be interpolated
+    xs: array_like
+        1d array of x-positions where points are known
+    ys_at_xs: list of array_like
+        list of 1d arrays of y-positions where points are known, len=len(x)
+    f: list of array_like
+        list of 1d arrays of function values size=(len(x), (len(ys_at_xs[j]))
+
+    Returns
+    -------
+    returns size=(len(x), len(y))
+    Examples
+    --------
+    """
+    x_ind0 = interp_left(x, xs)
+    x_ind1 = np.clip(x_ind0 + 1, None, len(xs) - 1)
+    y_ind_x0y0 = interp_left(y, ys_at_xs[x_ind0])
+    y_ind_x0y1 = np.clip(y_ind_x0y0 + 1, None, len(ys_at_xs[x_ind0]) - 1)
+    y_ind_x1y0 = interp_left(y, ys_at_xs[x_ind1])
+    y_ind_x1y1 = np.clip(y_ind_x1y0 + 1, None, len(ys_at_xs[x_ind1]) - 1)
+
+    x0 = xs[x_ind0]
+    x1 = xs[x_ind1]
+    y0_at_x0 = ys_at_xs[x_ind0][y_ind_x0y0]
+    y1_at_x0 = ys_at_xs[x_ind0][y_ind_x0y1]
+    y0_at_x1 = ys_at_xs[x_ind1][y_ind_x1y0]
+    y1_at_x1 = ys_at_xs[x_ind1][y_ind_x1y1]
+
+    fx0y0 = f[x_ind0][y_ind_x0y0]
+    fx0y1 = f[x_ind0][y_ind_x0y1]
+    fx1y0 = f[x_ind1][y_ind_x1y0]
+    f1y1 = f[x_ind1][y_ind_x1y1]
+    x_w = (x - x0) / ((x1 - x0) + 1e-16 * x1)
+    y_w_x0 = (y - y0_at_x0) / ((y1_at_x0 - y0_at_x0) + 1e-16 * y1_at_x0)
+    y_w_x1 = (y - y0_at_x1) / ((y1_at_x1 - y0_at_x1) + 1e-16 * y1_at_x1)
+    fvs = (fx0y0 * (1 - x_w) * (1 - y_w_x0)) + (fx0y1 * (1 - x_w) * y_w_x0) \
+           + (fx1y0 * x_w * (1 - y_w_x1)) + (f1y1 * x_w * y_w_x1)
+
+    return fvs
+
+#
+# if __name__ == '__main__':
+#     xs = np.array([0, 2])
+#     ys_at_xs = np.array([[0, 5, 10], [0, 2, 5, 8, 10]])
