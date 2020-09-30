@@ -647,8 +647,6 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
 
     def set_x_nodes(self):
         """Determine optimal position of node x-coordinates"""
-        print(self.x_scale_pos, self.x_scale_vals)
-        print(self.xcs_sorted)
         dxs = [0]
         x_start = 0
         x_scale_curr = self.x_scale_vals[0]
@@ -663,25 +661,16 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             x_scales = np.array(x_scales)
             x_cps.append(self.xcs_sorted[xx])
             zone_widths = np.diff(x_cps)
-            ne = zone_widths / (x_scales * self.dy_target)
             n_eles = np.sum(zone_widths / (x_scales * self.dy_target))
-            # x_init_incs = np.linspace(self.xcs_sorted[xx - 1], self.xcs_sorted[xx], 100)
-            # scale = interp_left(x_init_incs, self.x_scale_pos, self.x_scale_vals)
-            # av_scale = np.mean(scale)
-            # av_size = av_scale * self.dy_target
             n_x_eles = int(n_eles + 0.5)
-            # sf = x_shift / (av_size * n_x_eles)
             av_ele_width = x_shift / n_x_eles
             x_incs = []
             for n in range(n_x_eles):
                 x_ele = 0
                 for pp in range(10):
-                    w = interp_left(x_ele + x_start, self.x_scale_pos, self.x_scale_vals)
                     x_ele += interp_left(x_ele + x_start, self.x_scale_pos, self.x_scale_vals) * self.dy_target / 10
                 x_incs.append(x_ele)
                 x_start += x_ele
-            print(x_incs)
-            print('ss: ', x_shift / sum(x_incs), av_ele_width)
             x_incs = np.array(x_incs) * x_shift / sum(x_incs)
             dxs += list(x_incs)
             x_start = np.sum(dxs)
