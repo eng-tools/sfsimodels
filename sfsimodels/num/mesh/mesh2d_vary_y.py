@@ -32,7 +32,7 @@ def adjust_slope_points_for_removals(sds, x, removed_y, retained_y):
                 sd[1][i] = retained_y
 
 
-class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
+class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
     _soils = None
     x_index_to_sp_index = None
     _inactive_value = 1000000
@@ -73,6 +73,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         self.x_scale_vals = np.array(x_scale_vals)
         self.dp = dp
         self.xs = list(self.tds.x_sps)
+        self.smooth_surf = smooth_surf
 
         self.xs.append(tds.width)
         self.xs = np.array(self.xs)
@@ -100,7 +101,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         self.x_nodes = None
         self.y_nodes = None
         self.x_nodes2d = None
-        self.femesh = None
+        self._femesh = None
 
         if auto_run:
             self.get_special_coords_and_slopes()  # Step 1
@@ -718,6 +719,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 else:
                     x_rhs = min([x1 + 2 * (x1 - x0), self.xcs_sorted[i_curr + 1]])
                 xrhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
+                # TODO: need to deal with x_scale!!!
                 for yy in range(y0_ind, y1_ind + 1 * np.sign(y1_ind - y0_ind), np.sign(y1_ind - y0_ind)):
                     y_h = self.y_nodes[x0_ind][yy]
                     x_slope = np.interp(y_h, [y0, y1], [x0, x1])
@@ -811,9 +813,13 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
     def create_mesh(self):
         # if len(np.shape(self.x_nodes)) == 2:
         if self.x_nodes2d is not None:
-            self.femesh = FiniteElementVaryXY2DMesh(self.x_nodes2d, self.y_nodes, self.soil_grid, self.soils)
+            self._femesh = FiniteElementVaryXY2DMesh(self.x_nodes2d, self.y_nodes, self.soil_grid, self.soils)
         else:
-            self.femesh = FiniteElementVaryY2DMesh(self.x_nodes, self.y_nodes, self.soil_grid, self.soils)
+            self._femesh = FiniteElementVaryY2DMesh(self.x_nodes, self.y_nodes, self.soil_grid, self.soils)
+
+    @property
+    def femesh(self):
+        return self._femesh
 
     def exclude_fd_eles(self):
         for i, bd in enumerate(self.tds.bds):
@@ -963,19 +969,19 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
     def soils(self):
         return self._soils
 
-    def get_ele_indexes_at_depths(self, depths, x, low=None):
-        x_ind = self.get_ele_indexes_at_xs([x])[0]
-        return interp_left(-np.array(depths), -self._y_nodes[x_ind], low=low)
-
-    def get_ele_indexes_at_xs(self, xs, low=None):
-        return interp_left(xs, self.x_nodes, low=low)
-
-    def get_nearest_node_index_at_depth(self, depth, x):
-        x_ind = self.get_nearest_node_index_at_x(x)
-        return np.argmin(abs(self._y_nodes[x_ind] - depth))
-
-    def get_nearest_node_index_at_x(self, x):
-        return np.argmin(abs(self.x_nodes - x))
+    # def get_ele_indexes_at_depths(self, depths, x, low=None):
+    #     x_ind = self.get_ele_indexes_at_xs([x])[0]
+    #     return interp_left(-np.array(depths), -self._y_nodes[x_ind], low=low)
+    #
+    # def get_ele_indexes_at_xs(self, xs, y, low=None):
+    #     return interp_left(xs, self.x_nodes, low=low)
+    #
+    # def get_nearest_node_index_at_depth(self, depth, x):
+    #     x_ind = self.get_nearest_node_index_at_x(x)
+    #     return np.argmin(abs(self._y_nodes[x_ind] - depth))
+    #
+    # def get_nearest_node_index_at_x(self, x, y):
+    #     return np.argmin(abs(self.x_nodes - x))
 
     def build_node_coords_mesh(self):
         self.node_coords_mesh = np.array([self.x_nodes, self.y_nodes]).transpose(1, 2, 0)
@@ -991,13 +997,17 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         coords = np.array(coords)
         if self.node_coords_mesh is None:
             self.build_node_coords_mesh()
-        return np.argsort(np.array([np.linalg.norm(coords - x) for x in self.node_coords_mesh]))[:n]
+        norms = np.linalg.norm(coords - self.node_coords_mesh, axis=2)
+        arr_s = np.shape(self.node_coords_mesh)[:-1]
+        return np.dstack(np.unravel_index(np.argsort(norms.ravel())[:n], arr_s))[0]
 
     def get_nearest_eles_indexes(self, coords, n=1):
         coords = np.array(coords)
         if self.ele_coords_mesh is None:
             self.build_ele_coords_mesh()
-        return np.argsort(np.array([np.linalg.norm(coords - x) for x in self.ele_coords_mesh]))[:n]
+        norms = np.linalg.norm(coords - self.ele_coords_mesh, axis=2)
+        arr_s = np.shape(self.ele_coords_mesh)[:-1]
+        return np.dstack(np.unravel_index(np.argsort(norms.ravel())[:n], arr_s))[0]
 
 
 
@@ -1056,6 +1066,22 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
             models_dict["soil"] = {}
 
 
+def construct_femesh_vary_xy(tds, dy_target, x_scale_pos=None, x_scale_vals=None):
+    fc = FiniteElementVary2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
+                                            smooth_surf=True)
+    femesh = fc.femesh
+    assert isinstance(femesh, FiniteElementVaryXY2DMesh)
+    return femesh
+
+
+def construct_femesh_vary_y(tds, dy_target, x_scale_pos=None, x_scale_vals=None):
+    fc = FiniteElementVary2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
+                                            smooth_surf=False)
+    femesh = fc.femesh
+    assert isinstance(femesh, FiniteElementVaryY2DMesh)
+    return femesh
+
+
 def _example_run():
     vs = 150.0
     rho = 1.8
@@ -1098,7 +1124,7 @@ def _example_run():
 
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
-    fc = FiniteElementVaryY2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    fc = FiniteElementVary2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
     femesh = fc.femesh
 
 
@@ -1128,7 +1154,7 @@ def _example_simple_run():
 
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
-    fc = FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals, auto_run=False)
+    fc = FiniteElementVary2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals, auto_run=False)
     fc.get_special_coords_and_slopes()  # Step 1
     fc.set_init_y_blocks()
     fc.adjust_blocks_to_be_consistent_with_slopes()

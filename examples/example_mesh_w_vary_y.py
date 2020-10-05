@@ -60,7 +60,7 @@ show_set_to_decimal_places = 0
 show_set_soil_ids_to_grid = 0
 show_exclude_fd_eles = 0
 ##%
-fc = mesh2d_vary_y.FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
+fc = mesh2d_vary_y.FiniteElementVary2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)
 
 if show_ecp_definition:
