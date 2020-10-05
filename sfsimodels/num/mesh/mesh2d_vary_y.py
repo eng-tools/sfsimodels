@@ -35,13 +35,12 @@ def adjust_slope_points_for_removals(sds, x, removed_y, retained_y):
 class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
     x_act = None
     y_flat = None
-    x_nodes = None
-    y_nodes = None
     _soils = None
     x_index_to_sp_index = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True, use_3d_interp=False):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True,
+                 use_3d_interp=False, smooth_surf=False):
         """
         Builds a finite element mesh of a two-dimension system
 
@@ -59,6 +58,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             Number of decimal places
         fd_eles: int
             if =0 then elements corresponding to the foundation are removed, else provide element id
+        smooth_surf: bool
+            if true then changes in angle of the slope must be less than 90 degrees, builds VaryXY mesh
         """
         self.min_scale = 0.5
         self.max_scale = 2.0
@@ -77,7 +78,11 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
 
         self.xs.append(tds.width)
         self.xs = np.array(self.xs)
-
+        inds = np.where(tds.x_surf <= tds.width)
+        self.x_surf = np.array(tds.x_surf[inds])
+        if tds.width not in self.x_surf:
+            self.x_surf = np.insert(self.x_surf, len(self.x_surf), tds.width)
+        self.y_surf = np.interp(self.x_surf, tds.x_surf, tds.y_surf)
         self.y_surf_at_sps = np.interp(self.xs, tds.x_surf, tds.y_surf)
         self._soils = []
         self._soil_hashes = []
@@ -87,6 +92,17 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 if sl.unique_hash not in self._soil_hashes:
                     self._soil_hashes.append(sl.unique_hash)
                     self._soils.append(sl)
+
+        self.y_surf_at_xcs = None
+        self.yd = None
+        self.xcs_sorted = None
+        self.sds = None
+        self.y_blocks = None
+        self.y_coords_at_xcs = None
+        self.x_nodes = None
+        self.y_nodes = None
+        self.x_nodes2d = None
+
         if auto_run:
             self.get_special_coords_and_slopes()  # Step 1
             self.set_init_y_blocks()
@@ -101,7 +117,11 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 self.build_y_coords_grid_via_propagation()
             if self.dp is not None:
                 self.set_to_decimal_places()
-            self.set_soil_ids_to_grid()
+            if smooth_surf:
+                self.adjust_for_smooth_surface()
+                self.set_soil_ids_to_vary_xy_grid()
+            else:
+                self.set_soil_ids_to_vary_y_grid()
             self.create_mesh()
             if not fd_eles:
                 self.exclude_fd_eles()
@@ -111,9 +131,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         fd_coords = []
         x_off = 0.0
         yd = {}
-        for i in range(len(self.tds.x_surf)):
-            if self.tds.x_surf[i] <= self.tds.width:
-                yd[self.tds.x_surf[i]] = []
+        for i in range(len(self.x_surf)):
+            yd[self.x_surf[i]] = []
         if self.tds.width not in yd:
             yd[self.tds.width] = []
 
@@ -122,7 +141,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             x_bd = self.tds.x_bds[i]
             bd = self.tds.bds[i]
             fd_centre_x = x_bd + bd.x_fd
-            y_surf = np.interp(fd_centre_x, self.tds.x_surf, self.tds.y_surf)
+            y_surf = np.interp(fd_centre_x, self.x_surf, self.y_surf)
             if bd.fd.width > self.dy_target:
                 fd_coords.append(fd_centre_x)
             x_left = fd_centre_x - bd.fd.width / 2
@@ -151,7 +170,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             x_coords = np.array(list(yd))
             inds = np.where((x_coords >= x_curr) & (x_coords <= x_next))
             xs = np.sort(x_coords[inds])
-            y_surf_at_xs = np.interp(xs, self.tds.x_surf, self.tds.y_surf)
+            y_surf_at_xs = np.interp(xs, self.x_surf, self.y_surf)
             y_curr_surf = y_surf_at_xs[0]
             # Depths from defined soil profile
             int_yy = []
@@ -189,7 +208,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
 
         for x in yd:
             yd[x].append(-self.tds.height)
-            yd[x].append(np.interp(x, self.tds.x_surf, self.tds.y_surf))
+            yd[x].append(np.interp(x, self.x_surf, self.y_surf))
             yd[x] = list(set(yd[x]))
             yd[x].sort()
         xcs = list(yd)
@@ -197,9 +216,9 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         xcs = np.array(xcs)
         for i in range(len(xcs) - 1):
             xs = np.array([xcs[i], xcs[i + 1]])
-            slope = [list(xs), list(np.interp(xs, self.tds.x_surf, self.tds.y_surf))]
+            slope = [list(xs), list(np.interp(xs, self.x_surf, self.y_surf))]
             sds.append(slope)
-        y_surf_max = max(self.tds.y_surf)
+        y_surf_max = max(self.y_surf)
 
         # remove coordinates that are too close
         min_y = self.dy_target * self.min_scale
@@ -395,9 +414,9 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                             self.y_blocks[x1_c][ind_y1] += nb_sgn * 1
 
         # Step 5: Set the total number of blocks to be equal to the minimum number of blocks used in the highest columns
-        h_max = max(self.tds.y_surf)
+        h_max = max(self.y_surf)
         n_blocks = np.array([sum(self.y_blocks[xc]) for xc in xcs])
-        inds = np.where(np.interp(xcs, self.tds.x_surf, self.tds.y_surf) == h_max)[0]
+        inds = np.where(np.interp(xcs, self.x_surf, self.y_surf) == h_max)[0]
         n_max = min(n_blocks[inds])  # minimum number of blocks at top
         # create null nodes
         for i in range(len(xcs)):
@@ -679,6 +698,41 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
 
         self.x_nodes = np.cumsum(dxs)
 
+    def adjust_for_smooth_surface(self):
+        x_nodes2d = self.x_nodes[:, np.newaxis] * np.ones_like(self.y_nodes)
+        x0 = self.x_surf[0]
+        y0 = self.y_surf[0]
+        for ss in range(1, len(self.x_surf)):
+            x1 = self.x_surf[ss]
+            y1 = self.y_surf[ss]
+            slope = (y1 - y0) / (x1 - x0)
+            x0_ind = np.argmin(abs(self.x_nodes - x0))
+            y0_ind = np.argmin(abs(self.y_nodes[x0_ind] - y0))
+            x1_ind = np.argmin(abs(self.x_nodes - x1))
+            y1_ind = np.argmin(abs(self.y_nodes[x1_ind] - y1))
+            if x_nodes2d[x0_ind][y0_ind] != self.x_nodes[x0_ind]:
+                # mesh already adjusted, need to get actual node coord
+                pass
+                # raise ValueError('x already moved cannot perform double adjustment')
+            if y1_ind != y0_ind:  # non smooth surface
+                if abs(slope) < 1.5:
+                    raise ValueError(
+                        f'Cannot adjust stepped slope to slope slope, required abs slope angle ({slope:.2f}) >= 1.5:1')
+                i_curr = np.where(self.xcs_sorted == x1)[0][0]
+                if i_curr == len(self.xcs_sorted) - 1:
+                    x_rhs = self.xcs_sorted[i_curr]
+                else:
+                    x_rhs = min([x1 + 2 * (x1 - x0), self.xcs_sorted[i_curr + 1]])
+                xrhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
+                for yy in range(y0_ind, y1_ind + 1 * np.sign(y1_ind - y0_ind), np.sign(y1_ind - y0_ind)):
+                    y_h = self.y_nodes[x0_ind][yy]
+                    x_slope = np.interp(y_h, [y0, y1], [x0, x1])
+                    x_nodes2d[x0_ind:xrhs_ind, yy] = np.linspace(x_slope, x_rhs, xrhs_ind - x0_ind + 1)[:-1]
+            x0 = x1
+            y0 = y1
+        self.x_nodes2d = x_nodes2d
+        pass
+
     @property
     def soils(self):
         return self._soils
@@ -688,7 +742,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         self.y_nodes = np.round(self.y_nodes, self.dp)
         self.x_nodes = np.round(self.x_nodes, self.dp)
 
-    def set_soil_ids_to_grid(self):
+    def set_soil_ids_to_vary_y_grid(self):
         # Assign soil to element grid
         x_centres = (self.x_nodes[:-1] + self.x_nodes[1:]) / 2
         y_centres = (self.y_nodes[:, :-1] + self.y_nodes[:, 1:]) / 2
@@ -723,14 +777,54 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                         self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
                         break
 
+    def set_soil_ids_to_vary_xy_grid(self):
+        # Assign soil to element grid
+        x_centres = (self.x_nodes2d[:-1, :] + self.x_nodes2d[1:, :]) / 2
+        x_centres = (x_centres[:, :-1] + x_centres[:, 1:]) / 2
+        y_centres = (self.y_nodes[:, :-1] + self.y_nodes[:, 1:]) / 2
+        y_centres = (y_centres[:-1] + y_centres[1:]) / 2
+        self.y_centres = y_centres
+        self.soil_grid = np.zeros((len(y_centres), len(y_centres[0])), dtype=int)
+        self.x_index_to_sp_index = interp_left(x_centres[:, -1], self.tds.x_sps, np.arange(0, len(self.tds.x_sps)))
+        self.x_index_to_sp_index = np.array(self.x_index_to_sp_index, dtype=int)
+        for xx in range(len(self.soil_grid)):
+            for yy in range(len(self.soil_grid[0])):
+                pid = self.x_index_to_sp_index[xx]
+                sp = self.tds.sps[pid]
+                if y_centres[xx][yy] > np.interp(x_centres[xx][yy], self.x_surf, self.y_surf):
+                    self.soil_grid[xx][yy] = self._inactive_value
+                    continue
+                x_angles = list(sp.x_angles)
+                sp_x = self.tds.x_sps[pid]
+                for ll in range(1, sp.n_layers + 1):
+                    # yc = y_centres[xx][yy]
+                    if -y_centres[xx][yy] > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx][yy] - sp_x) - self.y_surf_at_sps[pid]):
+                        pass
+                    else:
+                        if ll == 1:  # above the original soil profile due to ground slope
+                            unique_hash = sp.layer(1).unique_hash
+                        else:
+                            unique_hash = sp.layer(ll - 1).unique_hash
+                        self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
+                        break
+                    if ll == sp.n_layers:
+                        unique_hash = sp.layer(ll).unique_hash
+                        self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
+                        break
+
     def create_mesh(self):
-        self.femesh = FiniteElementVaryY2DMesh(self.x_nodes, self.y_nodes, self.soil_grid, self.soils)
+        # if len(np.shape(self.x_nodes)) == 2:
+        if self.x_nodes2d is not None:
+            self.femesh = FiniteElementVaryXY2DMesh(self.x_nodes2d, self.y_nodes, self.soil_grid, self.soils)
+        else:
+            self.femesh = FiniteElementVaryY2DMesh(self.x_nodes, self.y_nodes, self.soil_grid, self.soils)
+
 
     def exclude_fd_eles(self):
         for i, bd in enumerate(self.tds.bds):
             fd = bd.fd
             fcx = self.tds.x_bds[i] + bd.x_fd
-            fcy = np.interp(fcx, self.tds.x_surf, self.tds.y_surf)
+            fcy = np.interp(fcx, self.x_surf, self.y_surf)
             lip = getattr(fd, fd.ip_axis)
             x0 = fcx - lip / 2
             x1 = fcx + lip / 2
@@ -751,7 +845,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
 
 class FiniteElementVaryY2DMesh(PhysicalObject):
     base_type = 'femesh'
-    type = 'vary_2d'
+    type = 'vary_y2d'
 
     def __init__(self, x_nodes, y_nodes, soil_grid, soils, inactive_value=1e6):
         self._x_nodes = x_nodes
@@ -844,6 +938,129 @@ class FiniteElementVaryY2DMesh(PhysicalObject):
             models_dict["soil"] = {}
 
 
+class FiniteElementVaryXY2DMesh(PhysicalObject):
+    base_type = 'femesh'
+    type = 'vary_xy2d'
+
+    def __init__(self, x_nodes, y_nodes, soil_grid, soils, inactive_value=1e6):
+        self._x_nodes = x_nodes
+        self._y_nodes = y_nodes
+        self.node_coords_mesh = None
+        self.ele_coords_mesh = None
+        self._soil_grid = soil_grid
+        self._soils = soils
+        self.inactive_value = inactive_value
+        self.inputs = ['x_nodes', 'y_nodes', 'soil_grid', 'soils']
+
+    def get_active_nodes(self):
+        active_nodes = np.ones((len(self._x_nodes), len(self._y_nodes[0])), dtype=int)  # Start with all active
+        # Pad soil_grid with inactive values around edge
+        sg_w_pad = self.inactive_value * np.ones((len(self._soil_grid) + 2, len(self._soil_grid[0]) + 2))
+        sg_w_pad[1:-1, 1:-1] = self._soil_grid
+        # Then compute the average soil_grid from four elements
+        node_grid = (sg_w_pad[:-1, :-1] + sg_w_pad[:-1, 1:] + sg_w_pad[1:, :-1] + sg_w_pad[1:, 1:]) / 4
+        # if average is equal to inactive then node is not active
+        inds = np.where(node_grid == self.inactive_value)
+        active_nodes[inds] = 0
+        return active_nodes
+
+    @property
+    def soils(self):
+        return self._soils
+
+    def get_ele_indexes_at_depths(self, depths, x, low=None):
+        x_ind = self.get_ele_indexes_at_xs([x])[0]
+        return interp_left(-np.array(depths), -self._y_nodes[x_ind], low=low)
+
+    def get_ele_indexes_at_xs(self, xs, low=None):
+        return interp_left(xs, self.x_nodes, low=low)
+
+    def get_nearest_node_index_at_depth(self, depth, x):
+        x_ind = self.get_nearest_node_index_at_x(x)
+        return np.argmin(abs(self._y_nodes[x_ind] - depth))
+
+    def get_nearest_node_index_at_x(self, x):
+        return np.argmin(abs(self.x_nodes - x))
+
+    def build_node_coords_mesh(self):
+        self.node_coords_mesh = np.array([self.x_nodes, self.y_nodes]).transpose(1, 2, 0)
+
+    def build_ele_coords_mesh(self):
+        x_centres = (self.x_nodes[:-1, :] + self.x_nodes[1:, :]) / 2
+        x_centres = (x_centres[:, :-1] + x_centres[:, 1:]) / 2
+        y_centres = (self.y_nodes[:, :-1] + self.y_nodes[:, 1:]) / 2
+        y_centres = (y_centres[:-1] + y_centres[1:]) / 2
+        self.ele_coords_mesh = np.array([x_centres, y_centres]).transpose(1, 2, 0)
+
+    def get_nearest_nodes_indexes(self, coords, n=1):
+        coords = np.array(coords)
+        if self.node_coords_mesh is None:
+            self.build_node_coords_mesh()
+        return np.argsort(np.array([np.linalg.norm(coords - x) for x in self.node_coords_mesh]))[:n]
+
+    def get_nearest_eles_indexes(self, coords, n=1):
+        coords = np.array(coords)
+        if self.ele_coords_mesh is None:
+            self.build_ele_coords_mesh()
+        return np.argsort(np.array([np.linalg.norm(coords - x) for x in self.ele_coords_mesh]))[:n]
+
+
+
+    @property
+    def nny(self):
+        return len(self._y_nodes[0])
+
+    @property
+    def nnx(self):
+        return len(self._x_nodes)
+
+    def set_to_decimal_places(self, dp):
+        """Adjusts the node coordinates to a certain number of decimal places"""
+        self._y_nodes = np.round(self._y_nodes, dp)
+        self._x_nodes = np.round(self._x_nodes, dp)
+
+    @property
+    def x_nodes(self):
+        return self._x_nodes
+
+    @x_nodes.setter
+    def x_nodes(self, x_nodes):
+        if isinstance(x_nodes, str):
+            self._x_nodes = np.loadtxt(x_nodes)
+        else:
+            self._x_nodes = x_nodes
+        self.coords_mesh = None
+
+    @property
+    def y_nodes(self):
+        return self._y_nodes
+
+    @y_nodes.setter
+    def y_nodes(self, y_nodes):
+        if isinstance(y_nodes, str):
+            self._y_nodes = np.loadtxt(y_nodes)
+        else:
+            self._y_nodes = y_nodes
+        self.coords_mesh = None
+
+    @property
+    def soil_grid(self):
+        return self._soil_grid
+
+    @soil_grid.setter
+    def soil_grid(self, soil_grid):
+        if isinstance(soil_grid, str):
+            self._soil_grid = np.loadtxt(soil_grid)
+        else:
+            self._soil_grid = soil_grid
+
+    def add_to_dict(self, models_dict, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = {}
+        if "soil" not in models_dict:
+            models_dict["soil"] = {}
+
+
 def _example_run():
     vs = 150.0
     rho = 1.8
@@ -906,27 +1123,70 @@ def _example_simple_run():
     sp2.add_layer(0, sl)
     sp2.add_layer(7, sl2)
     sp2.height = 14
-    sp.x_angles = [0.05, 0.0]
-    sp2.x_angles = [0.0, 0.0]
+    sp.x_angles = [0.2, 0.0]
+    sp2.x_angles = [0.1, 0.05]
     tds = TwoDSystem(width=25, height=10)
     tds.add_sp(sp, x=0)
     tds.add_sp(sp2, x=14)
-    tds.x_surf = np.array([0, 10, 12, 25])
+    tds.x_surf = np.array([0, 10, 11, 25])
     tds.y_surf = np.array([0, 0, 2, 2.3])
 
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
-    fc = FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
-    femesh = fc.femesh
-    # show = 1
-    # if show:
-    #     show_constructor(fc)
+    fc = FiniteElementVaryY2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals, auto_run=False)
+    fc.get_special_coords_and_slopes()  # Step 1
+    fc.set_init_y_blocks()
+    fc.adjust_blocks_to_be_consistent_with_slopes()
+    fc.trim_grid_to_target_dh()
+    fc.build_req_y_node_positions()
+    fc.set_x_nodes()
+    fc.build_y_coords_grid_via_propagation()
+    fc.adjust_for_smooth_surface()
+    fc.set_soil_ids_to_vary_xy_grid()
+    # fc.set_soil_ids_to_vary_y_grid()
+    fc.create_mesh()
+
+    # femesh = fc.femesh
+    import o3plot
+    import pyqtgraph as pg
+    win = o3plot.create_scaled_window_for_tds(tds, title='build_y_coords_at_xcs')
+    o3plot.plot_two_d_system(tds, win)
+    o3plot.plot_finite_element_mesh(fc.femesh, win, start=False)
+    xcs = fc.xcs_sorted
+    for i in range(len(xcs)):
+        xc = xcs[i]
+        h_blocks = np.diff(fc.yd[xc])
+        dhs = h_blocks / fc.y_blocks[xc]
+        y_node_steps = [0]
+        for hh in range(len(fc.y_blocks[xc])):
+            y_node_steps += [dhs[hh] for u in range(fc.y_blocks[xc][hh])]
+        y_node_coords = np.cumsum(y_node_steps) - tds.height
+        xn = xc * np.ones_like(list(fc.req_y_coords_at_xcs[i]))
+        win.plot(xn, list(fc.req_y_coords_at_xcs[i]), symbol='x', symbolPen='y')
+        xn = xc * np.ones_like(list(fc.y_coords_at_xcs[i]))
+        win.plot(xn, list(fc.y_coords_at_xcs[i]), symbol='+', symbolPen='r')
+        win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
+
+    for i in range(len(fc.sds)):
+        win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+    win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+    xns = fc.x_nodes
+    for i in range(len(xns)):
+        xc = xns[i]
+        xn = xc * np.ones_like(fc.y_nodes[i])
+        win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen=(200, 200, 200), symbolBrush=(200, 200, 200), symbolSize=3)
+    for i in range(len(fc.x_nodes2d)):
+        xn = fc.x_nodes2d[i]
+        win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen='r', symbolBrush='r', symbolSize=3)
+    for i in range(len(fc.xcs_sorted)):
+        win.addItem(pg.InfiniteLine(fc.xcs_sorted[i], angle=90, pen=(0, 255, 0, 100)))
+    o3plot.show()
 
 
 
 if __name__ == '__main__':
     # plot2()
-    # _example_simple_run()
-    _example_run()
+    _example_simple_run()
+    # _example_run()
     # replot()
 

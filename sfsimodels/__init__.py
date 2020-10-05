@@ -7,6 +7,7 @@ from sfsimodels.models.buildings import Building, FrameBuilding, WallBuilding, S
 from sfsimodels.models.sections import Section
 from sfsimodels.models import sections
 from sfsimodels.models import materials
+from sfsimodels import num
 
 # deprecated
 from sfsimodels.models.soils import SoilStressDependent, SoilCritical
