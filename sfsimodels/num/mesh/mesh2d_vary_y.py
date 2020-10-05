@@ -100,6 +100,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
         self.x_nodes = None
         self.y_nodes = None
         self.x_nodes2d = None
+        self.femesh = None
 
         if auto_run:
             self.get_special_coords_and_slopes()  # Step 1
@@ -195,6 +196,8 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 if y_surf_at_xs[j+1] not in yd[x_next]:
                     yd[x_next].append(y_surf_at_xs[j+1])
                 for k in range(len(int_yy)):
+                    if angles[k] is None:
+                        continue
                     y_curr = int_yy[k] + angles[k] * x0_diff
                     if y_curr < y_surf_at_xs[j] and y_curr not in yd[x0]:
                         yd[x0].append(y_curr)
@@ -226,13 +229,6 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             for pair in pairs:
                 adjust_slope_points_for_removals(sds, x, pair[0], pair[1])
 
-            # diffs = np.diff(yd[x])
-            # inds = np.where(diffs < min_y - 0.00001)
-            # while len(inds[0]):
-            #     yd[x][inds[0][0] + 1] = yd[x][inds[0][0]] + min_y
-            #     yd[x], pairs = remove_close_items(yd[x], tol=tol)
-            #     diffs = np.diff(yd[x])
-            #     inds = np.where(diffs < min_y - 0.00001)
         self.y_surf_at_xcs = {}
         for x in yd:
             self.y_surf_at_xcs[x] = yd[x][-1]
@@ -761,7 +757,7 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 sp_x = self.tds.x_sps[pid]
                 for ll in range(1, sp.n_layers + 1):
                     yc = y_centres[xx][yy]
-                    if -y_centres[xx][yy] > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
+                    if -yc > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
                         pass
                     else:
                         if ll == 1:  # above the original soil profile due to ground slope
@@ -796,7 +792,9 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
                 sp_x = self.tds.x_sps[pid]
                 for ll in range(1, sp.n_layers + 1):
                     # yc = y_centres[xx][yy]
-                    if -y_centres[xx][yy] > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx][yy] - sp_x) - self.y_surf_at_sps[pid]):
+                    x_diff = x_centres[xx][yy] - sp_x
+                    h_diff = sp.layer_depth(ll) - self.y_surf_at_sps[pid]
+                    if x_angles[ll - 1] is None or -y_centres[xx][yy] > h_diff - x_angles[ll - 1] * x_diff:
                         pass
                     else:
                         if ll == 1:  # above the original soil profile due to ground slope
@@ -816,7 +814,6 @@ class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLin
             self.femesh = FiniteElementVaryXY2DMesh(self.x_nodes2d, self.y_nodes, self.soil_grid, self.soils)
         else:
             self.femesh = FiniteElementVaryY2DMesh(self.x_nodes, self.y_nodes, self.soil_grid, self.soils)
-
 
     def exclude_fd_eles(self):
         for i, bd in enumerate(self.tds.bds):
@@ -1121,8 +1118,8 @@ def _example_simple_run():
     sp2.add_layer(0, sl)
     sp2.add_layer(7, sl2)
     sp2.height = 14
-    sp.x_angles = [0.2, 0.0]
-    sp2.x_angles = [0.1, 0.05]
+    sp.x_angles = [None, 0.0]
+    sp2.x_angles = [None, 0.05]
     tds = TwoDSystem(width=25, height=10)
     tds.add_sp(sp, x=0)
     tds.add_sp(sp2, x=14)
