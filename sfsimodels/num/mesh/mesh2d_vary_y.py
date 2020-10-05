@@ -33,8 +33,6 @@ def adjust_slope_points_for_removals(sds, x, removed_y, retained_y):
 
 
 class FiniteElementVaryY2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
-    x_act = None
-    y_flat = None
     _soils = None
     x_index_to_sp_index = None
     _inactive_value = 1000000
