@@ -712,18 +712,27 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             if y1_ind != y0_ind:  # non smooth surface
                 if abs(slope) < 1.5:
                     raise ValueError(
-                        f'Cannot adjust stepped slope to slope slope, required abs slope angle ({slope:.2f}) >= 1.5:1')
+                        f'Cannot adjust stepped slope to smooth slope, required abs slope angle ({slope:.2f}) >= 1.5:1')
                 i_curr = np.where(self.xcs_sorted == x1)[0][0]
                 if i_curr == len(self.xcs_sorted) - 1:
                     x_rhs = self.xcs_sorted[i_curr]
                 else:
                     x_rhs = min([x1 + 2 * (x1 - x0), self.xcs_sorted[i_curr + 1]])
                 xrhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
+                x_rhs = self.x_nodes[xrhs_ind]
                 # TODO: need to deal with x_scale!!!
+                x_vals_1 = np.linspace(x1, x_rhs, xrhs_ind - x0_ind + 1)
+                x_vals_0 = x_nodes2d[x0_ind:xrhs_ind + 1, y0_ind]
+                yvs = np.arange(y0_ind, y1_ind + 1 * np.sign(y1_ind - y0_ind))
                 for yy in range(y0_ind, y1_ind + 1 * np.sign(y1_ind - y0_ind), np.sign(y1_ind - y0_ind)):
                     y_h = self.y_nodes[x0_ind][yy]
                     x_slope = np.interp(y_h, [y0, y1], [x0, x1])
-                    x_nodes2d[x0_ind:xrhs_ind, yy] = np.linspace(x_slope, x_rhs, xrhs_ind - x0_ind + 1)[:-1]
+                    if y0 > y1:
+                        xvs = interp2d([y_h], [y1, y0], [x_vals_1, x_vals_0])
+                    else:
+                        xvs = interp2d([y_h], [y0, y1], [x_vals_0, x_vals_1])
+                    x_nodes2d[x0_ind:xrhs_ind + 1, yy] = xvs
+                    # x_nodes2d[x0_ind:xrhs_ind, yy] = np.linspace(x_slope, x_rhs, xrhs_ind - x0_ind + 1)[:-1]
             x0 = x1
             y0 = y1
         self.x_nodes2d = x_nodes2d
@@ -1149,7 +1158,7 @@ def _example_simple_run():
     tds = TwoDSystem(width=25, height=10)
     tds.add_sp(sp, x=0)
     tds.add_sp(sp2, x=14)
-    tds.x_surf = np.array([0, 10, 11, 25])
+    tds.x_surf = np.array([0, 10, 10.9, 25])
     tds.y_surf = np.array([0, 0, 2, 2.3])
 
     x_scale_pos = np.array([0, 5, 15, 30])

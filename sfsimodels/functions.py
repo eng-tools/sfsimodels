@@ -236,6 +236,9 @@ def interp2d(x, xf, f):
     >>> print(f_interp[0][2])
     2.0
     """
+    x = np.array(x)
+    xf = np.array(xf)
+    f = np.array(f)
     ind = np.argmin(np.abs(x[:, np.newaxis] - xf), axis=1)
     x_ind = xf[ind]
     ind0 = np.where(x_ind > x, ind - 1, ind)
