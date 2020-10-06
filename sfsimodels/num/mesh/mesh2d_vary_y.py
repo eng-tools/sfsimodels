@@ -720,19 +720,17 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     x_rhs = min([x1 + 2 * (x1 - x0), self.xcs_sorted[i_curr + 1]])
                 xrhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
                 x_rhs = self.x_nodes[xrhs_ind]
-                # TODO: need to deal with x_scale!!!
                 x_vals_1 = np.linspace(x1, x_rhs, xrhs_ind - x0_ind + 1)
                 x_vals_0 = x_nodes2d[x0_ind:xrhs_ind + 1, y0_ind]
-                yvs = np.arange(y0_ind, y1_ind + 1 * np.sign(y1_ind - y0_ind))
-                for yy in range(y0_ind, y1_ind + 1 * np.sign(y1_ind - y0_ind), np.sign(y1_ind - y0_ind)):
-                    y_h = self.y_nodes[x0_ind][yy]
-                    x_slope = np.interp(y_h, [y0, y1], [x0, x1])
-                    if y0 > y1:
-                        xvs = interp2d([y_h], [y1, y0], [x_vals_1, x_vals_0])
-                    else:
-                        xvs = interp2d([y_h], [y0, y1], [x_vals_0, x_vals_1])
-                    x_nodes2d[x0_ind:xrhs_ind + 1, yy] = xvs
-                    # x_nodes2d[x0_ind:xrhs_ind, yy] = np.linspace(x_slope, x_rhs, xrhs_ind - x0_ind + 1)[:-1]
+                if y1_ind > y0_ind:
+                    y_hs = self.y_nodes[x0_ind][y0_ind: y1_ind+1][::-1]
+                    xvs = interp2d(y_hs, [y1, y0], [x_vals_1, x_vals_0])[::-1]
+                    x_nodes2d[x0_ind:xrhs_ind + 1, y0_ind: y1_ind+1] = xvs.T
+                else:
+                    y_hs = self.y_nodes[x0_ind][y1_ind: y0_ind + 1][::-1]
+                    xvs = interp2d(y_hs, [y0, y1], [x_vals_0, x_vals_1])[::-1]
+                    x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind: y0_ind + 1] = xvs.T
+
             x0 = x1
             y0 = y1
         self.x_nodes2d = x_nodes2d
