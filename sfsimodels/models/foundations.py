@@ -18,6 +18,7 @@ class Foundation(PhysicalObject):
     _length = None  # [m], The length of the foundation perpendicular to the shaking
     _depth = None  # [m], The depth of the foundation from the surface
     _height = None  # [m], The height of the foundation from base of foundation to ground floor
+    _ip_axis = None
     _density = None  # [kg/m3], Density of foundation
     _mass = None  # kg
     base_type = "foundation"

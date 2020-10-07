@@ -1016,7 +1016,16 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         arr_s = np.shape(self.ele_coords_mesh)[:-1]
         return np.dstack(np.unravel_index(np.argsort(norms.ravel())[:n], arr_s))[0]
 
-
+    def get_ele_index_by_type(self, stype):
+        s_inds = []
+        for i, sl in enumerate(self.soils):
+            if sl.type == stype:
+                s_inds.append(i)
+        s_inds = np.array(s_inds)
+        arr_s = np.shape(self.soil_grid)
+        pmesh_inds = np.where(self.soil_grid.flatten() == s_inds[:, None])
+        pmesh_inds = np.unravel_index(pmesh_inds[1], arr_s)
+        return pmesh_inds
 
     @property
     def nny(self):
