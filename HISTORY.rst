@@ -2,7 +2,17 @@
 History
 =======
 
+Pre-release
+-----------
+* Improved saving and loading of `TwoDSystem`
+
+0.9.28 (2020-10-08)
+--------------------
 * Added in plane axis (`ip_axis`) and out-of-plane axis (`oop_axis`) parameters for foundation.
+* Added new constructor to `sfsimodels.num.mesh` `FiniteElementVary2DMeshConstructor`,
+  which constructs either `FiniteElementVaryY2DMesh` where x-coordinates remain unchanged with depth,
+    but y-coordinates vary with x-distance, or `FiniteElementVaryXY2DMesh` where both x- and y-coordinates vary
+    throughout the mesh.
 
 0.9.27 (2020-09-03)
 --------------------

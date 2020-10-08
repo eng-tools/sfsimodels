@@ -416,5 +416,29 @@ def test_soil_profile_split_complex_stress_dependent():
     assert None not in sp.split['shear_vel']
 
 
+def test_save_and_load_soil_profile():
+    sl1 = models.Soil()
+    sl1_gmod = 30e6
+    sl1_unit_dry_weight = 16000
+    sl1.g_mod = sl1_gmod
+    sl1.unit_dry_weight = sl1_unit_dry_weight
+    sl2 = models.Soil()
+    sl2_cohesion = 20e3
+    sl2.cohesion = sl2_cohesion
+    sp = models.SoilProfile()
+    sp.id = 0
+    sp.add_layer(0, sl1)
+    sp.add_layer(3, sl2)
+    sp.set_soil_ids_to_layers()
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(sp, export_none=False)
+    p_str = ecp_output.to_str()
+    objs = sm.loads_json(p_str, verbose=0)
+    loaded_soil = objs['soils'][1]
+    load_soil_from_profile = sp.layer(1)
+    assert np.isclose(loaded_soil.g_mod, sl1.g_mod)
+    assert np.isclose(load_soil_from_profile.g_mod, sl1.g_mod)
+
+
 if __name__ == '__main__':
-    test_vertical_stress_soil_profile()
+    test_save_and_load_soil_profile()

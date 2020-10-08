@@ -828,7 +828,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     def femesh(self):
         return self._femesh
 
-    def exclude_fd_eles(self):
+    def exclude_fd_eles(self):  # TODO: implement a near field option, where grid gets remeshed with angles to have more detail near footing
         for i, bd in enumerate(self.tds.bds):
             fd = bd.fd
             fcx = self.tds.x_bds[i] + bd.x_fd
@@ -919,6 +919,7 @@ class FiniteElementVaryY2DMesh(PhysicalObject):
 
     @property
     def y_nodes(self):
+        """Y-position of nodes - top-to-bottom"""
         return self._y_nodes
 
     @y_nodes.setter
@@ -1080,6 +1081,27 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
             models_dict[self.base_type] = {}
         if "soil" not in models_dict:
             models_dict["soil"] = {}
+
+    def get_change_coords_at_depth_offset(self, x_coords, y_coords, offset, tol=0):
+        prev_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
+        coords = [[self.x_nodes[0][prev_ind + 1]],
+                  [self.y_nodes[0][prev_ind + 1]]]
+        for i in range(self.nnx - 1):
+            active_ind = np.where(self.soil_grid[i] != self.inactive_value)[0][0]
+            if active_ind != prev_ind:
+                coords[0].append(self.x_nodes[i + 1][prev_ind + 1])
+                coords[1].append(self.y_nodes[i + 1][prev_ind + 1])
+            coords[0].append(self.x_nodes[i + 1][active_ind + 1])
+            coords[1].append(self.y_nodes[i + 1][active_ind + 1])
+            prev_ind = active_ind
+        coords = np.array(coords)
+        slopes = np.diff(coords[1]) / np.diff(coords[0])
+        diff_slopes = np.diff(slopes)
+        inds = np.where(abs(diff_slopes) > tol)[0] + 1
+        inds = np.array([0] + list(inds) + [len(coords[0]) -1], dtype=int)
+        ccoords = coords.T[inds].T
+        return ccoords
+
 
 
 def construct_femesh_vary_xy(tds, dy_target, x_scale_pos=None, x_scale_vals=None):

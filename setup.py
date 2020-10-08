@@ -36,8 +36,9 @@ setup(name='sfsimodels',
       },
       python_requires='>=3.3',
       package_data={
-          'models': ['models_data.dat'],
+          'sfsimodels': ['models_data.dat'],
       },
+      include_package_data=True,
       zip_safe=False)
 
 

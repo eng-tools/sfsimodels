@@ -1022,14 +1022,14 @@ class NullBuilding(PhysicalObject):
             self.z_fd = float(z)
         self._foundation = foundation
 
-
-class SoilStructureSystem(PhysicalObject):
-    bd = SDOFBuilding()
-    fd = Foundation()
-    sp = Soil()
-    hz = SeismicHazard()
-    name = "Nameless"
-
-    inputs = ["name"] + bd.inputs + fd.inputs + sp.inputs + hz.inputs
+#
+# class SoilStructureSystem(PhysicalObject):
+#     bd = SDOFBuilding()
+#     fd = Foundation()
+#     sp = Soil()
+#     hz = SeismicHazard()
+#     name = "Nameless"
+#
+#     inputs = ["name"] + bd.inputs + fd.inputs + sp.inputs + hz.inputs
 
 

@@ -271,7 +271,7 @@ if show_set_to_decimal_places:
     o3plot.show()
 
 ##%
-fc.set_soil_ids_to_grid()
+fc.set_soil_ids_to_vary_y_grid()
 fc.create_mesh()
 if show_set_soil_ids_to_grid:
     win = o3plot.create_scaled_window_for_tds(tds, title='set_soil_ids_to_grid')

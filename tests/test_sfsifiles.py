@@ -108,7 +108,7 @@ def test_save_and_load_soil():
     assert np.isclose(loaded_soil.g_mod, sl.g_mod)
 
 
-def test_save_and_load_soil_profile():
+def test_save_and_load_soil_profile_w_and_wo_none():
     sl1 = models.Soil()
     sl1_gmod = 30e6
     sl1_unit_dry_weight = 16000
@@ -516,10 +516,9 @@ if __name__ == '__main__':
     # test_load_and_save_structure()
     # test_save_and_load_soil_w_diff_liq_mass_density()
     # test_load_and_save_foundation_w_pads()
-    # test_save_and_load_soil_profile()
-    # test_save_and_load_an_element()
+    test_save_and_load_an_element()
     # test_save_and_load_building()
-    test_save_and_load_two_soil_profiles()
+    # test_save_and_load_two_soil_profiles()
     # test_load_json()
     # test_full_save_and_load()
     # test_save_and_load_soil_profile()

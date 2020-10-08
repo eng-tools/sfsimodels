@@ -157,6 +157,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
         "custom_object-custom_object": abstract_models.CustomObject,
         "system-system": systems.SoilStructureSystem,  # deprecated type
         "system-sfs": systems.SoilStructureSystem,
+        "system-two_d_system": systems.TwoDSystem,
         "load-load": loads.Load,
         "load-load_at_coords": loads.LoadAtCoords,
         "material-rc_material": materials.ReinforcedConcreteMaterial
@@ -426,8 +427,7 @@ class Output(object):
         return outputs
 
     def to_file(self, ffp, indent=4, name=None, units=None, comments=None):
-
-
+        """Export to json file"""
         if name is not None:
             self.name = "%s" % name
         if units is not None:
@@ -435,6 +435,16 @@ class Output(object):
         if comments is not None:
             self.comments = comments
         json.dump(self.to_dict(), open(ffp, "w"), indent=indent, default=_json_default)
+
+    def to_str(self, indent=4, name=None, units=None, comments=None):
+        """Return as a json string"""
+        if name is not None:
+            self.name = "%s" % name
+        if units is not None:
+            self.units = units
+        if comments is not None:
+            self.comments = comments
+        return json.dumps(self.to_dict(), indent=indent, default=_json_default)
 
 
 def migrate_ecp(in_ffp, out_ffp):
@@ -462,3 +472,9 @@ def unhash_dict(pdict):  # TODO: make method
         new_dict[key] = pdict[item]
         replacement_dict[item] = key
     return new_dict, replacement_dict
+
+
+def _load_mod_dat():
+    import os
+    folder_path = os.path.dirname(os.path.realpath(__file__))
+    return open(os.path.join(folder_path, 'models_data.dat'))

@@ -157,12 +157,13 @@ class TwoDSystem(object):
 
         self._bds = []
         self._x_bds = []
-        self.inputs = ["id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf"]
+        self.inputs = ["base_type", "type", "id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf"]
         self.gwl = 1e6  # can be coordinates
 
-    def to_dict(self, **kwargs):
+    def to_dict(self, skip_list=None, **kwargs):
         outputs = OrderedDict()
-        skip_list = ['sps', 'bds']
+        if skip_list is None:
+            skip_list = []
         for item in self.inputs:
             if item not in skip_list:
                 value = self.__getattribute__(item)
@@ -182,7 +183,7 @@ class TwoDSystem(object):
             models_dict["building"] = OrderedDict()
         if "foundation" not in models_dict:
             models_dict["foundation"] = OrderedDict()
-        profile_dict = self.to_dict(**kwargs)
+        profile_dict = self.to_dict(skip_list=('x_sps', 'x_bds'), **kwargs)
         profile_dict["sps"] = []
         for i, sp in enumerate(self.sps):
             sp.add_to_dict(models_dict, **kwargs)
@@ -190,6 +191,7 @@ class TwoDSystem(object):
                 sp.id = i + 1
             sp.set_soil_ids_to_layers()
             profile_dict["sps"].append({
+                "x": self.x_sps[i],
                 "soil_profile_id": str(sp.id),
                 "soil_profile_unique_hash": str(sp.unique_hash),
             })
@@ -209,10 +211,10 @@ class TwoDSystem(object):
             else:
                 models_dict["building"][bd.unique_hash] = bd.to_dict(**kwargs)
             profile_dict["bds"].append({
+                "x": self.x_bds[i],
                 "building_id": str(bd.id),
                 "building_hash": str(bd.unique_hash),
             })
-
 
         models_dict[self.base_type][self.unique_hash] = profile_dict
 
@@ -224,6 +226,13 @@ class TwoDSystem(object):
     def sps(self):
         return self._sps
 
+    @sps.setter
+    def sps(self, sps_w_xs):
+        for sp_dict in sps_w_xs:
+            x = sp_dict["x"]
+            sp = sp_dict["soil_profile"]  # is actually a soil profile object
+            self.add_sp(sp, x)
+
     @property
     def x_sps(self):
         return self._x_sps
@@ -231,6 +240,13 @@ class TwoDSystem(object):
     @property
     def bds(self):
         return self._bds
+
+    @bds.setter
+    def bds(self, bds_w_xs):
+        for bd_dict in bds_w_xs:
+            x = bd_dict["x"]
+            bd = bd_dict["building"]  # is actually a soil profile object
+            self.add_bd(bd, x)
 
     def add_bd(self, bd, x):
         self._x_bds.append(x)

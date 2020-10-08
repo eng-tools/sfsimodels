@@ -19,7 +19,7 @@ def test_save_and_load_2d_system():
     sl.specific_gravity = 2.65
     sl.xi = 0.03  # for linear analysis
     sl.sra_type = 'hyperbolic'
-    sl.inputs += [ 'sra_type', 'xi']
+    sl.inputs += ['sra_type', 'xi']
     sp = sm.SoilProfile()
     sp.add_layer(0.0, sl)
     sp.height = 1e3
@@ -43,9 +43,11 @@ def test_save_and_load_2d_system():
     p_str = json.dumps(ecp_out.to_dict(), skipkeys=["__repr__"], indent=4)
     objs = sm.loads_json(p_str)
     building = objs["building"][1]
-    foundation = objs["foundation"][1]
+    system = objs["system"][1]
     assert np.isclose(building.h_eff, 8)
     assert np.isclose(building.fd.height, 1)
+    assert isinstance(system, sm.TwoDSystem)
+    assert system.sps[0].layer(1).xi == 0.03
 
 
 if __name__ == '__main__':
