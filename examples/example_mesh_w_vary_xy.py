@@ -30,20 +30,12 @@ sp2.height = 20
 sp.x_angles = [0.17, 0.07, 0.0]
 sp2.x_angles = [0.0, 0.00, 0.0]
 
-fd = sm.RaftFoundation()
-fd.width = 3
-fd.depth = 0.6
-fd.ip_axis = 'width'
-fd.height = 0.7
-fd.length = 100
+
 tds = sm.TwoDSystem(width=33, height=7.5)
 tds.add_sp(sp, x=0)
 tds.add_sp(sp2, x=17)
-tds.x_surf = np.array([0, 12, 14, tds.width])
-tds.y_surf = np.array([0, 0, h_face, h_face])
-bd = sm.NullBuilding()
-bd.set_foundation(fd, x=0.0)
-tds.add_bd(bd, x=22)
+tds.x_surf = np.array([0, 12, 13, tds.width])
+tds.y_surf = np.array([0, 0, h_face, h_face-0.5])
 
 x_scale_pos = np.array([0, 5, 10, 16, 19, 25, 29])
 x_scale_vals = np.array([2., 1.2, 1.0, 1.2, 0.7, 1.2, 2])
@@ -57,6 +49,7 @@ show_build_req_y_node_positions = 0
 show_set_x_nodes = 0
 show_build_y_coords_grid_via_propagation = 0
 show_set_to_decimal_places = 0
+show_smooth_surf = 1
 show_set_soil_ids_to_grid = 0
 show_exclude_fd_eles = 1
 ##%
@@ -271,7 +264,25 @@ if show_set_to_decimal_places:
     o3plot.show()
 
 ##%
-fc.set_soil_ids_to_vary_y_grid()
+fc.adjust_for_smooth_surface()
+if show_smooth_surf:
+    if show_build_y_coords_grid_via_propagation:
+        win = o3plot.create_scaled_window_for_tds(tds, title='build_y_coords_grid_via_propagation')
+        for i in range(len(fc.sds)):
+            win.plot(fc.sds[i][0], fc.sds[i][1], pen='b')
+        win.plot([0, fc.tds.width], [-fc.tds.height, -fc.tds.height], pen='w')
+        xns = fc.x_nodes
+        for i in range(len(xns)):
+            xc = xns[i]
+            xn = xc * np.ones_like(fc.y_nodes[i])
+            win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen='r', symbolBrush='r', symbolSize=3)
+        for i in range(len(fc.xcs_sorted)):
+            win.addItem(pg.InfiniteLine(fc.xcs_sorted[i], angle=90, pen=(0, 255, 0, 100)))
+        o3plot.show()
+
+
+##%
+fc.set_soil_ids_to_vary_xy_grid()
 fc.create_mesh()
 if show_set_soil_ids_to_grid:
     win = o3plot.create_scaled_window_for_tds(tds, title='set_soil_ids_to_grid')

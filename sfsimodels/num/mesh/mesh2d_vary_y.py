@@ -697,6 +697,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         self.x_nodes = np.cumsum(dxs)
 
     def adjust_for_smooth_surface(self):
+        """Make the surface have less than 90 degree changes"""
         x_nodes2d = self.x_nodes[:, np.newaxis] * np.ones_like(self.y_nodes)
         x0 = self.x_surf[0]
         y0 = self.y_surf[0]
@@ -714,25 +715,52 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 # raise ValueError('x already moved cannot perform double adjustment')
             if y1_ind != y0_ind:  # non smooth surface
                 if abs(slope) < 1.5:
-                    raise ValueError(
-                        f'Cannot adjust stepped slope to smooth slope, required abs slope angle ({slope:.2f}) >= 1.5:1')
-                i_curr = np.where(self.xcs_sorted == x1)[0][0]
-                if i_curr == len(self.xcs_sorted) - 1:
-                    x_rhs = self.xcs_sorted[i_curr]
-                else:
-                    x_rhs = min([x1 + 2 * (x1 - x0), self.xcs_sorted[i_curr + 1]])
-                xrhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
-                x_rhs = self.x_nodes[xrhs_ind]
-                x_vals_1 = np.linspace(x1, x_rhs, xrhs_ind - x0_ind + 1)
-                x_vals_0 = x_nodes2d[x0_ind:xrhs_ind + 1, y0_ind]
-                if y1_ind > y0_ind:
-                    y_hs = self.y_nodes[x0_ind][y0_ind: y1_ind+1][::-1]
-                    xvs = interp2d(y_hs, [y1, y0], [x_vals_1, x_vals_0])[::-1]
-                    x_nodes2d[x0_ind:xrhs_ind + 1, y0_ind: y1_ind+1] = xvs.T
-                else:
-                    y_hs = self.y_nodes[x0_ind][y1_ind: y0_ind + 1][::-1]
-                    xvs = interp2d(y_hs, [y0, y1], [x_vals_0, x_vals_1])[::-1]
-                    x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind: y0_ind + 1] = xvs.T
+                    # Need to smooth steps
+                    i_curr = np.where(self.xcs_sorted == x1)[0][0]
+                    if i_curr == len(self.xcs_sorted) - 1:  # right hand mesh edge
+                        x_edge = self.xcs_sorted[i_curr]
+                    else:
+                        x_edge = self.xcs_sorted[i_curr + 1]
+                    apx_x_steps = np.linspace(x0, x1, abs(y1_ind - y0_ind) + 2)
+                    for i in range(1, len(apx_x_steps) - 1):
+                        if y1_ind < y0_ind:  # down slope to the left
+                            x_lhs = apx_x_steps[i]
+                            x_rhs = min([apx_x_steps[i + 1] + 2, x_edge])
+                            y_upper_ind = y0_ind - i
+                        else:  # up slope to the left
+                            x_lhs = apx_x_steps[i - 1]
+                            x_rhs = min([apx_x_steps[i], x_edge])
+                            y_upper_ind = y1_ind - i
+
+                        x_rhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
+                        x_rhs = self.x_nodes[x_rhs_ind]
+                        x_lhs_ind = np.argmin(abs(self.x_nodes - x_lhs))
+                        x_lhs = self.x_nodes[x_lhs_ind]
+                        x_vals_upper = np.linspace(x_lhs, x_rhs, x_rhs_ind - x_lhs_ind + 1)  # TODO: should be scaled based on current xnode_2d pos
+                        x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = x_vals_upper
+
+                    # raise ValueError(
+                    #     f'Cannot adjust stepped slope to smooth slope, required abs slope angle ({slope:.2f}) >= 1.5:1')
+                else:  # Smooth the whole slope as one
+                    i_curr = np.where(self.xcs_sorted == x1)[0][0]
+                    if i_curr == len(self.xcs_sorted) - 1:
+                        x_rhs = self.xcs_sorted[i_curr]
+                    else:
+                        x_rhs = min([x1 + 2 * (x1 - x0), self.xcs_sorted[i_curr + 1]])
+                    xrhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
+                    x_rhs = self.x_nodes[xrhs_ind]
+                    x_vals_upper = np.linspace(x1, x_rhs, xrhs_ind - x0_ind + 1)
+
+                    if y1_ind > y0_ind:
+                        x_vals_lower = x_nodes2d[x0_ind:xrhs_ind + 1, y0_ind]
+                        y_hs = self.y_nodes[x0_ind][y0_ind: y1_ind+1][::-1]
+                        xvs = interp2d(y_hs, [y1, y0], [x_vals_upper, x_vals_lower])[::-1]
+                        x_nodes2d[x0_ind:xrhs_ind + 1, y0_ind: y1_ind+1] = xvs.T
+                    else:
+                        x_vals_lower = x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind]
+                        y_hs = self.y_nodes[x0_ind][y1_ind: y0_ind + 1][::-1]
+                        xvs = interp2d(y_hs, [y0, y1], [x_vals_lower, x_vals_upper])[::-1]
+                        x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind: y0_ind + 1] = xvs.T
 
             x0 = x1
             y0 = y1
@@ -1104,7 +1132,6 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         inds = np.array([0] + list(inds) + [len(coords[0]) -1], dtype=int)
         ccoords = coords.T[inds].T
         return ccoords
-
 
 
 def construct_femesh_vary_xy(tds, dy_target, x_scale_pos=None, x_scale_vals=None):

@@ -146,11 +146,11 @@ class TwoDSystem(object):
         self.width = width
         self.height = height
         if x_surf is None:
-            self.x_surf = np.array([0, width])
-            self.y_surf = np.array([0, 0])
+            self._x_surf = np.array([0, width])
+            self._y_surf = np.array([0, 0])
         else:
-            self.x_surf = np.array(x_surf)
-            self.y_surf = np.array(y_surf)
+            self._x_surf = np.array(x_surf)
+            self._y_surf = np.array(y_surf)
 
         self._sps = []
         self._x_sps = []
@@ -261,6 +261,28 @@ class TwoDSystem(object):
         if self._unique_hash is None:
             self._unique_hash = uuid.uuid1()
         return self._unique_hash
+
+    @property
+    def x_surf(self):
+        return self._x_surf
+
+    @x_surf.setter
+    def x_surf(self, values):
+        if values is None:
+            self._x_surf = None
+        else:
+            self._x_surf = np.array(values)
+
+    @property
+    def y_surf(self):
+        return self._y_surf
+
+    @y_surf.setter
+    def y_surf(self, values):
+        if values is None:
+            self._y_surf = None
+        else:
+            self._y_surf = np.array(values)
 
     def get_y_surface_at_x(self, x):
         return np.interp(x, self.x_surf, self.y_surf)
