@@ -38,7 +38,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     _inactive_value = 1000000
 
     def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True,
-                 use_3d_interp=False, smooth_surf=False):
+                 use_3d_interp=False, smooth_surf=False, force_x2d=False):
         """
         Builds a finite element mesh of a two-dimension system
 
@@ -77,8 +77,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
         self.xs.append(tds.width)
         self.xs = np.array(self.xs)
-        inds = np.where(tds.x_surf <= tds.width)
-        self.x_surf = np.array(tds.x_surf[inds])
+        inds = np.where(np.array(tds.x_surf) <= tds.width)
+        self.x_surf = np.array(tds.x_surf)[inds]
         if tds.width not in self.x_surf:
             self.x_surf = np.insert(self.x_surf, len(self.x_surf), tds.width)
         self.y_surf = np.interp(self.x_surf, tds.x_surf, tds.y_surf)
@@ -119,6 +119,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 self.set_to_decimal_places()
             if smooth_surf:
                 self.adjust_for_smooth_surface()
+                self.set_soil_ids_to_vary_xy_grid()
+            elif force_x2d:
+                self.x_nodes2d = self.x_nodes[:, np.newaxis] * np.ones_like(self.y_nodes)
                 self.set_soil_ids_to_vary_xy_grid()
             else:
                 self.set_soil_ids_to_vary_y_grid()
