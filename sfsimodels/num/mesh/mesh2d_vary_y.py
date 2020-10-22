@@ -723,21 +723,27 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         x_edge = self.xcs_sorted[i_curr + 1]
                     apx_x_steps = np.linspace(x0, x1, abs(y1_ind - y0_ind) + 2)
                     for i in range(1, len(apx_x_steps) - 1):
-                        if y1_ind < y0_ind:  # down slope to the left
+                        if y1_ind < y0_ind:  # up slope to the left
                             x_lhs = apx_x_steps[i]
-                            x_rhs = min([apx_x_steps[i + 1] + 2, x_edge])
+                            x_rhs = min([apx_x_steps[i + 1], x_edge])
                             y_upper_ind = y0_ind - i
-                        else:  # up slope to the left
+                            dx_lhs = 0
+                            dx_rhs = self.dy_target
+                        else:  # down slope to the left
                             x_lhs = apx_x_steps[i - 1]
                             x_rhs = min([apx_x_steps[i], x_edge])
                             y_upper_ind = y1_ind - i
+                            dx_lhs = 0
+                            dx_rhs = -self.dy_target
 
-                        x_rhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
-                        x_rhs = self.x_nodes[x_rhs_ind]
-                        x_lhs_ind = np.argmin(abs(self.x_nodes - x_lhs))
-                        x_lhs = self.x_nodes[x_lhs_ind]
-                        x_vals_upper = np.linspace(x_lhs, x_rhs, x_rhs_ind - x_lhs_ind + 1)  # TODO: should be scaled based on current xnode_2d pos
-                        x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = x_vals_upper
+                        x_rhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_rhs))
+                        x_rhs = x_nodes2d[x_rhs_ind, y_upper_ind]
+                        x_lhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_lhs))
+                        x_lhs = x_nodes2d[x_lhs_ind, y_upper_ind]
+                        sf = 1 - self.dy_target / (x_rhs - x_lhs)
+                        sfs = np.linspace(1, sf, x_rhs_ind - x_lhs_ind + 1)
+                        # x_vals_upper = np.linspace(x_lhs, x_rhs + dx_rhs, x_rhs_ind - x_lhs_ind + 1)  # TODO: should be scaled based on current xnode_2d pos
+                        x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = sfs * x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind]
 
                     # raise ValueError(
                     #     f'Cannot adjust stepped slope to smooth slope, required abs slope angle ({slope:.2f}) >= 1.5:1')
