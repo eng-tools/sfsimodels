@@ -716,31 +716,35 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             if y1_ind != y0_ind:  # non smooth surface
                 if abs(slope) < 1.5:
                     # Need to smooth steps
+                    y_ind_top = min([y0_ind, y1_ind])
+                    dy_inds = abs(y1_ind - y0_ind)
+                    y_ns = self.y_nodes[x0_ind: x1_ind, y_ind_top: y_ind_top + dy_inds+1]
+                    y_centres_at_xns = (y_ns[1:] + y_ns[:-1]) / 2
+                    y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
+                    # y_ns = self.y_nodes[x0_ind+1: x1_ind, y_ind_top: y_ind_top + dy_inds+1]
+                    xcens = (x_nodes2d[x0_ind+1: x1_ind, y_ind_top] + x_nodes2d[x0_ind: x1_ind-1, y_ind_top]) / 2
+                    y_surf_at_x_cens = np.interp(xcens, self.tds.x_surf, self.tds.y_surf)
                     i_curr = np.where(self.xcs_sorted == x1)[0][0]
-                    if i_curr == len(self.xcs_sorted) - 1:  # right hand mesh edge
-                        x_edge = self.xcs_sorted[i_curr]
-                    else:
-                        x_edge = self.xcs_sorted[i_curr + 1]
-                    apx_x_steps = np.linspace(x0, x1, abs(y1_ind - y0_ind) + 2)  # TODO: improve estimate
-                    for i in range(1, len(apx_x_steps) - 1):
+                    x_lhs_ind = x0_ind
+                    for i in range(1, dy_inds + 1):
+                        y_upper_ind = y_ind_top + i - 1
                         if y1_ind < y0_ind:  # up slope to the left
-                            x_lhs = apx_x_steps[i]
-                            x_rhs = min([apx_x_steps[i + 1], x_edge])
-                            y_upper_ind = y0_ind - i
+                            x_lhs_ind = np.where(y_centres[:, -i -1] < y_surf_at_x_cens)[0][0] + 1 + x0_ind
+                            x_rhs_ind = np.where(y_centres[:, -i -2] < y_surf_at_x_cens)[0][0] + 1 + x0_ind  # len=0. then use x1
                             sgn_rhs = -1
                         else:  # down slope to the left
-                            x_lhs = apx_x_steps[i - 1]
-                            x_rhs = min([apx_x_steps[i], x_edge])
-                            y_upper_ind = y1_ind - i
+                            x_rhs_ind = np.where(y_centres[:, i-1] > y_surf_at_x_cens)[0][0] + x0_ind
                             sgn_rhs = 1
 
-                        x_rhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_rhs))
+                        # x_rhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_rhs))
                         x_rhs = x_nodes2d[x_rhs_ind, y_upper_ind]
-                        x_lhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_lhs))
+                        # x_lhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_lhs))
                         x_lhs = x_nodes2d[x_lhs_ind, y_upper_ind]
-                        dx_rhs = sgn_rhs * (x_nodes2d[x_rhs_ind + 1, y_upper_ind] - x_nodes2d[x_rhs_ind, y_upper_ind])
+                        dx_rhs = 0.5 * sgn_rhs * (x_nodes2d[x_rhs_ind + 1, y_upper_ind] - x_nodes2d[x_rhs_ind, y_upper_ind])  # adjust by half an element width  # TODO: Include as setting
                         dxs = np.linspace(0, dx_rhs, x_rhs_ind - x_lhs_ind + 1)
                         x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] - dxs
+                        # self.y_nodes[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = np.interp(x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind], self.tds.x_surf, self.tds.y_surf)
+                        x_lhs_ind = x_rhs_ind
 
                     # raise ValueError(
                     #     f'Cannot adjust stepped slope to smooth slope, required abs slope angle ({slope:.2f}) >= 1.5:1')

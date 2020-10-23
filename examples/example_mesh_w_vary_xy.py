@@ -31,11 +31,11 @@ sp.x_angles = [0.17, 0.07, 0.0]
 sp2.x_angles = [0.0, 0.00, 0.0]
 
 
-tds = sm.TwoDSystem(width=33, height=7.5)
+tds = sm.TwoDSystem(width=45, height=7.5)
 tds.add_sp(sp, x=0)
 tds.add_sp(sp2, x=17)
-tds.x_surf = np.array([0, 12, 13, tds.width])
-tds.y_surf = np.array([0, 0, h_face, h_face-0.5])
+tds.x_surf = np.array([0, 12, 13, 20, tds.width])
+tds.y_surf = np.array([0, 0, h_face, h_face-0.6, h_face + 0.])
 
 x_scale_pos = np.array([0, 5, 10, 16, 19, 25, 29])
 x_scale_vals = np.array([2., 1.2, 1.0, 1.2, 0.7, 1.2, 2])
@@ -50,8 +50,8 @@ show_set_x_nodes = 0
 show_build_y_coords_grid_via_propagation = 0
 show_set_to_decimal_places = 0
 show_smooth_surf = 1
-show_set_soil_ids_to_grid = 0
-show_exclude_fd_eles = 1
+show_set_soil_ids_to_grid = 1
+show_exclude_fd_eles = 0
 ##%
 fc = mesh2d_vary_y.FiniteElementVary2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos,
                                                        x_scale_vals=x_scale_vals, auto_run=False)
@@ -283,10 +283,13 @@ if show_smooth_surf:
 
 ##%
 fc.set_soil_ids_to_vary_xy_grid()
+inds = np.where(fc.soil_grid == fc._inactive_value)
+fc.soil_grid[inds] = 10
 fc.create_mesh()
 if show_set_soil_ids_to_grid:
     win = o3plot.create_scaled_window_for_tds(tds, title='set_soil_ids_to_grid')
     o3plot.plot_finite_element_mesh_onto_win(win, fc.femesh)
+    win.plot(tds.x_surf, tds.y_surf)
     o3plot.show()
 
 ##%
