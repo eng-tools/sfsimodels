@@ -6,6 +6,7 @@ Pre-release
 -----------
 * Improved saving and loading of `TwoDSystem`
 * Allowed calculation of effective stress when soil under water and dry weight is not set
+* Fixed issue where soil_profile.move_layer function would delete layer if new position was equal to previous position
 
 0.9.28 (2020-10-08)
 --------------------

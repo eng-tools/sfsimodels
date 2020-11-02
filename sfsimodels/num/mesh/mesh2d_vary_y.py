@@ -373,7 +373,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 diff_nb = nb1 - nb0
                 if diff_nb:  # if zero then slope matches the line
                     # else check if an adjustment is possible
-                    for nn in range(diff_nb):
+                    nnn = abs(diff_nb)
+                    for nn in range(nnn):
                         diff_nb = nb1 - nb0
                         if diff_nb == 0:
                             break
@@ -852,23 +853,35 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     continue
                 x_angles = list(sp.x_angles)
                 sp_x = self.tds.x_sps[pid]
+                lay_ind = 0
                 for ll in range(1, sp.n_layers + 1):
                     # yc = y_centres[xx][yy]
                     x_diff = x_centres[xx][yy] - sp_x
-                    h_diff = sp.layer_depth(ll) - self.y_surf_at_sps[pid]
-                    if x_angles[ll - 1] is None or -y_centres[xx][yy] > h_diff - x_angles[ll - 1] * x_diff:
-                        pass
+                    z_lay_at_sp = -sp.layer_depth(ll) + self.y_surf_at_sps[pid]
+                    if x_angles[ll - 1] is None or np.isnan(x_angles[ll - 1]):
+                        z_lay_at_x = 1e6
                     else:
-                        if ll == 1:  # above the original soil profile due to ground slope
-                            unique_hash = sp.layer(1).unique_hash
-                        else:
-                            unique_hash = sp.layer(ll - 1).unique_hash
-                        self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
+                        z_lay_at_x = z_lay_at_sp + x_angles[ll - 1] * x_diff
+                    if y_centres[xx][yy] <= z_lay_at_x:
+                        lay_ind = ll
+                    else:
                         break
-                    if ll == sp.n_layers:
-                        unique_hash = sp.layer(ll).unique_hash
-                        self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
-                        break
+                if lay_ind == 0:
+                    self.soil_grid[xx][yy] = self._inactive_value
+                else:
+                    unique_hash = sp.layer(lay_ind).unique_hash
+                    self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
+                    # else:
+                    #     if ll == 1:  # above the original soil profile due to ground slope
+                    #         unique_hash = sp.layer(1).unique_hash
+                    #     else:
+                    #         unique_hash = sp.layer(ll - 1).unique_hash
+                    #
+                    #     break
+                    # if ll == sp.n_layers:
+                    #     unique_hash = sp.layer(ll).unique_hash
+                    #     self.soil_grid[xx][yy] = self._soil_hashes.index(unique_hash)
+                    #     break
 
     def create_mesh(self):
         # if len(np.shape(self.x_nodes)) == 2:

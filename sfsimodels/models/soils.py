@@ -1175,8 +1175,8 @@ class SoilProfile(PhysicalObject):
     def move_layer(self, new_depth, layer_int):
         key = list(self._layers.keys())[layer_int - 1]
         soil = self._layers[key]
-        self._layers[new_depth] = soil
         del self._layers[key]
+        self._layers[new_depth] = soil
         self._sort_layers()
 
     def layer(self, index):
