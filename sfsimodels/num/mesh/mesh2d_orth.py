@@ -4,35 +4,8 @@ from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left
 
 
-# class FiniteElementOrth2DMesh(object):
-#     x_act = None
-#     y_flat = None
-#     x_nodes = None
-#     y_nodes = None
-#     soils = None
-#     x_index_to_sp_index = None
-#     _inactive_value = 1000000
-#
-#     def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, fd_eles=0):
-#         """
-#         A finite element mesh of a two-dimension system
-#
-#         Parameters
-#         ----------
-#         tds: TwoDSystem
-#             A two dimensional system of models
-#         dy_target: float
-#             Target height of elements
-#         x_scale_pos: array_like
-#             x-positions used to provide scale factors for element widths
-#         x_scale_vals: array_like
-#             scale factors for element widths
-#         dp: int
-#             Number of decimal places
-#         """
-
 class FiniteElementOrth2DMesh(object):
-    def __init__(self, x_nodes, y_nodes, soil_grid, soils, inactive_value=1e6):
+    def __init__(self, x_nodes=None, y_nodes=None, soil_grid=None, soils=None, inactive_value=1e6):
         self.x_nodes = x_nodes
         self.y_nodes = y_nodes
         self.soil_grid = soil_grid
@@ -51,6 +24,45 @@ class FiniteElementOrth2DMesh(object):
     @property
     def soils(self):
         return self._soils
+
+    @soils.setter
+    def soils(self, sls):
+        self._soils = sls
+
+    @property
+    def x_nodes(self):
+        return self._x_nodes
+
+    @x_nodes.setter
+    def x_nodes(self, x_nodes):
+        if isinstance(x_nodes, str):
+            self._x_nodes = np.loadtxt(x_nodes)
+        else:
+            self._x_nodes = x_nodes
+        self.coords_mesh = None
+
+    @property
+    def y_nodes(self):
+        return self._y_nodes
+
+    @y_nodes.setter
+    def y_nodes(self, y_nodes):
+        if isinstance(y_nodes, str):
+            self._y_nodes = np.loadtxt(y_nodes)
+        else:
+            self._y_nodes = y_nodes
+        self.coords_mesh = None
+
+    @property
+    def soil_grid(self):
+        return self._soil_grid
+
+    @soil_grid.setter
+    def soil_grid(self, soil_grid):
+        if isinstance(soil_grid, str):
+            self._soil_grid = np.loadtxt(soil_grid)
+        else:
+            self._soil_grid = soil_grid
 
     def get_indexes_at_depths(self, depths, low=None):
         return interp_left(-np.array(depths), -self.y_nodes, low=low)
@@ -337,8 +349,6 @@ class FiniteElementOrth2DMeshConstructor(object):
             ys = np.array([fcy - fd.depth, fcy - fd.depth + fd.height])
             xsi, xei = self.get_indexes_at_xs(xs)
             yei, ysi = self.get_indexes_at_depths(ys, low='min')
-            print('xi: ', xsi, xei)
-            print('yi: ', ysi, yei)
             # create foundation nodes a soil mesh nodes
             # along the base
             j = 0
@@ -346,6 +356,13 @@ class FiniteElementOrth2DMeshConstructor(object):
                 for yy in range(ysi, yei):
                     self.soil_grid[xx][yy] = self._inactive_value
                     self.femesh.soil_grid[xx][yy] = self.femesh.inactive_value
+
+
+def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None):
+    fc = FiniteElementOrth2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+    femesh = fc.femesh
+    assert isinstance(femesh, FiniteElementOrth2DMesh)
+    return femesh
 
 
 def _example_run():

@@ -1299,8 +1299,9 @@ class SoilProfile(PhysicalObject):
                         raise AnalysisError("Saturated unit weight not defined for layer %i." % layer_int)
                     sat_height = bottom_depth - max(self.gwl, depths[l_index])
                     dry_height = height - sat_height
-                    total_stress += dry_height * self.layer(layer_int).unit_dry_weight + \
-                                    sat_height * self.layer(layer_int).unit_sat_weight
+                    total_stress += sat_height * self.layer(layer_int).unit_sat_weight
+                    if dry_height > 0:
+                        total_stress += dry_height * self.layer(layer_int).unit_dry_weight
             else:
                 end = 1
             if end:

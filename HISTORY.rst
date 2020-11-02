@@ -5,6 +5,7 @@ History
 Pre-release
 -----------
 * Improved saving and loading of `TwoDSystem`
+* Allowed calculation of effective stress when soil under water and dry weight is not set
 
 0.9.28 (2020-10-08)
 --------------------

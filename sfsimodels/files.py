@@ -114,19 +114,7 @@ deprecated_types = OrderedDict([
     ("raft_foundation", "foundation_raft")
 ])
 
-
-def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbose=0):
-    """
-    Given an ecp dictionary, build a dictionary of sfsi objects
-
-    :param ecp_dict: dict, engineering consistency project dictionary
-    :param custom: dict, used to load custom objects, {model type: custom object}
-    :param verbose: int, console output
-    :return: dict
-    """
-    if custom_map is None:
-        custom_map = {}
-
+def get_std_obj_map():
     obj_map = {
         "soil-soil": soils.Soil,
         "soil-critical_soil": soils.CriticalSoil,
@@ -162,7 +150,21 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
         "load-load_at_coords": loads.LoadAtCoords,
         "material-rc_material": materials.ReinforcedConcreteMaterial
     }
+    return obj_map
 
+def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbose=0):
+    """
+    Given an ecp dictionary, build a dictionary of sfsi objects
+
+    :param ecp_dict: dict, engineering consistency project dictionary
+    :param custom: dict, used to load custom objects, {model type: custom object}
+    :param verbose: int, console output
+    :return: dict
+    """
+    if custom_map is None:
+        custom_map = {}
+
+    obj_map = get_std_obj_map()
     # merge and overwrite the object map with custom maps
     # for item in custom_map:
     #     obj_map[item] = custom_map[item]
