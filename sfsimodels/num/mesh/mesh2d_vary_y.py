@@ -56,8 +56,6 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     if sgn == -1:
         xm = xm[::-1]
         ym = ym[::-1]
-    print(xm)
-    print(ym)
     y_centres_at_xns = (ym[1:] + ym[:-1]) / 2
     y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
     # get x-coordinates of centres of relevant elements
@@ -73,7 +71,6 @@ def adj_slope_by_layers(xm, ym, sgn=1):
             included_ele.append(inds[0][0])
         else:
             included_ele.append(len(y_surf_at_x_cens))
-        print(included_ele, y_centres[:, i], y_surf_at_x_cens)
     included_ele.append(len(y_surf_at_x_cens))
     new_xm = xm
     new_ym = ym
@@ -218,6 +215,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
         for i in range(len(self.tds.sps)):
             x_curr = self.tds.x_sps[i]
+            if x_curr > self.tds.width:
+                continue
             if i == len(self.tds.sps) - 1:
                 x_next = self.tds.width
             else:
@@ -587,6 +586,13 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     opts_tried.append((x_ind, y_ind))
             else:
                 break
+        smallest = 0
+        for xcs in self.y_blocks:
+            if self.y_blocks[xcs][-1] < smallest:
+                smallest = self.y_blocks[xcs][-1]
+        if smallest != 0:
+            for xcs in self.y_blocks:
+                self.y_blocks[xcs][-1] += abs(smallest)
 
     def build_req_y_node_positions(self):
         """
