@@ -32,6 +32,66 @@ def adjust_slope_points_for_removals(sds, x, removed_y, retained_y):
                 sd[1][i] = retained_y
 
 
+def adj_slope_by_layers(xm, ym, sgn=1):
+    """
+    Given mesh coordinates, adjust the mesh to be match the slope by adjust each layer
+
+    bottom left and top right coords of mesh are the slope
+
+    Parameters
+    ----------
+    xm
+    ym
+    x_slope - NOT needed
+    y_slope
+
+    Returns
+    -------
+
+    """
+    # TODO: account for shift before assessing position of centroid
+    # TODO use centroid formula - and use o3plot to get ele-coords
+    ym = sgn * np.array(ym)
+    xm = sgn * np.array(xm)
+
+    if sgn == -1:
+        xm = xm[::-1]
+        ym = ym[::-1]
+    print(xm)
+    print(ym)
+    y_centres_at_xns = (ym[1:] + ym[:-1]) / 2
+    y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
+    # get x-coordinates of centres of relevant elements
+    xcens = (xm[1:, -1] + xm[:-1, -1]) / 2
+    y_surf_at_x_cens = np.interp(xcens, [xm[0][0], xm[-1][-1]], [ym[0][0], ym[-1][-1]])
+    # y_surf_at_x_cens = np.interp(xcens, x_slope, y_slope)
+
+    included_ele = []
+    dy_inds = len(ym[0, :]) - 1
+    for i in range(0, dy_inds):
+
+        inds = np.where(y_centres[:, i] < y_surf_at_x_cens)
+        if len(inds[0]):
+            included_ele.append(inds[0][0])
+        else:
+            included_ele.append(len(y_surf_at_x_cens))
+        print(included_ele, y_centres[:, i], y_surf_at_x_cens)
+    included_ele.append(len(y_surf_at_x_cens))
+    new_xm = xm
+    new_ym = ym
+    for i in range(1, dy_inds + 1):
+        x_ind_adj = included_ele[i-1]
+        x_ind_adj_next = included_ele[i]
+        # shift by half of the ele
+        dx = (xm[x_ind_adj + 1, i] - xm[x_ind_adj, i]) * 0.5
+        dxs = np.interp(xm[x_ind_adj:x_ind_adj_next, i], [xm[x_ind_adj, i], xm[x_ind_adj_next, i]], [dx, 0])
+        new_xm[x_ind_adj:x_ind_adj_next, i] = xm[x_ind_adj:x_ind_adj_next, i] + dxs
+    if sgn == -1:
+        new_xm = new_xm[::-1]
+        new_ym = new_ym[::-1]
+    return new_xm * sgn, new_ym * sgn
+
+
 class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
     _soils = None
     x_index_to_sp_index = None
@@ -180,11 +240,11 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             angles = []
             for yy in range(1, self.tds.sps[i].n_layers + 1):
                 # if self.tds.sps[i].layer_depth(yy) >= 0:
-                int_yy.append(-self.tds.sps[i].layer_depth(yy) + y_curr_surf)
-                angles.append(self.tds.sps[i].x_angles[yy-1])
+                y = -self.tds.sps[i].layer_depth(yy) + y_curr_surf
+                if -y < self.tds.height:
+                    int_yy.append(y)
+                    angles.append(self.tds.sps[i].x_angles[yy-1])
             angles = np.array(angles)
-            # angs = np.array(self.tds.sps[i].x_angles)[:-1]
-            # angles = np.array(self.tds.sps[i].x_angles)[:-1]
 
             if xs[0] not in yd:
                 yd[xs[0]] = []
@@ -711,7 +771,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             y1 = self.y_surf[ss]
             slope = (y1 - y0) / (x1 - x0)
             x0_ind = np.argmin(abs(self.x_nodes - x0))  # TODO: should use x_nodes2d
-            y0_ind = np.argmin(abs(self.y_nodes[x0_ind] - y0))
+            y0_ind = np.argmin(abs(self.y_nodes[x0_ind] - y0))  # counts from top to bottom
             x1_ind = np.argmin(abs(self.x_nodes - x1))
             y1_ind = np.argmin(abs(self.y_nodes[x1_ind] - y1))
             if x_nodes2d[x0_ind][y0_ind] != self.x_nodes[x0_ind]:
@@ -724,39 +784,40 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 y_top = max([y0, y1])
                 y_bot = min([y0, y1])
                 dy_inds = abs(y1_ind - y0_ind)
-                if abs(slope) < 1.5:
-                    # Need to smooth steps
+                if (x1_ind - x0_ind) > abs(y1_ind - y0_ind):
+                    # Need to smooth by adjusting each step
+                    # get all relevant node y-coordinates
+                    y_ns = self.y_nodes[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds+1]
+                    x_ns = x_nodes2d[x0_ind: x1_ind+1, y_ind_top: y_ind_top + dy_inds+1]
+                    y_ns = y_ns[:, ::-1]  # flip
+                    x_ns = x_ns[:, ::-1]
 
-                    y_ns = self.y_nodes[x0_ind: x1_ind, y_ind_top: y_ind_top + dy_inds+1]
-                    y_centres_at_xns = (y_ns[1:] + y_ns[:-1]) / 2
-                    y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
-                    # y_ns = self.y_nodes[x0_ind+1: x1_ind, y_ind_top: y_ind_top + dy_inds+1]
-                    xcens = (x_nodes2d[x0_ind+1: x1_ind, y_ind_top] + x_nodes2d[x0_ind: x1_ind-1, y_ind_top]) / 2
-                    y_surf_at_x_cens = np.interp(xcens, self.tds.x_surf, self.tds.y_surf)
-                    i_curr = np.where(self.xcs_sorted == x1)[0][0]
-                    x_lhs_ind = x0_ind
-                    for i in range(1, dy_inds + 1):
-                        y_upper_ind = y_ind_top + i - 1  # TODO: deal with this condition
-                        if y1_ind < y0_ind:  # up slope to the left
-                            x_lhs_ind = np.where(y_centres[:, -i -1] < y_surf_at_x_cens)[0][0] + 1 + x0_ind
-                            x_rhs_ind = np.where(y_centres[:, -i -2] < y_surf_at_x_cens)[0][0] + 1 + x0_ind  # len=0. then use x1
-                            sgn_rhs = -1
-                        else:  # down slope to the left
-                            x_rhs_ind = np.where(y_centres[:, i-1] > y_surf_at_x_cens)[0][0] + x0_ind
-                            sgn_rhs = 1
+                    # # get y-coordinates of centres of relevant elements
+                    # y_centres_at_xns = (y_ns[1:] + y_ns[:-1]) / 2
+                    # y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
+                    # # get x-coordinates of centres of relevant elements
+                    # xcens = (x_nodes2d[x0_ind+1: x1_ind+1, y_ind_top] + x_nodes2d[x0_ind: x1_ind, y_ind_top]) / 2
+                    # y_surf_at_x_cens = np.interp(xcens, self.tds.x_surf, self.tds.y_surf)
+                    # i_curr = np.where(self.xcs_sorted == x1)[0][0]
+                    # x_lhs_ind = x0_ind
+                    if y1_ind < y0_ind:  # up slope to the right  # TODO: issue here if small diff?
+                        new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, y_ns)
+                        x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
 
+                    else:  # down slope to the right
+                        new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, -y_ns, -1)
+                        x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
+                        # x_rhs_ind = np.where(y_centres[:, i-1] > y_surf_at_x_cens)[0][0] + x0_ind
+                        # sgn_rhs = 1
                         # x_rhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_rhs))
-                        x_rhs = x_nodes2d[x_rhs_ind, y_upper_ind]
-                        # x_lhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_lhs))
-                        x_lhs = x_nodes2d[x_lhs_ind, y_upper_ind]
-                        dx_rhs = 0.5 * sgn_rhs * (x_nodes2d[x_rhs_ind + 1, y_upper_ind] - x_nodes2d[x_rhs_ind, y_upper_ind])  # adjust by half an element width  # TODO: Include as setting
-                        dxs = np.linspace(0, dx_rhs, x_rhs_ind - x_lhs_ind + 1)
-                        x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] - dxs
-                        # self.y_nodes[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = np.interp(x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind], self.tds.x_surf, self.tds.y_surf)
-                        x_lhs_ind = x_rhs_ind
-
-                    # raise ValueError(
-                    #     f'Cannot adjust stepped slope to smooth slope, required abs slope angle ({slope:.2f}) >= 1.5:1')
+                        # x_rhs = x_nodes2d[x_rhs_ind, y_upper_ind]
+                        # # x_lhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_lhs))
+                        # x_lhs = x_nodes2d[x_lhs_ind, y_upper_ind]
+                        # dx_rhs = 0.5 * sgn_rhs * (x_nodes2d[x_rhs_ind + 1, y_upper_ind] - x_nodes2d[x_rhs_ind, y_upper_ind])  # adjust by half an element width  # TODO: Include as setting
+                        # dxs = np.linspace(0, dx_rhs, x_rhs_ind - x_lhs_ind + 1)
+                        # x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] - dxs
+                        # # self.y_nodes[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = np.interp(x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind], self.tds.x_surf, self.tds.y_surf)
+                        # x_lhs_ind = x_rhs_ind
                 else:  # Smooth the whole slope as one
                     dx = x1 - x0
 
