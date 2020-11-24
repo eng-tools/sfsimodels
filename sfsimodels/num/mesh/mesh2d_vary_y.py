@@ -49,7 +49,6 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     -------
 
     """
-    # TODO: account for shift before assessing position of centroid
     # TODO use centroid formula - and use o3plot to get ele-coords
     ym = sgn * np.array(ym)
     xm = sgn * np.array(xm)
@@ -62,14 +61,13 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     y_centres_at_xns = (ym[1:] + ym[:-1]) / 2
     y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
     # get x-coordinates of centres of relevant elements
-    xcens = (xm[1:, -1] + xm[:-1, -1]) / 2
-    y_surf_at_x_cens = np.interp(xcens, [xm[0][0], xm[-1][-1]], [ym[0][0], ym[-1][-1]])
-    # y_surf_at_x_cens = np.interp(xcens, x_slope, y_slope)
 
     included_ele = []
     dy_inds = len(ym[0, :]) - 1
     for i in range(0, dy_inds):
-
+        # account for shift before assessing position of centroid
+        xcens = (xm[1:, i] + xm[:-1, i]) / 2 + 0.375 * (xm[1:, -1] - xm[:-1, -1])
+        y_surf_at_x_cens = np.interp(xcens, [xm[0][0], xm[-1][-1]], [ym[0][0], ym[-1][-1]])
         inds = np.where(y_centres[:, i] < y_surf_at_x_cens)
         if len(inds[0]):
             included_ele.append(inds[0][0])
@@ -792,32 +790,13 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     y_ns = y_ns[:, ::-1]  # flip
                     x_ns = x_ns[:, ::-1]
 
-                    # # get y-coordinates of centres of relevant elements
-                    # y_centres_at_xns = (y_ns[1:] + y_ns[:-1]) / 2
-                    # y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
-                    # # get x-coordinates of centres of relevant elements
-                    # xcens = (x_nodes2d[x0_ind+1: x1_ind+1, y_ind_top] + x_nodes2d[x0_ind: x1_ind, y_ind_top]) / 2
-                    # y_surf_at_x_cens = np.interp(xcens, self.tds.x_surf, self.tds.y_surf)
-                    # i_curr = np.where(self.xcs_sorted == x1)[0][0]
-                    # x_lhs_ind = x0_ind
-                    if y1_ind < y0_ind:  # up slope to the right  # TODO: issue here if small diff?
+                    if y1_ind < y0_ind:  # up slope to the right
                         new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, y_ns)
                         x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
 
                     else:  # down slope to the right
                         new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, -y_ns, -1)
                         x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
-                        # x_rhs_ind = np.where(y_centres[:, i-1] > y_surf_at_x_cens)[0][0] + x0_ind
-                        # sgn_rhs = 1
-                        # x_rhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_rhs))
-                        # x_rhs = x_nodes2d[x_rhs_ind, y_upper_ind]
-                        # # x_lhs_ind = np.argmin(abs(x_nodes2d[:, y_upper_ind] - x_lhs))
-                        # x_lhs = x_nodes2d[x_lhs_ind, y_upper_ind]
-                        # dx_rhs = 0.5 * sgn_rhs * (x_nodes2d[x_rhs_ind + 1, y_upper_ind] - x_nodes2d[x_rhs_ind, y_upper_ind])  # adjust by half an element width  # TODO: Include as setting
-                        # dxs = np.linspace(0, dx_rhs, x_rhs_ind - x_lhs_ind + 1)
-                        # x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] - dxs
-                        # # self.y_nodes[x_lhs_ind:x_rhs_ind + 1, y_upper_ind] = np.interp(x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_upper_ind], self.tds.x_surf, self.tds.y_surf)
-                        # x_lhs_ind = x_rhs_ind
                 else:  # Smooth the whole slope as one
                     dx = x1 - x0
 
