@@ -87,6 +87,23 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     return new_xm * sgn, new_ym * sgn
 
 
+def calc_centroid(xs, ys):
+    import numpy as np
+    x0 = np.array(xs)
+    y0 = np.array(ys)
+    x1 = np.roll(xs, 1, axis=-1)
+    y1 = np.roll(ys, 1, axis=-1)
+    a = x0 * y1 - x1 * y0
+    xc = np.sum((x0 + x1) * a, axis=-1)
+    yc = np.sum((y0 + y1) * a, axis=-1)
+
+    area = 0.5 * np.sum(a, axis=-1)
+    xc /= (6.0*area)
+    yc /= (6.0*area)
+
+    return xc, yc
+
+
 class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
     _soils = None
     x_index_to_sp_index = None
@@ -1058,6 +1075,17 @@ class FiniteElementVaryY2DMesh(PhysicalObject):
         if "soil" not in models_dict:
             models_dict["soil"] = {}
 
+    def get_node_indices_for_all_eles(self):
+        xx = np.arange(len(self.soil_grid))
+        xis = np.array([xx, xx + 1, xx + 1, xx])[:, :, np.newaxis] * np.ones_like(self.soil_grid)[np.newaxis, :, :]
+        yy = np.arange(len(self.soil_grid[0]))
+        yis = np.array([xx, xx + 1, xx + 1, xx])[:, np.newaxis, :] * np.ones_like(self.soil_grid)[np.newaxis, :, :]
+        return xis, yis
+
+    def get_node_coords_for_all_eles(self):
+        xis, yis = self.get_node_indices_for_all_eles()
+        x_coords = self.x_nodes[xis]
+        y_coords = self.y_nodes[xis, yis]
 
 class FiniteElementVaryXY2DMesh(PhysicalObject):
     base_type = 'femesh'
@@ -1213,6 +1241,22 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         inds = np.array([0] + list(inds) + [len(coords[0]) -1], dtype=int)
         ccoords = coords.T[inds].T
         return ccoords
+
+    def get_node_indices_for_all_eles(self):
+        xx = np.arange(len(self.soil_grid))
+        xis = np.array([xx, xx + 1, xx + 1, xx]).T[:, np.newaxis, :] * np.ones_like(self.soil_grid)[:, :, np.newaxis]
+        yy = np.arange(len(self.soil_grid[0]))
+        yis = np.array([yy, yy, yy + 1, yy + 1]).T[np.newaxis, :, :] * np.ones_like(self.soil_grid)[:, :, np.newaxis]
+        return xis, yis
+
+    def get_node_coords_for_all_eles(self):
+        xis, yis = self.get_node_indices_for_all_eles()
+        x_coords = self.x_nodes[xis, yis]
+        y_coords = self.y_nodes[xis, yis]
+        return x_coords, y_coords
+
+    def get_centroid_coords_for_all_eles(self):
+        return calc_centroid(*self.get_node_coords_for_all_eles())
 
 
 def construct_femesh_vary_xy(tds, dy_target, x_scale_pos=None, x_scale_vals=None):

@@ -1172,8 +1172,10 @@ class SoilProfile(PhysicalObject):
         key = list(self._layers.keys())[layer_int - 1]
         self._layers[key] = soil
 
-    def move_layer(self, new_depth, layer_int):
+    def move_layer(self, new_depth, layer_int, overwrite=False):
         key = list(self._layers.keys())[layer_int - 1]
+        if new_depth != key and new_depth in self._layers.keys() and not overwrite:
+            raise ValueError('new_depth is already in soil profile. If you want to over write this layer then set overwrite=True')
         soil = self._layers[key]
         del self._layers[key]
         self._layers[new_depth] = soil
