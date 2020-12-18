@@ -242,7 +242,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             # get important x-coordinates that are between two soil profiles
             if x_curr not in yd:
                 yd[x_curr] = []
-            if x_next not in yd:
+            if x_next not in yd and x_next < self.tds.width:
                 yd[x_next] = []
             x_coords = np.array(list(yd))
             inds = np.where((x_coords >= x_curr) & (x_coords <= x_next))

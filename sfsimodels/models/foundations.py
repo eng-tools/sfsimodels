@@ -67,7 +67,8 @@ class Foundation(PhysicalObject):
         "mass",
         'x_bd',
         'z_bd'
-    ]
+        ]
+        self.stack = []
 
     @property
     def ancestor_types(self):
@@ -129,24 +130,28 @@ class Foundation(PhysicalObject):
         if value is None or value == "":
             return
         self._length = float(value)
+        self._add_to_stack('length', float(value))
 
     @width.setter
     def width(self, value):
         if value is None or value == "":
             return
         self._width = float(value)
+        self._add_to_stack('width', float(value))
 
     @height.setter
     def height(self, value):
         if value is None or value == "":
             return
         self._height = float(value)
+        self._add_to_stack('height', float(value))
 
     @depth.setter
     def depth(self, value):
         if value is None or value == "":
             return
         self._depth = float(value)
+        self._add_to_stack('depth', float(value))
 
     def override_density(self, value):
         self._density = float(value)
@@ -162,6 +167,7 @@ class Foundation(PhysicalObject):
         if density is not None and not np.isclose(density, value, rtol=self._tolerance):
             raise ModelError("Density inconsistent with set mass")
         self._density = float(value)
+        self._add_to_stack('density', float(value))
         mass = self._calc_mass()
         if mass is not None and not ct.isclose(mass, self.mass):
             self.mass = mass
@@ -180,6 +186,7 @@ class Foundation(PhysicalObject):
         if mass is not None and not ct.isclose(mass, value, rel_tol=self._tolerance):
             raise ModelError("Mass inconsistent with set density")
         self._mass = float(value)
+        self._add_to_stack('mass', self._mass)
         density = self._calc_density()
         if density is not None and not ct.isclose(density, self.density, rel_tol=self._tolerance):
             self.density = density
@@ -215,6 +222,7 @@ class Foundation(PhysicalObject):
         else:
             raise ModelError("ip_axis must be either 'width', 'length' or None")
         self._ip_axis = ip_axis
+        self._add_to_stack('ip_axis', ip_axis)
 
     @property
     def oop_axis(self):
@@ -233,6 +241,7 @@ class Foundation(PhysicalObject):
         else:
             raise ModelError("oop_axis must be either 'width', 'length' or None")
         self._oop_axis = oop_axis
+        self._add_to_stack('oop_axis', oop_axis)
 
     @property
     def building(self):
@@ -262,6 +271,64 @@ class Foundation(PhysicalObject):
         if z is not None:
             self.z_bd = float(z)
         self._building = building
+
+    def reset_all(self):
+        """
+        Resets all parameters to None
+        """
+        for item in self.inputs:
+            setattr(self, "_%s" % item, None)
+        self.stack = []
+
+    def _add_to_stack(self, item, value):
+        """
+        Add a parameter-value pair to the stack of parameters that have been set.
+        :param item:
+        :param value:
+        :return:
+        """
+        p_value = (item, value)
+        if p_value not in self.stack:
+            self.stack.append(p_value)
+
+    def override(self, item, value):
+        """
+        Can set a parameter to a value that is inconsistent with existing values.
+
+        This method sets the inconsistent value and then reapplies all existing values
+        that are still consistent, all non-consistent (conflicting) values are removed from the object
+        and returned as a list
+
+        :param item: name of parameter to be set
+        :param value: value of the parameter to be set
+        :return: list, conflicting values
+        """
+        if not hasattr(self, item):
+            raise KeyError("Soil Object does not have property: %s", item)
+        try:
+            setattr(self, item, value)  # try to set using normal setter method
+            return []
+        except ModelError:
+            pass  # if inconsistency, then need to rebuild stack
+        # create a new temporary stack
+        temp_stack = list(self.stack)
+        # remove item from original position in stack
+        temp_stack[:] = (value for value in temp_stack if value[0] != item)
+        # add item to the start of the stack
+        temp_stack.insert(0, (item, value))
+        # clear object, ready to rebuild
+        self.reset_all()
+        # reapply trace, one item at a time, if conflict then don't add the conflict.
+        conflicts = []
+        for item, value in temp_stack:
+            # catch all conflicts
+            try:
+                setattr(self, item, value)
+                if item in ['gravity']:
+                    self._add_to_stack(item, value)
+            except ModelError:
+                conflicts.append(item)
+        return conflicts
 
 
 class StripFoundation(Foundation):

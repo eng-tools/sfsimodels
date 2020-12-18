@@ -222,6 +222,11 @@ class TwoDSystem(object):
         self._x_sps.append(x)
         self._sps.append(sp)
 
+    def remove_sp(self, x):
+        ind = self.x_sps.index(x)
+        self._x_sps.pop(ind)
+        self._sps.pop(ind)
+
     @property
     def sps(self):
         return self._sps
@@ -286,3 +291,13 @@ class TwoDSystem(object):
 
     def get_y_surface_at_x(self, x):
         return np.interp(x, self.x_surf, self.y_surf)
+
+    def get_sp_and_x_sps_for_x(self, x):
+        xs = self.x_sps
+        inds = np.argsort(xs)
+        xs_sorted = np.array(xs)[inds]
+        ind = sf.interp_left(x, xs_sorted)
+        return self.sps[inds[ind]], xs_sorted[ind]
+
+
+
