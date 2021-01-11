@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 
 from sfsimodels.models.abstract_models import PhysicalObject
-from sfsimodels.models import SeismicHazard, Foundation, Soil
+# from sfsimodels.models import SeismicHazard, Foundation, Soil
 from sfsimodels.exceptions import ModelError, deprecation
 from sfsimodels import functions as sf
 from sfsimodels.models.sections import Section
@@ -57,6 +57,22 @@ class Building(PhysicalObject):
         self.inputs += self._extra_class_variables
         self.all_parameters = self.inputs + [
         ]
+
+    def add_to_dict(self, models_dict, return_mdict=False, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = OrderedDict()
+        mdict = self.to_dict(**kwargs)
+        if self.material is not None:
+            if "material" not in models_dict:
+                models_dict["material"] = OrderedDict()
+            models_dict["material"][self.material.unique_hash] = self.material.to_dict(**kwargs)
+            # mdict["material"] = {
+            mdict['material_id'] = self.material.id
+            mdict['material_unique_hash'] = self.material.unique_hash
+
+        if return_mdict:
+            return mdict
+        models_dict[self.base_type][self.unique_hash] = mdict
 
     @property
     def ancestor_types(self):
@@ -246,16 +262,16 @@ class BeamColumnElement(PhysicalObject):
             models_dict[self.base_type] = OrderedDict()
         if "section" not in models_dict:
             models_dict["section"] = OrderedDict()
-        profile_dict = self.to_dict(**kwargs)
-        profile_dict["sections"] = []
+        mdict = self.to_dict(**kwargs)
+        mdict["sections"] = []
         for i, section in enumerate(self.sections):
             models_dict["section"][self.sections[i].unique_hash] = self.sections[i].to_dict(**kwargs)
-            profile_dict["sections"].append({
+            mdict["sections"].append({
                 "section_id": str(i),
                 "section_unique_hash": str(self.sections[i].unique_hash),
                 # "depth": float(section)
             })
-        models_dict["beam_column_element"][self.unique_hash] = profile_dict
+        models_dict["beam_column_element"][self.unique_hash] = mdict
 
 
 class Element(BeamColumnElement):
@@ -287,33 +303,35 @@ class Frame(object):
         self._n_bays = n_bays
         self._allocate_beams_and_columns()
 
-    def add_to_dict(self, models_dict, **kwargs):
+    def add_to_dict(self, models_dict, return_mdict=False, **kwargs):
         if self.base_type not in models_dict:
             models_dict[self.base_type] = OrderedDict()
         if "beam_column_element" not in models_dict:
             models_dict["beam_column_element"] = OrderedDict()
-        profile_dict = self.to_dict(**kwargs)
-        profile_dict["beams"] = []
+        mdict = self.to_dict(**kwargs)
+        mdict["beams"] = []
         for i, storey in enumerate(self.beams):
-            profile_dict["beams"].append([])
+            mdict["beams"].append([])
             for j, beam in enumerate(storey):
                 self.beams[i][j].add_to_dict(models_dict, **kwargs)
-                profile_dict["beams"][i].append({
+                mdict["beams"][i].append({
                     "beam_column_element_id": str(i),
                     "beam_column_element_unique_hash": str(self.beams[i][j].unique_hash),
                     # "depth": float(section)
                 })
-        profile_dict["columns"] = []
+        mdict["columns"] = []
         for i, storey in enumerate(self.columns):
-            profile_dict["columns"].append([])
+            mdict["columns"].append([])
             for j, col in enumerate(storey):
                 self.columns[i][j].add_to_dict(models_dict, **kwargs)
-                profile_dict["columns"][i].append({
+                mdict["columns"][i].append({
                     "beam_column_element_id": str(i),
                     "beam_column_element_unique_hash": str(self.columns[i][j].unique_hash),
                     # "depth": float(section)
                 })
-        models_dict[self.base_type][self.unique_hash] = profile_dict
+        if return_mdict:
+            return mdict
+        models_dict[self.base_type][self.unique_hash] = mdict
 
     def to_dict(self, extra=(), **kwargs):
         outputs = OrderedDict()
@@ -675,6 +693,14 @@ class FrameBuilding(Frame, Building):
         trib_widths[0] = tw / 2
         trib_widths[-1] = tw / 2
         return n_total * (trib_lens[:, np.newaxis] * trib_widths[np.newaxis, :]) / self.floor_area
+
+    def add_to_dict(self, models_dict, return_mdict=False, **kwargs):
+        frame_mdict = Frame.add_to_dict(self, models_dict, return_mdict=True, **kwargs)
+        building_mdict = Building.add_to_dict(self, models_dict, return_mdict=True, **kwargs)
+        mdict = {**frame_mdict, **building_mdict}
+        if return_mdict:
+            return mdict
+        models_dict[self.base_type][self.unique_hash] = mdict
 
 
 class FrameBuilding2D(Frame, Building):

@@ -10,6 +10,7 @@ Pre-release
 * Fixed issue with mesh vary2DXY where mesh could not adjust near the surface
 * Added `ip_axis` to foundation default outputs (`ip_axis` is in-plane axis)
 * When using the `set_section_prop` on a `BeamColumnElement` the property is automatically added to the outputs list
+* Can load `Material` object into `Building` as `Building.material`
 
 0.9.28 (2020-10-08)
 --------------------
