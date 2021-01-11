@@ -217,8 +217,12 @@ class BeamColumnElement(PhysicalObject):
         if sections is None:
             sections = range(len(self.sections))
             prop_value = [prop_value] * len(self.sections)
+        if isinstance(prop_value, str) or not hasattr(prop_value, '__len__'):
+            prop_value = [prop_value] * len(self.sections)
         for i, sect_i in enumerate(sections):
             setattr(self.sections[sect_i], prop, prop_value[i])
+            if prop not in self.sections[sect_i].inputs:
+                self.sections[sect_i].inputs.append(prop)
 
     def add_inputs_to_section(self, props, sections=None):
         if sections is None:

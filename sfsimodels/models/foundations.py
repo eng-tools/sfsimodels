@@ -66,7 +66,8 @@ class Foundation(PhysicalObject):
         "density",
         "mass",
         'x_bd',
-        'z_bd'
+        'z_bd',
+        'ip_axis'
         ]
         self.stack = []
 

@@ -538,6 +538,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
                     for w in range(len(y_node_nums_at_xcs)):
                         y_ind = interp_left(opt, y_node_nums_at_xcs[w])
+                        if y_ind == len(y_node_nums_at_xcs[w]) - 1:
+                            y_ind -= 1
                         nb_low = y_node_nums_at_xcs[w][y_ind]
                         nb_high = y_node_nums_at_xcs[w][y_ind + 1]
                         hzone = y_coords_at_xcs[w][y_ind + 1] - y_coords_at_xcs[w][y_ind]
@@ -547,6 +549,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     if max_new_dh < opt_high:
                         for w in range(len(y_node_nums_at_xcs)):
                             y_ind = interp_left(opt, y_node_nums_at_xcs[w])
+                            if y_ind == len(y_node_nums_at_xcs[w]) - 1:
+                                y_ind -= 1
                             self.y_blocks[xcs[w]][y_ind] -= 1
                         found_opt = 1
                         break

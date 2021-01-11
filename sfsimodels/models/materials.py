@@ -18,6 +18,8 @@ class ReinforcedConcreteMaterial(PhysicalObject):
         self.poissons_ratio = poissons_ratio
 
     inputs = [
+        'base_type',
+        'type',
         'fy',
         'e_mod_steel',
         'poissons_ratio'

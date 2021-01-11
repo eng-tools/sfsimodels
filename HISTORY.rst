@@ -7,6 +7,9 @@ Pre-release
 * Improved saving and loading of `TwoDSystem`
 * Allowed calculation of effective stress when soil under water and dry weight is not set
 * Fixed issue where soil_profile.move_layer function would delete layer if new position was equal to previous position
+* Fixed issue with mesh vary2DXY where mesh could not adjust near the surface
+* Added `ip_axis` to foundation default outputs (`ip_axis` is in-plane axis)
+* When using the `set_section_prop` on a `BeamColumnElement` the property is automatically added to the outputs list
 
 0.9.28 (2020-10-08)
 --------------------
