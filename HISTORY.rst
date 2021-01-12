@@ -11,6 +11,8 @@ Pre-release
 * Added `ip_axis` to foundation default outputs (`ip_axis` is in-plane axis)
 * When using the `set_section_prop` on a `BeamColumnElement` the property is automatically added to the outputs list
 * Can load `Material` object into `Building` as `Building.material`
+* Can load `Material` object into `Section` as `Section.material` or `Section.mat`
+* Added `sm.std.create_rc_beam()` function to create an RC beam element with RC sections.
 
 0.9.28 (2020-10-08)
 --------------------

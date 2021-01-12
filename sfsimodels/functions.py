@@ -59,7 +59,10 @@ def get_key_value(value, objs, key=None):
     if key is not None and "_id" == key[-3:]:
         obj_base_type = key[:-3]
         if value is not None:
-            value = objs[obj_base_type][int(value)]
+            try:
+                value = objs[obj_base_type][int(value)]
+            except KeyError:
+                raise KeyError(f'Cannot load type: {obj_base_type}, id: {int(value)}')
         return obj_base_type, value
     elif isinstance(value, list):
         vals = []
@@ -112,6 +115,12 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
             key, value = get_key_value(dictionary[item], objs, key=item)
             if verbose:
                 print("assign: ", key, value)
+            if isinstance(value, dict) and len(value) == 2:  # if is a dict to ref another object
+                keys = list(value.keys())
+                cleaned_keys = [val.replace('_unique_hash', '') for val in keys]
+                if cleaned_keys[0] == cleaned_keys[1]:
+                    value = value[cleaned_keys[0]]
+
             try:
                 setattr(obj, key, value)
             except AttributeError:

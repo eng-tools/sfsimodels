@@ -261,7 +261,7 @@ def load_last_objects(objs, load_later, ll_type, now_loaded):
     ll_objs = load_later[ll_type]
     for obj_pms in ll_objs:
         for pre_req in obj_pms[0].loading_pre_reqs:
-            if pre_req not in objs:
+            if pre_req in load_later and pre_req not in now_loaded:
                 load_last_objects(objs, load_later, pre_req, now_loaded)  # could get into infinite loop if prereqs dependent on each other
         add_to_obj(obj_pms[0], obj_pms[1], objs=objs, verbose=obj_pms[2])
         objs[ll_type][int(obj_pms[1]["id"])] = obj_pms[0]

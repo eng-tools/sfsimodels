@@ -95,6 +95,8 @@ class PhysicalObject(object):
             full_inputs = list(extra)
         for item in full_inputs:
             if item not in self.skip_list:
+                # if item.endswith('_id'):
+                #     obj =
                 value = self.__getattribute__(item)
                 if not export_none and value is None:
                     continue

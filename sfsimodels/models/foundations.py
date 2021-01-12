@@ -443,6 +443,7 @@ class PadFoundation(Foundation):
         "pad_pos_in_length_dir",
         "pad_pos_in_width_dir"
     ]
+    loading_pre_reqs = ('beam_column_element',)
 
     def __str__(self):
         return "PadFoundation id: {0}, name: {1}".format(self.id, self.name)
@@ -451,10 +452,29 @@ class PadFoundation(Foundation):
         super(PadFoundation, self).__init__()
         self.inputs += self._extra_class_inputs
         self._pad = PadFooting()
-        self._tie_beam_sect_in_width_dir = None  # Should be a section object
-        self._tie_beam_sect_in_length_dir = None
+        # self._tie_beam_sect_in_width_dir = None  # Should be a section object
+        # self._tie_beam_sect_in_length_dir = None
+        self._tie_beam_in_width_dir = None  # Should be a element object
+        self._tie_beam_in_length_dir = None
         self._pad_pos_in_length_dir = None
         self._pad_pos_in_width_dir = None
+        self.skip_list = list(self.skip_list) + ["tie_beam_sect_in_width_dir",
+                           "tie_beam_sect_in_length_dir"]
+
+    def add_to_dict(self, models_dict, return_mdict=False, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = OrderedDict()
+        mdict = self.to_dict(**kwargs)
+        if self.tie_beam_in_length_dir is not None:
+            self.tie_beam_in_length_dir.add_to_dict(models_dict, **kwargs)
+            if self.tie_beam_in_length_dir.id is None:
+                self.tie_beam_in_length_dir.id = 1
+            mdict['tie_beam_in_length_dir'] = {'beam_column_element_id': self.tie_beam_in_length_dir.id,
+            'beam_column_element_unique_hash': self.tie_beam_in_length_dir.unique_hash}
+
+        if return_mdict:
+            return mdict
+        models_dict[self.base_type][self.unique_hash] = mdict
 
     @property
     def ancestor_types(self):
@@ -659,21 +679,41 @@ class PadFoundation(Foundation):
         self._depth = float(value)
         self._pad.depth = float(value)
 
+    # @property
+    # def tie_beam_sect_in_width_dir(self):
+    #     return self._tie_beam_sect_in_width_dir
+    #
+    # @tie_beam_sect_in_width_dir.setter
+    # def tie_beam_sect_in_width_dir(self, value):
+    #     self._tie_beam_sect_in_width_dir = value
+    #
+    # @property
+    # def tie_beam_sect_in_length_dir(self):
+    #     return self._tie_beam_sect_in_length_dir
+    #
+    # @tie_beam_sect_in_length_dir.setter
+    # def tie_beam_sect_in_length_dir(self, value):
+    #     self._tie_beam_sect_in_length_dir = value
+
     @property
-    def tie_beam_sect_in_width_dir(self):
-        return self._tie_beam_sect_in_width_dir
+    def tie_beam_in_width_dir(self):
+        return self._tie_beam_in_width_dir
 
-    @tie_beam_sect_in_width_dir.setter
-    def tie_beam_sect_in_width_dir(self, value):
-        self._tie_beam_sect_in_width_dir = value
+    @tie_beam_in_width_dir.setter
+    def tie_beam_in_width_dir(self, value):
+        if isinstance(value, list):  # need to unpack from ecp file
+            self._tie_beam_in_width_dir = value[0]
+        self._tie_beam_in_width_dir = value
 
     @property
-    def tie_beam_sect_in_length_dir(self):
-        return self._tie_beam_sect_in_length_dir
+    def tie_beam_in_length_dir(self):
+        return self._tie_beam_in_length_dir
 
-    @tie_beam_sect_in_length_dir.setter
-    def tie_beam_sect_in_length_dir(self, value):
-        self._tie_beam_sect_in_length_dir = value
+    @tie_beam_in_length_dir.setter
+    def tie_beam_in_length_dir(self, value):
+        if isinstance(value, list):  # need to unpack from ecp file
+            self._tie_beam_in_length_dir = value[0]
+        self._tie_beam_in_length_dir = value
 
 
 class FoundationPad(PadFoundation):

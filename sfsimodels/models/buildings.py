@@ -204,13 +204,14 @@ class BeamColumnElement(PhysicalObject):
     base_type = "beam_column_element"
     type = "beam_column_element"
     section_lengths = None
+    loading_pre_reqs = ('section',)
 
-    def __init__(self, section_class=None):
-        self.inputs = ['sections']
+    def __init__(self, n_sects=1, section_class=None):
+        self.inputs = ['type', 'base_type', 'sections']
         if section_class is None:
-            self._sections = [Section()]
+            self._sections = [Section() for i in range(n_sects)]
         else:
-            self._sections = [section_class()]
+            self._sections = [section_class() for i in range(n_sects)]
 
     @property
     def s(self):
@@ -236,9 +237,9 @@ class BeamColumnElement(PhysicalObject):
         if isinstance(prop_value, str) or not hasattr(prop_value, '__len__'):
             prop_value = [prop_value] * len(self.sections)
         for i, sect_i in enumerate(sections):
-            setattr(self.sections[sect_i], prop, prop_value[i])
-            if prop not in self.sections[sect_i].inputs:
+            if not hasattr(self.sections[sect_i], prop) and prop not in self.sections[sect_i].inputs:
                 self.sections[sect_i].inputs.append(prop)
+            setattr(self.sections[sect_i], prop, prop_value[i])
 
     def add_inputs_to_section(self, props, sections=None):
         if sections is None:
@@ -265,7 +266,10 @@ class BeamColumnElement(PhysicalObject):
         mdict = self.to_dict(**kwargs)
         mdict["sections"] = []
         for i, section in enumerate(self.sections):
-            models_dict["section"][self.sections[i].unique_hash] = self.sections[i].to_dict(**kwargs)
+            if hasattr(self.sections[i], 'add_to_dict'):
+                self.sections[i].add_to_dict(models_dict, **kwargs)
+            else:
+                models_dict["section"][self.sections[i].unique_hash] = self.sections[i].to_dict(**kwargs)
             mdict["sections"].append({
                 "section_id": str(i),
                 "section_unique_hash": str(self.sections[i].unique_hash),
@@ -374,8 +378,8 @@ class Frame(object):
         return ["frame"]
 
     def _allocate_beams_and_columns(self):
-        self._beams = np.array([[BeamColumnElement(self._custom_beam_section) for i in range(self.n_bays)] for ss in range(self.n_storeys)])
-        self._columns = np.array([[BeamColumnElement(self._custom_column_section) for i in range(self.n_cols)] for ss in range(self.n_storeys)])
+        self._beams = np.array([[BeamColumnElement(section_class=self._custom_beam_section) for i in range(self.n_bays)] for ss in range(self.n_storeys)])
+        self._columns = np.array([[BeamColumnElement(section_class=self._custom_column_section) for i in range(self.n_cols)] for ss in range(self.n_storeys)])
 
     @property
     def beams(self):
