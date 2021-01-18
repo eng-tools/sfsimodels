@@ -705,7 +705,26 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 else:
                     ind = np.where(req_y_nodes[i] == j)[0][0]
                     new_y_vals.append(y_coords_at_xcs[i][ind])
+            new_y_vals = np.array(new_y_vals)
+
+            # adjust positions to ensure element thickness is appropriate
+            for j in range(len(req_y_nodes[i]) - 1):
+                ys = new_y_vals[req_y_nodes[i][j]:req_y_nodes[i][j+1]+1]
+                diffs = np.diff(ys)
+                if len(diffs):
+                    min_h = min(diffs)
+                    max_h = max(diffs)
+                    h_block = ys[0] - ys[-1]
+                    nbs = req_y_nodes[i][j+1] - req_y_nodes[i][j]
+                    uni_ys = np.interp(np.arange(req_y_nodes[i][j], req_y_nodes[i][j+1] + 1), req_y_nodes[i], y_coords_at_xcs[i])
+                    uni_h = min(np.diff(uni_ys))
+                    if min_h / max_h < 0.7:
+                        x = 0.7 - min_h / max_h
+                        new_ys = (1 - x) * ys + x * uni_ys
+                        new_y_vals[req_y_nodes[i][j]:req_y_nodes[i][j + 1]+1] = new_ys
+
             y_nodes.append(new_y_vals)
+
         y_nodes = np.array(y_nodes)
         # For each surface slope adjust steps so that they are not pointed against slope
         for i, xc0 in enumerate(xcs):
@@ -724,9 +743,10 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             next_slope = surf_at_next_xc - surf_at_xc
             # trim either half the block or min_dh
             if next_slope > 0 and diff_nb > 0:
-                next_ys = y_nodes[i+1][ind_yc+1: ind_nc + 1]
+                ind_yc2 = np.where(y_nodes[i+1] > surf_at_xc)[0][0]
+                next_ys = y_nodes[i+1][ind_yc2: ind_nc + 1]
                 # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]
-                y_nodes[i][ind_yc+1: ind_nc + 1] = next_ys
+                y_nodes[i][ind_yc2: ind_nc + 1] = next_ys
             # elif next_slope < 0 and diff_nb < 0:
             #     next_ys = y_nodes[i+1][ind_yc+1: ind_nc + 1]
             #     # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]

@@ -50,7 +50,7 @@ x_scale_vals = np.array([2., 1.2, 1.0, 1.2, 0.7, 1.2, 2])
 
 show_set_init_y_blocks = 0
 show_ecp_definition = 0
-show_get_special_coords_and_slopes = 0
+show_get_special_coords_and_slopes = 1
 show_adjust_blocks_to_be_consistent_with_slopes = 0
 show_trim_grid_to_target_dh = 0
 show_build_req_y_node_positions = 0
@@ -65,7 +65,7 @@ fc = mesh2d_vary_y.FiniteElementVary2DMeshConstructor(tds, 0.5, x_scale_pos=x_sc
 
 if show_ecp_definition:
     win = o3plot.create_scaled_window_for_tds(tds, title='ECP definition')
-    o3plot.plot_two_d_system(win, tds)
+    o3plot.plot_two_d_system(tds, win)
     o3plot.show()
 
 ##%
