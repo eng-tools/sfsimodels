@@ -503,6 +503,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         xcs = self.xcs_sorted
         opt_low = self.dy_target * (self.min_scale + 1) / 2
         opt_high = self.dy_target * (self.max_scale + 1) / 2
+        y_surfs_at_xcs = np.interp(xcs, self.x_surf, self.y_surf)
         # try to trim mesh to be closer to target dh
         # First try to remove blocks
         opts_tried = []
@@ -519,7 +520,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             for i in range(len(y_node_nums_at_xcs)):
                 av_dhs.append([])
                 for j in range(len(y_node_nums_at_xcs[i]) - 1):
-                    if (i, j) in opts_tried:
+                    if (i, j) in opts_tried or y_coords_at_xcs[i][j+1] > y_surfs_at_xcs[i]:
                         av_dhs[i].append(1000)
                         continue
                     nb = y_node_nums_at_xcs[i][j + 1] - y_node_nums_at_xcs[i][j]
@@ -580,8 +581,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             for i in range(len(y_node_nums_at_xcs)):
                 av_dhs.append([])
                 for j in range(len(y_node_nums_at_xcs[i]) - 1):
-                    if (i, j) in opts_tried:
-                        av_dhs[i].append(1000)
+                    if (i, j) in opts_tried or y_coords_at_xcs[i][j+1] > y_surfs_at_xcs[i]:
+                        av_dhs[i].append(-1)
                         continue
                     nb = y_node_nums_at_xcs[i][j + 1] - y_node_nums_at_xcs[i][j]
                     av_dhs[i].append((y_coords_at_xcs[i][j + 1] - y_coords_at_xcs[i][j]) / nb)
@@ -590,7 +591,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             if max(max_dhs) > opt_high:
                 x_ind = max_dhs.index(max(max_dhs))
                 y_ind = av_dhs[x_ind].index(max_dhs[x_ind])
-                nb_lowest = y_node_nums_at_xcs[x_ind][y_ind]  # range where element could be add
+                nb_lowest = y_node_nums_at_xcs[x_ind][y_ind]  # range where element could be added
                 nb_highest = y_node_nums_at_xcs[x_ind][y_ind + 1]
                 if nb_highest <= nb_lowest:
                     opts_tried.append((x_ind, y_ind))
