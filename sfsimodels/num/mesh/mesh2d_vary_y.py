@@ -274,7 +274,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 if y_surf_at_xs[j+1] not in yd[x_next]:
                     yd[x_next].append(y_surf_at_xs[j+1])
                 for k in range(len(int_yy)):
-                    if angles[k] is None:
+                    if angles[k] is None or np.isnan(angles[k]):
                         continue
                     y_curr = int_yy[k] + angles[k] * x0_diff
                     if y_curr < y_surf_at_xs[j] and y_curr not in yd[x0]:
@@ -282,7 +282,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     y_next = int_yy[k] + angles[k] * xn_diff
                     if y_next < y_surf_at_xs[j+1] and y_next not in yd[x_next]:
                         yd[x_next].append(y_next)
-                    if y_curr < y_surf_at_xs[j] and y_next < y_surf_at_xs[j+1]:
+                    if y_curr <= y_surf_at_xs[j] and y_next <= y_surf_at_xs[j+1]:
                         sds.append([[x0, x_next], [y_curr, y_next]])
 
         for x in yd:
@@ -296,7 +296,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         for i in range(len(xcs) - 1):
             xs = np.array([xcs[i], xcs[i + 1]])
             slope = [list(xs), list(np.interp(xs, self.x_surf, self.y_surf))]
-            sds.append(slope)
+            if slope not in sds:
+                sds.append(slope)
         y_surf_max = max(self.y_surf)
 
         # remove coordinates that are too close
@@ -373,7 +374,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         mdirs = [1, -1]  # TODO: alternative between forward and reverse add
         dd = 0
         mdir = mdirs[dd]
-        for pp in range(10):
+        for pp in range(20):
             sds = self.sds[::mdir]
             for sd in sds:
                 csum_y_blocks = [np.cumsum(self.y_blocks[xcs]) for xcs in self.y_blocks]
@@ -1271,17 +1272,33 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         if "soil" not in models_dict:
             models_dict["soil"] = {}
 
-    def get_change_coords_at_depth_offset(self, x_coords, y_coords, offset, tol=0):
+    def get_change_coords_at_vert_ele_offset(self, tol=0):
         prev_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
         coords = [[self.x_nodes[0][prev_ind + 1]],
                   [self.y_nodes[0][prev_ind + 1]]]
         for i in range(self.nnx - 1):
             active_ind = np.where(self.soil_grid[i] != self.inactive_value)[0][0]
-            if active_ind != prev_ind:
+            if active_ind < prev_ind:
                 coords[0].append(self.x_nodes[i + 1][prev_ind + 1])
                 coords[1].append(self.y_nodes[i + 1][prev_ind + 1])
-            coords[0].append(self.x_nodes[i + 1][active_ind + 1])
-            coords[1].append(self.y_nodes[i + 1][active_ind + 1])
+                coords[0].append(self.x_nodes[i + 1][prev_ind])
+                coords[1].append(self.y_nodes[i + 1][prev_ind])
+                if prev_ind != active_ind + 1:
+                    coords[0].append(self.x_nodes[i + 1][active_ind + 1])
+                    coords[1].append(self.y_nodes[i + 1][active_ind + 1])
+            elif active_ind > prev_ind:
+                coords[0] = coords[0][:-1]  # remove last added
+                coords[1] = coords[1][:-1]
+                coords[0].append(self.x_nodes[i][active_ind])
+                coords[1].append(self.y_nodes[i][active_ind])
+                coords[0].append(self.x_nodes[i][active_ind + 1])
+                coords[1].append(self.y_nodes[i][active_ind + 1])
+                if prev_ind != active_ind + 1:
+                    coords[0].append(self.x_nodes[i + 1][active_ind + 1])
+                    coords[1].append(self.y_nodes[i + 1][active_ind + 1])
+            else:
+                coords[0].append(self.x_nodes[i + 1][active_ind + 1])
+                coords[1].append(self.y_nodes[i + 1][active_ind + 1])
             prev_ind = active_ind
         coords = np.array(coords)
         slopes = np.diff(coords[1]) / np.diff(coords[0])
