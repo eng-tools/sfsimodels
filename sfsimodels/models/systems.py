@@ -157,7 +157,7 @@ class TwoDSystem(object):
 
         self._bds = []
         self._x_bds = []
-        self.inputs = ["base_type", "type", "id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf"]
+        self.inputs = ["base_type", "type", "id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf", "gwl"]
         self.gwl = 1e6  # can be coordinates
 
     def to_dict(self, skip_list=None, **kwargs):

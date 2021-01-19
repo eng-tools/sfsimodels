@@ -373,7 +373,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         mdirs = [1, -1]  # TODO: alternative between forward and reverse add
         dd = 0
         mdir = mdirs[dd]
-        for pp in range(5):
+        for pp in range(10):
             sds = self.sds[::mdir]
             for sd in sds:
                 csum_y_blocks = [np.cumsum(self.y_blocks[xcs]) for xcs in self.y_blocks]
@@ -704,7 +704,16 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 if j not in req_y_nodes[i]:
                     # if it exceeds surface of left column then interpolate the rest
                     if y_nodes[i-1][j] >= self.y_surf_at_xcs[xcs[i-1]]:
-                        yys = np.interp(np.arange(j, req_y_nodes[i][-1] + 1), req_y_nodes[i], y_coords_at_xcs[i])
+                        node_nums = [x for x in req_y_nodes[i]]
+                        y_poses = [x for x in y_coords_at_xcs[i]]
+                        for nn in range(len(new_y_vals)):
+                            if nn not in node_nums:
+                                node_nums.append(nn)
+                                y_poses.append(new_y_vals[nn])
+
+                        node_nums.sort()
+                        y_poses.sort()
+                        yys = np.interp(np.arange(j, req_y_nodes[i][-1] + 1), node_nums, y_poses)
                         new_y_vals += list(yys)
                         break
                     else:
@@ -759,6 +768,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             # trim either half the block or min_dh
             if next_slope > 0 and diff_nb > 0:
                 ind_yc2 = np.where(y_nodes[i+1] > surf_at_xc)[0][0]
+                ind_yc2 = max(ind_yc2, ind_yc + 1)
                 next_ys = y_nodes[i+1][ind_yc2: ind_nc + 1]
                 # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]
                 y_nodes[i][ind_yc2: ind_nc + 1] = next_ys
