@@ -2,7 +2,7 @@
 History
 =======
 
-0.9.30 (2021-01-28)
+0.9.31 (2021-01-28)
 -------------------
 * Improved saving and loading of `TwoDSystem`
 * Allowed calculation of effective stress when soil under water and dry weight is not set

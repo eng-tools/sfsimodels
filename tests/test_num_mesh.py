@@ -169,7 +169,7 @@ def test_mesh_vary_y():
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
     fc = mesh2d_vary_y.FiniteElementVary2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
     femesh = fc.femesh
-    show = 1
+    show = 0
     femesh = fc.femesh
     if show:
 
