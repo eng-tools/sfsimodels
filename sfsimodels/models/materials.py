@@ -20,6 +20,7 @@ class ReinforcedConcreteMaterial(PhysicalObject):
     inputs = [
         'base_type',
         'type',
+        'fc',
         'fy',
         'e_mod_steel',
         'poissons_ratio'
@@ -27,7 +28,9 @@ class ReinforcedConcreteMaterial(PhysicalObject):
 
     @property
     def e_mod_conc(self):
-        return (3320 * np.sqrt(self.fc / 1e6) + 6900.0) * 1e6
+        if self.fc is not None:
+            return (3320 * np.sqrt(self.fc / 1e6) + 6900.0) * 1e6
+        return None
 
 
 class Concrete(ReinforcedConcreteMaterial):

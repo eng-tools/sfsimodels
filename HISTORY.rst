@@ -2,8 +2,8 @@
 History
 =======
 
-Pre-release
------------
+0.9.29 (2021-01-28)
+-------------------
 * Improved saving and loading of `TwoDSystem`
 * Allowed calculation of effective stress when soil under water and dry weight is not set
 * Fixed issue where soil_profile.move_layer function would delete layer if new position was equal to previous position
@@ -14,6 +14,7 @@ Pre-release
 * Can load `Material` object into `Building` as `Building.material`
 * Can load `Material` object into `Section` as `Section.material` or `Section.mat`
 * Added `sm.std.create_rc_beam()` function to create an RC beam element with RC sections.
+* Added `override` option to the `Foundation` object to override pre-computed properties.
 
 0.9.28 (2020-10-08)
 --------------------

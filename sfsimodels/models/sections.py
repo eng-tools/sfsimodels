@@ -97,11 +97,17 @@ class RCBeamSection(Section):
 
     @property
     def i_rot_ww_cracked(self):
-        return self.cracked_ratio * self.i_rot_ww
+        try:
+            return self.cracked_ratio * self.i_rot_ww
+        except TypeError:
+            return None
 
     @property
     def i_rot_dd_cracked(self):
-        return self.cracked_ratio * self.i_rot_dd
+        try:
+            return self.cracked_ratio * self.i_rot_dd
+        except TypeError:
+            return None
 
     @property
     def mom_cracked(self):
