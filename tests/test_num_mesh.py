@@ -147,8 +147,8 @@ def test_mesh_vary_y():
     sp2.add_layer(7, sl5)
     sp2.add_layer(12, sl0)
     sp2.height = 20
-    sp.x_angles = [0.0, 0.01, 0.05]
-    sp2.x_angles = [0.0, 0.00, 0.0]
+    sp.x_angles = [None, 0.01, 0.05]
+    sp2.x_angles = [None, 0.00, 0.0]
 
     fd = sm.RaftFoundation()
     fd.width = 2
@@ -169,7 +169,7 @@ def test_mesh_vary_y():
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
     fc = mesh2d_vary_y.FiniteElementVary2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
     femesh = fc.femesh
-    show = 0
+    show = 1
     femesh = fc.femesh
     if show:
 
@@ -193,7 +193,7 @@ def test_mesh_vary_y():
         # o3plot.plot_two_d_system(win, tds)
         # #
         for i, sd in enumerate(fc.sds):
-            print(i)
+
             x0 = sd[0][0]
             x1 = sd[0][1]
             y0 = sd[1][0]
@@ -220,10 +220,11 @@ def test_mesh_vary_y():
         y0_ind = femesh.get_nearest_node_index_at_depth(y0, x0)
         y1_ind = femesh.get_nearest_node_index_at_depth(y1, x1)
         if y0 == 0 and y1 == 2:
-            assert y0_ind - 6 == y1_ind, (sd, y0_ind - 6, y1_ind)
+            assert y0_ind - 5 == y1_ind, (sd, y0_ind - 5, y1_ind)
         else:
             assert y0_ind == y1_ind, (sd, y0_ind, y1_ind)
 
 
 if __name__ == '__main__':
-    test_remove_close_items()
+    test_mesh_vary_y()
+    # test_remove_close_items()

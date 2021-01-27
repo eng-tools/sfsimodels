@@ -212,7 +212,7 @@ class Foundation(PhysicalObject):
 
     @ip_axis.setter
     def ip_axis(self, ip_axis):
-        if ip_axis is None:
+        if ip_axis is None or ip_axis == '':
             self._ip_axis = None
             self._oop_axis = None
             return

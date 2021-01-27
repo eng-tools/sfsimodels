@@ -933,7 +933,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 sp_x = self.tds.x_sps[pid]
                 for ll in range(1, sp.n_layers + 1):
                     yc = y_centres[xx][yy]
-                    if -yc > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
+                    if x_angles[ll - 1] is None:
+                        pass
+                    elif -yc > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
                         pass
                     else:
                         if ll == 1:  # above the original soil profile due to ground slope
