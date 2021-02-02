@@ -2,6 +2,7 @@ import numpy as np
 
 from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left
+from .fns import remove_close_items
 
 
 class FiniteElementOrth2DMesh(object):
@@ -209,6 +210,10 @@ class FiniteElementOrth2DMeshConstructor(object):
                 y_curr = y1_curr + self.tds.sps[i].x_angles[yy] * x_diffs
                 y_curr = np.clip(y_curr, -self.tds.height, None)
                 y_flat += list(y_curr)
+        x_act.sort()
+        x_act, pairs = remove_close_items(x_act, 0.1, del_prev=False)
+        # x_diff = np.diff(x_act)
+
         self.x_act = x_act
         self.y_flat = y_flat
 

@@ -2,19 +2,7 @@ import numpy as np
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left, interp2d, interp3d
-
-
-def remove_close_items(y, tol):
-    diffs = np.diff(y)
-    pairs = []
-    inds = np.where(diffs < tol)
-    while len(inds[0]):  # progressively delete coordinate below until tolerance is reached
-        pairs.append((y[inds[0][0]], y[inds[0][0] + 1]))
-        y = np.delete(y, inds[0][0])
-
-        diffs = np.diff(y)
-        inds = np.where(diffs < tol)
-    return y, pairs
+from .fns import remove_close_items
 
 
 def sort_slopes(sds):
