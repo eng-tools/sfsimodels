@@ -2,6 +2,11 @@
 History
 =======
 
+Pre-release
+___________
+* Can retrieve the `unique_hash` from the ecp file for each object under the `loaded_unique_hash` parameter.
+
+
 0.9.31 (2021-01-28)
 -------------------
 * Improved saving and loading of `TwoDSystem`

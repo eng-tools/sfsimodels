@@ -18,6 +18,7 @@ class PhysicalObject(object):
     _counter = 0
     type = "physical_object"
     _unique_hash = None
+    _loaded_unique_hash = None  # This is only set when the model is loaded from an ecp file
     # inputs = ()
     _tolerance = 0.0001  # consistency tolerance
     skip_list = ()
@@ -119,6 +120,10 @@ class PhysicalObject(object):
     def recompute_unique_hash(self):
         self._unique_hash = hashlib.md5(json.dumps(self.to_dict(with_hash=False)).encode('utf-8')).hexdigest()
         return self._unique_hash
+
+    @property
+    def loaded_unique_hash(self):
+        return self._loaded_unique_hash
 
     @property
     def id(self):

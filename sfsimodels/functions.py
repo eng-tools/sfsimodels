@@ -105,8 +105,11 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
     """
     if exceptions is None:
         exceptions = []
-    exceptions.append('unique_hash')
+    # exceptions.append('unique_hash')
     for item in dictionary:
+        if item == 'unique_hash':
+            obj._loaded_unique_hash = dictionary[item]
+            continue
         if item in exceptions:
             continue
         if dictionary[item] is not None:
