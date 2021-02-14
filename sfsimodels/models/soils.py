@@ -693,11 +693,11 @@ class Soil(PhysicalObject):
         Unit water of reference water used to calculate specific gravity values
         :return:
         """
-        return self.gravity * MASS_DENSITY_WATER
+        return self.gravity * self.liq_mass_density
 
     @property
     def liq_sg(self):
-        return self.liq_mass_density / MASS_DENSITY_WATER
+        return 1
 
     def _calc_specific_gravity(self):
         try:
