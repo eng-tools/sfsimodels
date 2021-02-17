@@ -43,20 +43,25 @@ class Soil(PhysicalObject):
     _bulk_mod = None  # Bulk modulus [Pa]
     _poissons_ratio = None
     _plasticity_index = None
+    _liq_sg = 1
 
-    def __init__(self, pw=9800, liq_mass_density=None, g=9.8, **kwargs):
-        # Note: pw has deprecated
+    def __init__(self, pw=None, wmd=None, liq_mass_density=None, liq_sg=1, g=9.8, **kwargs):
+        # Note: liq_mass_density has deprecated, and pw is no longer supported
         self._gravity = g  # m/s2
-        if liq_mass_density:
-            self._liq_mass_density = liq_mass_density  # kg/m3
-        elif pw is not None and self._gravity is not None:
+        self._liq_sg = liq_sg
+        if liq_mass_density and wmd is None:
+            self._wmd = liq_mass_density / liq_sg
+        elif pw is not None:
             if pw == 9800 and g == 9.8:
-                self._liq_mass_density = 1.0e3
+                _liq_mass_density = 1.0e3
             else:
-                self._liq_mass_density = pw / self._gravity
+                _liq_mass_density = pw / self._gravity
+            self._wmd = _liq_mass_density / liq_sg
+        elif wmd is None:
+            self._wmd = 1000
         else:
-            self._liq_mass_density = None
-        self.stack = [('gravity', self._gravity), ('liq_mass_density', self._liq_mass_density)]
+            self._wmd = wmd
+        self.stack = [('gravity', self._gravity), ('wmd', self._wmd), ('liq_sg', self._liq_sg)]
         self._extra_class_inputs = [
             "id",
             "name",
@@ -80,7 +85,8 @@ class Soil(PhysicalObject):
             "plasticity_index",
             "permeability",
             "gravity",
-            "liq_mass_density"
+            "wmd",
+            "liq_sg"
         ]
         if not hasattr(self, "inputs"):
             self.inputs = []
@@ -128,7 +134,7 @@ class Soil(PhysicalObject):
             # catch all conflicts
             try:
                 setattr(self, item, value)
-                if item in ['gravity', 'liq_mass_density']:
+                if item in ['gravity', 'wmd', 'liq_sg']:
                     self._add_to_stack(item, value)
             except ModelError:
                 conflicts.append(item)
@@ -199,8 +205,16 @@ class Soil(PhysicalObject):
         return self.ulw
 
     @property
+    def wmd(self):
+        return self._wmd
+
+    @wmd.setter
+    def wmd(self, value):
+        self._wmd = value
+
+    @property
     def liq_mass_density(self):
-        return self._liq_mass_density
+        return self._wmd * self._liq_sg
 
     @property
     def gravity(self):
@@ -220,14 +234,8 @@ class Soil(PhysicalObject):
 
     @liq_mass_density.setter
     def liq_mass_density(self, value):
-        value = clean_float(value)
-        if self._liq_mass_density is not None and not np.isclose(self._liq_mass_density, value, rtol=self._tolerance):
-            raise ModelError("New liq_mass_density (%.3f) inconsistent with one (%.3f)"
-                             % (value, self._liq_mass_density))
-        if value is not None:
-            self._liq_mass_density = float(value)
-        else:
-            self._liq_mass_density = None
+        deprecation('liq_mass_density has deprecated, set liq_sg or wmd')
+        self._wmd = value / self.liq_sg
 
     @property
     def ulw(self):
@@ -304,7 +312,6 @@ class Soil(PhysicalObject):
             return self.unit_sat_weight
         return None
 
-
     @property
     def unit_dry_mass(self):
         """The mass of the soil in dry state"""
@@ -361,7 +368,8 @@ class Soil(PhysicalObject):
 
     @property
     def k_0(self):
-        k_0 = 1 - np.sin(self.phi_r)  # Jaky 1944
+        k_0 = self.poissons_ratio / (1 - self.poissons_ratio)
+        # k_0 = 1 - np.sin(self.phi_r)  # Jaky 1944
         return k_0
 
     @property
@@ -693,11 +701,19 @@ class Soil(PhysicalObject):
         Unit water of reference water used to calculate specific gravity values
         :return:
         """
-        return self.gravity * self.liq_mass_density
+        return self.gravity * self.wmd
 
     @property
     def liq_sg(self):
-        return 1
+        return self._liq_sg
+
+    @liq_sg.setter
+    def liq_sg(self, value):
+        if value is None or value == '':
+            return
+        if self.liq_sg is not None and self.liq_sg != value:
+            raise ModelError(f"New liq_sg ({value:.3g}) is inconsistent with current value ({self.liq_sg:.3g})")
+        self._liq_sg = value
 
     def _calc_specific_gravity(self):
         try:
@@ -826,9 +842,9 @@ class CriticalSoil(Soil):
     lamb_crl = 0.0
     type = "critical_soil"
 
-    def __init__(self, pw=9800, liq_mass_density=None, g=9.8,  **kwargs):
+    def __init__(self, wmd=None, liq_mass_density=None, g=9.8,  **kwargs):
         # run parent class initialiser function
-        super(CriticalSoil, self).__init__(pw=pw, liq_mass_density=liq_mass_density, g=g, **kwargs)
+        super(CriticalSoil, self).__init__(wmd=wmd, liq_mass_density=liq_mass_density, g=g, **kwargs)
         self._extra_class_inputs = ["e_cr0", "p_cr0", "lamb_crl"]
         self.inputs = self.inputs + self._extra_class_inputs
         for param in kwargs:
@@ -850,10 +866,11 @@ class StressDependentSoil(Soil):
     type = "stress_dependent_soil"
     _a = 0.5  # stress factor
     _g_mod_p0 = 0.0  # shear modulus at zero confining stress
+    _curr_m_eff_stress = None
 
-    def __init__(self, pw=9800, liq_mass_density=None, g=9.8, **kwargs):
+    def __init__(self, pw=None, wmd=None, liq_mass_density=None, liq_sg=1, g=9.8, **kwargs):
 
-        super(StressDependentSoil, self).__init__(pw=pw, liq_mass_density=liq_mass_density, g=g, **kwargs)
+        super(StressDependentSoil, self).__init__(pw=pw, wmd=wmd, liq_mass_density=liq_mass_density, liq_sg=liq_sg, g=g, **kwargs)
         self._extra_class_inputs = ["g0_mod", "p_atm", "a"]
         self.inputs = self.inputs + self._extra_class_inputs
         for param in kwargs:
@@ -864,9 +881,57 @@ class StressDependentSoil(Soil):
     def ancestor_types(self):
         return super(StressDependentSoil, self).ancestor_types + [self.type]
 
-    # @g_mod.setter
-    # def g_mod(self, value):
-    #     raise ValueError
+    @property
+    def bulk_mod(self):
+        try:
+            return 2 * self.g_mod * (1 + self.poissons_ratio) / (3 * (1 - 2 * self.poissons_ratio))
+        except TypeError:
+            return None
+
+    @bulk_mod.setter
+    def bulk_mod(self, value):
+        raise ModelError('Do not set bulk_mod on stress dependent soil, set curr_m_eff_stress')
+
+
+    @property
+    def poissons_ratio(self):
+        """Poisson's ratio of the soil"""
+        return self._poissons_ratio
+
+    @poissons_ratio.setter
+    def poissons_ratio(self, value):
+        if value is None or value == "":
+            return
+        curr_poissons_ratio = self._calc_poissons_ratio()
+        if curr_poissons_ratio is not None and not ct.isclose(curr_poissons_ratio, value, rel_tol=0.001):
+            raise ModelError("New poissons_ratio (%.3f) is inconsistent "
+                             "with current value (%.3f)" % (value, curr_poissons_ratio))
+        old_value = self.poissons_ratio
+        self._poissons_ratio = value
+
+    @property
+    def curr_m_eff_stress(self):
+        return self._curr_m_eff_stress
+
+    @curr_m_eff_stress.setter
+    def curr_m_eff_stress(self, value):
+        self._curr_m_eff_stress = value
+
+    @property
+    def g_mod(self):
+        if self._curr_m_eff_stress is not None:
+            return self.get_g_mod_at_m_eff_stress(self._curr_m_eff_stress)
+        else:
+            return self._g_mod
+
+    @g_mod.setter
+    def g_mod(self, value):
+        deprecation("Do not set g_mod directly on a stress dependent soil, set curr_m_eff_stress")
+        value = clean_float(value)
+        self._g_mod = value
+
+    def recompute_all_stiffness_parameters(self):
+        return
 
     @property
     def g0_mod(self):
@@ -912,14 +977,17 @@ class StressDependentSoil(Soil):
         if value is not None:
             self._add_to_stack("p_atm", float(value))
 
-    def get_g_mod_at_v_eff_stress(self, v_eff_stress):
-        k0 = 1 - np.sin(self.phi_r)
+    def get_g_mod_at_v_eff_stress(self, v_eff_stress, k0=None):
+        # k0 = 1 - np.sin(self.phi_r)
+        if k0 is None:
+            k0 = self.poissons_ratio / (1 - self.poissons_ratio)
         return self.g0_mod * self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a + self.g_mod_p0
 
-    def set_g0_mod_at_v_eff_stress(self, v_eff_stress, g_mod, g_mod_p0=None):
+    def set_g0_mod_at_v_eff_stress(self, v_eff_stress, g_mod, g_mod_p0=None, k0=None):
         if g_mod_p0 is not None:
             self.g_mod_p0 = g_mod_p0
-        k0 = 1 - np.sin(self.phi_r)
+        if k0 is None:
+            k0 = self.poissons_ratio / (1 - self.poissons_ratio)
         m = self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a
         self.g0_mod = (g_mod - self.g_mod_p0) / m
 

@@ -60,7 +60,7 @@ fc = mesh2d_vary_y.FiniteElementVary2DMeshConstructor(tds, 0.5, x_scale_pos=x_sc
 
 if show_ecp_definition:
     win = o3plot.create_scaled_window_for_tds(tds, title='ECP definition')
-    o3plot.plot_two_d_system(win, tds)
+    o3plot.plot_two_d_system(tds, win)
     o3plot.show()
 
 ##%

@@ -479,6 +479,25 @@ def test_can_set_more_than_two_positional_args():
     assert cus.p3 == 5
 
 
+def test_save_and_load_soil_w_diff_wmd():  # deprecated
+    sl = models.Soil(wmd=1.0)
+    sl.e_curr = 0.65
+    sl.specific_gravity = 2.65
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(sl)
+    p_str = json.dumps(ecp_output.to_dict(), indent=4)
+    objs = sm.loads_json(p_str)
+
+    sl = models.StressDependentSoil(wmd=1.0, p_atm=101.0)
+    sl.e_curr = 0.65
+    sl.specific_gravity = 2.65
+
+    ecp_output = sm.Output()
+    ecp_output.add_to_dict(sl)
+    p_str = json.dumps(ecp_output.to_dict(), indent=4)
+    objs = sm.loads_json(p_str)
+
+
 def test_save_and_load_soil_w_diff_liq_mass_density():
     sl = models.Soil(liq_mass_density=1.0)
     sl.e_curr = 0.65
@@ -503,7 +522,6 @@ def test_save_and_load_two_soil_profiles():
     ecp_output.add_to_dict(sp)
     ecp_output.add_to_dict(sp2)
     p_str = json.dumps(ecp_output.to_dict(), indent=4)
-    print(p_str)
     objs = sm.loads_json(p_str)
     assert len(objs['soil_profile']) == 2
 
@@ -516,7 +534,7 @@ if __name__ == '__main__':
     # test_load_and_save_structure()
     # test_save_and_load_soil_w_diff_liq_mass_density()
     # test_load_and_save_foundation_w_pads()
-    test_save_and_load_an_element()
+    test_save_and_load_soil_w_diff_wmd()
     # test_save_and_load_building()
     # test_save_and_load_two_soil_profiles()
     # test_load_json()

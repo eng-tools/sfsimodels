@@ -4,7 +4,6 @@ import os
 from sfsimodels import files
 from sfsimodels import models
 import numpy as np
-from tests.test_soil_profiles import test_soil_profile_split_complex_stress_dependent
 
 
 def test_void_ratio_setter():
@@ -231,7 +230,7 @@ def test_inputs_soil():
 
 
 def test_e_critical():
-    crit_sl = models.CriticalSoil(pw=9800)
+    crit_sl = models.CriticalSoil(wmd=1000)
     crit_sl.e_cr0 = 0.79  # Jin et al. 2015
     crit_sl.p_cr0 = 10  # Jin et al. 2015
     crit_sl.lamb_crl = 0.015  # Jin et al. 2015
@@ -342,10 +341,10 @@ def test_poissons_ratio_again():
 
 def test_non_water_liquid():
     sl0 = models.Soil(liq_mass_density=1.0e3, unit_dry_weight=16000., e_curr=0.55)
-    sl1 = models.Soil(liq_mass_density=1.1e3, unit_dry_weight=16000., e_curr=0.55)
+    sl1 = models.Soil(liq_mass_density=1.1e3, liq_sg=1.1, unit_dry_weight=16000., e_curr=0.55)
     assert np.isclose(sl0.specific_gravity, sl1.specific_gravity), (sl0.specific_gravity, sl1.specific_gravity)
     assert not np.isclose(sl0.unit_sat_weight, sl1.unit_sat_weight), (sl0.unit_sat_weight, sl1.unit_sat_weight)
-    sl1.override('liq_mass_density', 1.0e3)
+    sl1.override('liq_sg', 1.0)
     assert np.isclose(sl0.unit_sat_weight, sl1.unit_sat_weight), (sl0.unit_sat_weight, sl1.unit_sat_weight)
 
     sl0 = models.Soil(liq_mass_density=1.0e3, unit_sat_weight=20000., e_curr=0.55)
@@ -365,13 +364,22 @@ def test_stress_dependent_soil_set_get_g_mod():
     g_mod = 68.0e6
     esig_v0 = 50.0e3
     sl = models.StressDependentSoil()
-    sl.phi = 30.
+    sl.poissons_ratio = 0.3
     sl.a = 0.5
     sl.set_g0_mod_at_v_eff_stress(esig_v0, g_mod)
     assert np.isclose(g_mod, sl.get_g_mod_at_v_eff_stress(esig_v0))
+    k0 = sl.poissons_ratio / (1 - sl.poissons_ratio)
+    m0 = esig_v0 * (1 + 2 * k0) / 3
+    sl.curr_m_eff_stress = m0
+    assert np.isclose(g_mod, sl.g_mod)
+    m0 = esig_v0 * 4
+    sl.curr_m_eff_stress = m0
+    assert not np.isclose(g_mod, sl.g_mod)
+
 
 if __name__ == '__main__':
-    test_non_normal_g()
+    test_e_critical()
+    # test_non_normal_g()
     # test_e_critical()
     # test_auto_set_unit_dry_weight_from_sat()
     # test_poissons_ratio_again()

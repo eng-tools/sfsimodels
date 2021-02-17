@@ -162,11 +162,11 @@ def test_hydrostatic_pressure():
 
 def test_stress_dependent_soil_g_mod():
     soil_1 = models.Soil()
-    soil_1.phi = 33.
+    soil_1.poissons_ratio = 0.33
     soil_1.unit_dry_weight = 18000
     soil_1.specific_gravity = 2.65
     soil_2 = sm.StressDependentSoil()
-    soil_2.phi = 33.
+    soil_2.poissons_ratio = 0.33
     soil_2.cohesion = 50000
     soil_2.unit_dry_weight = 18000
     soil_2.g0_mod = 500.
@@ -180,9 +180,10 @@ def test_stress_dependent_soil_g_mod():
     assert np.isclose(soil_1.unit_sat_weight, 21007.5471698, rtol=0.0001)
     assert np.isclose(soil_profile.get_hydrostatic_pressure_at_depth(z_c), 9800, rtol=0.0001)
     v_eff = soil_profile.get_v_eff_stress_at_depth(z_c)
-    assert np.isclose(soil_2.get_g_mod_at_v_eff_stress(v_eff), 36580544.6888, rtol=0.0001)
-    m_eff = v_eff * (1 + 2 * (1 - np.sin(soil_2.phi_r))) / 3
-    assert np.isclose(soil_2.get_g_mod_at_m_eff_stress(m_eff), 36580544.6888, rtol=0.0001)
+    assert np.isclose(soil_2.get_g_mod_at_v_eff_stress(v_eff), 37285488.97326168, rtol=0.0001)
+    k_0 = soil_2.poissons_ratio / (1 - soil_2.poissons_ratio)
+    m_eff = v_eff * (1 + 2 * k_0) / 3
+    assert np.isclose(soil_2.get_g_mod_at_m_eff_stress(m_eff), 37285488.97326168, rtol=0.0001)
 
 
 def test_get_layer_index_by_depth():
@@ -397,7 +398,7 @@ def test_soil_profile_split_complex_stress_dependent():
 
     sl1.unit_dry_weight = sl1_unit_dry_weight
     sl2 = models.StressDependentSoil()
-    sl2.phi = 30.0
+    sl2.poissons_ratio = 0.33
 
     sp = models.SoilProfile()
     sp.add_layer(0, sl1)

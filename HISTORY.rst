@@ -4,6 +4,7 @@ History
 
 Pre-release
 ___________
+* Soil now defines water mass density `wmd` and `liq_sg` instead of `liq_mass_density` to allow for not water liquids.
 * Can retrieve the `unique_hash` from the ecp file for each object under the `loaded_unique_hash` parameter.
 * Allow soil liquid mass to be changed.
 
