@@ -98,7 +98,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     _inactive_value = 1000000
 
     def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True,
-                 use_3d_interp=False, smooth_surf=False, force_x2d=False):
+                 use_3d_interp=False, smooth_surf=False, force_x2d=False, min_scale=0.5, max_scale=2.0, allowable_slope=0.25):
         """
         Builds a finite element mesh of a two-dimension system
 
@@ -119,9 +119,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         smooth_surf: bool
             if true then changes in angle of the slope must be less than 90 degrees, builds VaryXY mesh
         """
-        self.min_scale = 0.5
-        self.max_scale = 2.0
-        self.allowable_slope = 0.25
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+        self.allowable_slope = allowable_slope
         assert isinstance(tds, TwoDSystem)
         self.tds = tds
         self.dy_target = dy_target
