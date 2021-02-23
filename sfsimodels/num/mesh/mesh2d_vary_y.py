@@ -98,7 +98,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     _inactive_value = 1000000
 
     def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True,
-                 use_3d_interp=False, smooth_surf=False, force_x2d=False, min_scale=0.5, max_scale=2.0, allowable_slope=0.25):
+                 use_3d_interp=False, smooth_surf=False, force_x2d=False, min_scale=0.5, max_scale=2.0,
+                 allowable_slope=0.25, smooth_ratio=1.):
         """
         Builds a finite element mesh of a two-dimension system
 
@@ -122,6 +123,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         self.min_scale = min_scale
         self.max_scale = max_scale
         self.allowable_slope = allowable_slope
+        self.smooth_ratio = smooth_ratio
         assert isinstance(tds, TwoDSystem)
         self.tds = tds
         self.dy_target = dy_target
@@ -475,17 +477,27 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         if y1_above is not None:
                             self.y_blocks[x1_c][ind_y1] += nb_sgn * 1
 
-        # Step 5: Set the total number of blocks to be equal to the minimum number of blocks used in the highest columns
-        h_max = max(self.y_surf)
+        # Step 5: Set the total number of blocks to be equal to the column that uses the maximum number of
+        # blocks used to get to the surface
         n_blocks = np.array([sum(self.y_blocks[xc]) for xc in xcs])
-        inds = np.where(np.interp(xcs, self.x_surf, self.y_surf) == h_max)[0]
-        n_max = min(n_blocks[inds])  # minimum number of blocks at top
+        y_surfs = np.interp(xcs, self.x_surf, self.y_surf)
+        nbs_at_surf = []
+        for i in range(len(xcs)):
+            x0 = xcs[i]
+            nbs = np.cumsum(self.y_blocks[x0])
+            nbs = np.insert(nbs, 0, 0)
+            nbs_at_surf.append(nbs[np.where(self.yd[x0] >= y_surfs[i] - 0.01)][0])
+
+        # inds = np.where(np.interp(xcs, self.x_surf, self.y_surf) == h_max)[0]
+        i_max = np.argmax(nbs_at_surf)  # maximum number of blocks at top
+        n_max = n_blocks[i_max]
         # create null nodes
         for i in range(len(xcs)):
             x0 = xcs[i]
             if n_blocks[i] != n_max:
                 n_extra = n_max - n_blocks[i]
                 self.y_blocks[x0][-1] += n_extra
+                assert self.y_blocks[x0][-1] > 0, (x0, self.yd[x0], self.y_blocks[x0][-1])
 
     def trim_grid_to_target_dh(self):
         """Check mesh for potential thin layers and try to remove rows of elements to get elements close to target dh"""
@@ -843,7 +855,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 y_top = max([y0, y1])
                 y_bot = min([y0, y1])
                 dy_inds = abs(y1_ind - y0_ind)
-                if (x1_ind - x0_ind) > abs(y1_ind - y0_ind):
+                if (x1_ind - x0_ind) > self.smooth_ratio * abs(y1_ind - y0_ind):
                     # Need to smooth by adjusting each step
                     # get all relevant node y-coordinates
                     y_ns = self.y_nodes[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds+1]
@@ -1279,13 +1291,13 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
             elif active_ind > prev_ind:
                 coords[0] = coords[0][:-1]  # remove last added
                 coords[1] = coords[1][:-1]
-                coords[0].append(self.x_nodes[i][active_ind])
-                coords[1].append(self.y_nodes[i][active_ind])
+                coords[0].append(self.x_nodes[i-1][active_ind])
+                coords[1].append(self.y_nodes[i-1][active_ind])
+                if prev_ind != active_ind + 1:
+                    coords[0].append(self.x_nodes[i-1][active_ind + 1])
+                    coords[1].append(self.y_nodes[i-1][active_ind + 1])
                 coords[0].append(self.x_nodes[i][active_ind + 1])
                 coords[1].append(self.y_nodes[i][active_ind + 1])
-                if prev_ind != active_ind + 1:
-                    coords[0].append(self.x_nodes[i + 1][active_ind + 1])
-                    coords[1].append(self.y_nodes[i + 1][active_ind + 1])
             else:
                 coords[0].append(self.x_nodes[i + 1][active_ind + 1])
                 coords[1].append(self.y_nodes[i + 1][active_ind + 1])

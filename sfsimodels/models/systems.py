@@ -221,6 +221,9 @@ class TwoDSystem(object):
     def add_sp(self, sp, x):
         self._x_sps.append(x)
         self._sps.append(sp)
+        inds = np.argsort(self._x_sps)
+        self._x_sps = list(np.array(self._x_sps)[inds])
+        self._sps = list(np.array(self._sps)[inds])
 
     def remove_sp(self, x):
         ind = self.x_sps.index(x)
