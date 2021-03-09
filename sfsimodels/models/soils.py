@@ -1249,6 +1249,12 @@ class SoilProfile(PhysicalObject):
         self._layers[new_depth] = soil
         self._sort_layers()
 
+    def shift_all_layers(self, delta_depth):
+        old_keys = self._layers.keys()
+        new_keys = [depth + delta_depth for depth in old_keys]
+        vals = self._layers.values()
+        self._layers = dict(zip(new_keys, vals))
+
     def layer(self, index):
         index = int(index)
         if index == 0:

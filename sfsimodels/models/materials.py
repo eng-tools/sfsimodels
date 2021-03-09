@@ -35,3 +35,8 @@ class ReinforcedConcreteMaterial(PhysicalObject):
 
 class Concrete(ReinforcedConcreteMaterial):
     pass
+
+
+if __name__ == '__main__':
+    rc = ReinforcedConcreteMaterial()
+    print(rc.e_mod_conc)

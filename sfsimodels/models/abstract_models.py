@@ -83,7 +83,10 @@ class PhysicalObject(object):
             inputs_list = self.inputs
         for item in inputs_list:
             if hasattr(obj, item):
-                setattr(self, item, getattr(obj, item))
+                try:
+                    setattr(self, item, getattr(obj, item))
+                except ModelError:
+                    continue
                 if update_inputs and item not in self.inputs:
                     self.inputs.append(item)
 

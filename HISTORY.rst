@@ -7,6 +7,8 @@ ___________
 * Soil now defines water mass density `wmd` and `liq_sg` instead of `liq_mass_density` to allow for not water liquids.
 * Can retrieve the `unique_hash` from the ecp file for each object under the `loaded_unique_hash` parameter.
 * Allow soil liquid mass to be changed.
+* When loading an ecp file the loader does not fail when trying to set a non-settable attribute, instead it just does not set the attribute
+* Fixed issue with meshing when adjusting for a smooth slope, when slope was going down to the right the top slope could be slightly wrong
 
 
 0.9.31 (2021-01-28)

@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import numpy as np
-
+import sfsimodels.exceptions
 #
 # def convert_stress_to_mass(q, width, length, gravity):
 #     """
@@ -134,6 +134,8 @@ def add_to_obj(obj, dictionary, objs=None, exceptions=None, verbose=0):
                         raise AttributeError("Can't set {0}={1} on object: {2}".format(key, value, obj))
                 else:
                     raise AttributeError("Can't set {0}={1} on object: {2}".format(key, value, obj))
+            except sfsimodels.exceptions.ModelError:
+                pass
 
 
 def get_value_of_a_get_method(obj, method, extras=None):

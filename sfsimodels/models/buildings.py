@@ -682,6 +682,8 @@ class FrameBuilding(Frame, Building):
 
     def get_column_vert_loads(self):
         """
+        Vertical loads at column bases
+
         return [len-axis][width-axis]
         :return:
         """

@@ -204,14 +204,15 @@ class FiniteElementOrth2DMeshConstructor(object):
                 x_temp[0] += 1.0e-14
 
             for x in range(len(x_curr)):
-                y_flat.append(y_curr_surf[x])
+                if y_curr_surf[x] not in y_flat:
+                    y_flat.append(y_curr_surf[x])
             for yy in range(len(int_yy) - 1):
                 y1_curr = self.y_surf_at_sps[i] - int_yy[yy + 1]
                 y_curr = y1_curr + self.tds.sps[i].x_angles[yy] * x_diffs
                 y_curr = np.clip(y_curr, -self.tds.height, None)
                 y_flat += list(y_curr)
         x_act.sort()
-        x_act, pairs = remove_close_items(x_act, 0.1, del_prev=False)
+        x_act, pairs = remove_close_items(x_act, self.dy_target * 0.25, del_prev=False)
         # x_diff = np.diff(x_act)
 
         self.x_act = x_act
@@ -224,7 +225,7 @@ class FiniteElementOrth2DMeshConstructor(object):
         layers = []  # builds from lowest first
         while min_y < max(self.tds.y_surf):
             min_y = min(y_flat)
-            inds = np.where(y_flat < min_y + self.dy_target)
+            inds = np.where(y_flat < min_y + self.dy_target * 0.25)
             layer = np.mean(y_flat[inds])
             y_flat[inds] = 1000
             layers.append(layer)

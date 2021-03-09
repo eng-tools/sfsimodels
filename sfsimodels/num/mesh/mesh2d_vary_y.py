@@ -301,7 +301,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         self.y_surf_at_xcs = {}
         for x in yd:
             self.y_surf_at_xcs[x] = yd[x][-1]
-            if y_surf_max not in yd[x]:
+            if y_surf_max not in yd[x] and abs(y_surf_max - max(yd[x])) > tol:
                 yd[x] = np.insert(yd[x], len(yd[x]), y_surf_max)
             yd[x] = np.array(yd[x])
         self.yd = yd
@@ -482,10 +482,12 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         n_blocks = np.array([sum(self.y_blocks[xc]) for xc in xcs])
         y_surfs = np.interp(xcs, self.x_surf, self.y_surf)
         nbs_at_surf = []
+        surf_inds = []
         for i in range(len(xcs)):
             x0 = xcs[i]
             nbs = np.cumsum(self.y_blocks[x0])
             nbs = np.insert(nbs, 0, 0)
+            surf_inds.append(np.where(self.yd[x0] >= y_surfs[i] - 0.01)[0][0])
             nbs_at_surf.append(nbs[np.where(self.yd[x0] >= y_surfs[i] - 0.01)][0])
 
         # inds = np.where(np.interp(xcs, self.x_surf, self.y_surf) == h_max)[0]
@@ -495,9 +497,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         for i in range(len(xcs)):
             x0 = xcs[i]
             if n_blocks[i] != n_max:
-                n_extra = n_max - n_blocks[i]
+                n_extra = n_max - n_blocks[i]  # TODO: could improve this by minus eles more evenly from zones
                 self.y_blocks[x0][-1] += n_extra
-                assert self.y_blocks[x0][-1] > 0, (x0, self.yd[x0], self.y_blocks[x0][-1])
+                assert min(self.y_blocks[x0][:surf_inds[i]]) > 0, (x0, self.yd[x0], self.y_blocks[x0][-1])
 
     def trim_grid_to_target_dh(self):
         """Check mesh for potential thin layers and try to remove rows of elements to get elements close to target dh"""
@@ -873,18 +875,26 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 else:  # Smooth the whole slope as one
                     dx = x1 - x0
 
-                    if y1_ind > y0_ind:
+                    if y1_ind > y0_ind:  # slope moves down as you go to the right
                         x_rhs_ind = x1_ind
                         x_lhs = x0 - dx
-
+                        x0_ind = np.argmin(abs(self.x_nodes - x0))
                         x_lhs_ind = np.argmin(abs(self.x_nodes - x_lhs))
+
+                        y_lhs = self.y_nodes[x_lhs_ind, y_ind_top: y_ind_bot + 1]
+                        x_short_vals_lower = x_nodes2d[x0_ind:x_rhs_ind + 1, y_ind_bot]
+                        x_incs = x_short_vals_lower - x_short_vals_lower[0]
+                        y_lower = np.interp(x_incs, [x_incs[0], x_incs[-1]], [y_lhs[-1], y1])
+                        sf = (y0 - y_lower) / (y_lhs[0] - y_lhs[-1]) * np.ones_like(y_lower)
+                        ys = (y_lhs - y_lhs[-1])[np.newaxis, :] * sf[:, np.newaxis] + y_lower[:, np.newaxis]
+                        self.y_nodes[x0_ind:x_rhs_ind + 1, y_ind_top: y_ind_bot + 1] = ys
                         dxs = np.linspace(0, dx, x_rhs_ind - x_lhs_ind + 1)
                         x_vals_upper = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top] - dxs
                         x_vals_lower = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_bot]
                         y_hs = self.y_nodes[x1_ind][y_ind_top: y_ind_bot+1][::-1]
                         xvs = interp2d(y_hs, [y_bot, y_top], [x_vals_lower, x_vals_upper])[::-1]
                         x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top: y_ind_bot+1] = xvs.T
-                    else:  # up slope to left
+                    else:  # slope moves down as you go to the left
                         i_curr = np.where(self.xcs_sorted == x1)[0][0]
                         if i_curr == len(self.xcs_sorted) - 1:
                             x_rhs = self.xcs_sorted[i_curr]
@@ -897,6 +907,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         y_hs = self.y_nodes[x0_ind][y1_ind: y0_ind + 1][::-1]
                         xvs = interp2d(y_hs, [y0, y1], [x_vals_lower, x_vals_upper])[::-1]
                         x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind: y0_ind + 1] = xvs.T
+                        # y_lhs = self.y_nodes[x0, y1_ind: y0_ind + 1]
+                        # sf = (y0 - y1) / (y_lhs[-1] - y_lhs[0])
+                        # y_rhs = y_lhs * sf + y1 - y_lhs[0]
 
             x0 = x1
             y0 = y1
