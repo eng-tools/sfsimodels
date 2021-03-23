@@ -842,22 +842,34 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
         self.x_nodes = np.cumsum(dxs)
 
+    def get_closest_idx_on_varyxy(self, x0, y0):
+        x_diffs = abs(self.x_nodes2d - x0)
+        y_diffs = abs(self.y_nodes - y0)
+        dir_diffs = np.sqrt(x_diffs ** 2 + y_diffs ** 2)
+        k = dir_diffs.argmin()
+        ncol = dir_diffs.shape[1]
+        return int(k/ncol), k%ncol
+
     def adjust_for_smooth_surface(self):
         """Make the surface have less than 90 degree changes"""
-        x_nodes2d = self.x_nodes[:, np.newaxis] * np.ones_like(self.y_nodes)
+        self.x_nodes2d = self.x_nodes[:, np.newaxis] * np.ones_like(self.y_nodes)
         x0 = self.x_surf[0]
         y0 = self.y_surf[0]
         for ss in range(1, len(self.x_surf)):
             x1 = self.x_surf[ss]
             y1 = self.y_surf[ss]
             slope = (y1 - y0) / (x1 - x0)
-            x0_ind = np.argmin(abs(self.x_nodes - x0))  # TODO: should use x_nodes2d
-            y0_ind = np.argmin(abs(self.y_nodes[x0_ind] - y0))  # counts from top to bottom
-            x1_ind = np.argmin(abs(self.x_nodes - x1))
-            y1_ind = np.argmin(abs(self.y_nodes[x1_ind] - y1))
-            if x_nodes2d[x0_ind][y0_ind] != self.x_nodes[x0_ind]:
-                # mesh already adjusted, need to get actual node coord
-                pass
+
+            x0_ind, y0_ind = self.get_closest_idx_on_varyxy(x0, y0)
+            x1_ind, y1_ind = self.get_closest_idx_on_varyxy(x1, y1)
+            # x0_ind_alt = np.argmin(abs(self.x_nodes - x0))  # TODO: should use x_nodes2d
+            # y0_ind_alt = np.argmin(abs(self.y_nodes[x0_ind] - y0))  # counts from top to bottom
+            # print('inds: ', x0_ind, x0_ind_alt, y0_ind, y0_ind_alt)
+            # x1_ind = np.argmin(abs(self.x_nodes - x1))
+            # y1_ind = np.argmin(abs(self.y_nodes[x1_ind] - y1))
+            # if x_nodes2d[x0_ind][y0_ind] != self.x_nodes[x0_ind]:
+            #     # mesh already adjusted, need to get actual node coord
+            #     pass
                 # raise ValueError('x already moved cannot perform double adjustment')
             if y1_ind != y0_ind:  # non smooth surface
                 y_ind_top = min([y0_ind, y1_ind])
@@ -869,17 +881,17 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     # Need to smooth by adjusting each step
                     # get all relevant node y-coordinates
                     y_ns = self.y_nodes[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds+1]
-                    x_ns = x_nodes2d[x0_ind: x1_ind+1, y_ind_top: y_ind_top + dy_inds+1]
+                    x_ns = self.x_nodes2d[x0_ind: x1_ind+1, y_ind_top: y_ind_top + dy_inds+1]
                     y_ns = y_ns[:, ::-1]  # flip
                     x_ns = x_ns[:, ::-1]
 
                     if y1_ind < y0_ind:  # up slope to the right
                         new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, y_ns)
-                        x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
+                        self.x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
 
                     else:  # down slope to the right
                         new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, -y_ns, -1)
-                        x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
+                        self.x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
                 else:  # Smooth the whole slope as one
                     dx = x1 - x0
 
@@ -890,18 +902,18 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         x_lhs_ind = np.argmin(abs(self.x_nodes - x_lhs))
 
                         y_lhs = self.y_nodes[x_lhs_ind, y_ind_top: y_ind_bot + 1]
-                        x_short_vals_lower = x_nodes2d[x0_ind:x_rhs_ind + 1, y_ind_bot]
+                        x_short_vals_lower = self.x_nodes2d[x0_ind:x_rhs_ind + 1, y_ind_bot]
                         x_incs = x_short_vals_lower - x_short_vals_lower[0]
                         y_lower = np.interp(x_incs, [x_incs[0], x_incs[-1]], [y_lhs[-1], y1])
                         sf = (y0 - y_lower) / (y_lhs[0] - y_lhs[-1]) * np.ones_like(y_lower)
                         ys = (y_lhs - y_lhs[-1])[np.newaxis, :] * sf[:, np.newaxis] + y_lower[:, np.newaxis]
                         self.y_nodes[x0_ind:x_rhs_ind + 1, y_ind_top: y_ind_bot + 1] = ys
                         dxs = np.linspace(0, dx, x_rhs_ind - x_lhs_ind + 1)
-                        x_vals_upper = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top] - dxs
-                        x_vals_lower = x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_bot]
+                        x_vals_upper = self.x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top] - dxs
+                        x_vals_lower = self.x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_bot]
                         y_hs = self.y_nodes[x1_ind][y_ind_top: y_ind_bot+1][::-1]
                         xvs = interp2d(y_hs, [y_bot, y_top], [x_vals_lower, x_vals_upper])[::-1]
-                        x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top: y_ind_bot+1] = xvs.T
+                        self.x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top: y_ind_bot+1] = xvs.T
                     else:  # slope moves down as you go to the left
                         i_curr = np.where(self.xcs_sorted == x1)[0][0]
                         if i_curr == len(self.xcs_sorted) - 1:
@@ -911,17 +923,16 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         xrhs_ind = np.argmin(abs(self.x_nodes - x_rhs))
                         x_rhs = self.x_nodes[xrhs_ind]
                         x_vals_upper = np.linspace(x1, x_rhs, xrhs_ind - x0_ind + 1)
-                        x_vals_lower = x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind]
+                        x_vals_lower = self.x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind]
                         y_hs = self.y_nodes[x0_ind][y1_ind: y0_ind + 1][::-1]
                         xvs = interp2d(y_hs, [y0, y1], [x_vals_lower, x_vals_upper])[::-1]
-                        x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind: y0_ind + 1] = xvs.T
+                        self.x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind: y0_ind + 1] = xvs.T
                         # y_lhs = self.y_nodes[x0, y1_ind: y0_ind + 1]
                         # sf = (y0 - y1) / (y_lhs[-1] - y_lhs[0])
                         # y_rhs = y_lhs * sf + y1 - y_lhs[0]
 
             x0 = x1
             y0 = y1
-        self.x_nodes2d = x_nodes2d
         pass
 
     @property
