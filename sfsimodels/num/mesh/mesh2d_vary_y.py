@@ -3,12 +3,13 @@ from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left, interp2d, interp3d
 from .fns import remove_close_items
+import hashlib
 
 
 def sort_slopes(sds):
     """Sort slopes from bottom to top then right to left"""
     sds = np.array(sds)
-    scores = sds[:, 0, 0] + sds[:, 1, 0] * 1e6
+    scores = sds[:, 0, 1] + sds[:, 1, 1] * 1e6
     inds = np.argsort(scores)
     return sds[inds]
 
@@ -364,9 +365,16 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         mdirs = [1, -1]  # TODO: alternative between forward and reverse add
         dd = 0
         mdir = mdirs[dd]
-        for pp in range(20):
+        old_hash = ''
+        for pp in range(100):
             sds = self.sds[::mdir]
-            for sd in sds:
+            csum_y_blocks = [np.cumsum(self.y_blocks[xcs]) for xcs in self.y_blocks]
+            fblocks = np.array([j for i in csum_y_blocks for j in i], dtype=int)
+            new_hash = hashlib.md5(fblocks).hexdigest()
+            if new_hash == old_hash:
+                break
+            old_hash = new_hash
+            for qq, sd in enumerate(sds):
                 csum_y_blocks = [np.cumsum(self.y_blocks[xcs]) for xcs in self.y_blocks]
                 if mdir == 1:
                     x0 = sd[0][0]
@@ -817,7 +825,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             x_cps.append(self.xcs_sorted[xx])
             zone_widths = np.diff(x_cps)
             n_eles = np.sum(zone_widths / (x_scales * self.dy_target))
-            n_x_eles = int(n_eles + 0.5)
+            n_x_eles = max(1, int(n_eles + 0.5))
             av_ele_width = x_shift / n_x_eles
             x_incs = []
             for n in range(n_x_eles):
