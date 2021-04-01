@@ -404,8 +404,20 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 y1_below = yd_list[ind_x1][ind_y1 - 1]
                 if y1_c == self.y_surf_at_xcs[x1_c]:  # surface
                     y1_above = None
+                    try:
+                        x_next = xcs[ind_x1 + 1]
+                        y_next_surf = self.y_surf_at_xcs[x_next]
+                        ind_y_next = int(np.argmin(abs(np.array(yd_list[ind_x1 + 1]) - y_next_surf)))
+                        nb_next = csum_y_blocks[ind_x1 + 1][ind_y_next - 1]
+                    except IndexError:
+                        x_next = None
+                        y_next_surf = None
+                        ind_y_next = None  
                 else:
                     y1_above = yd_list[ind_x1][ind_y1 + 1]
+                    x_next = None
+                    y_next_surf = None
+                    ind_y_next = None
 
                 while sgn != np.sign(diff_nb) and diff_nb != 0:
 
@@ -425,6 +437,11 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         if not (min_dh < new_dh_above < max_dh):
                             break
                         self.y_blocks[x1_c][ind_y1] += np.sign(diff_nb) * 1
+                    else:  # check slope of surface is appropriate
+                        a = 1
+                        # new_dh_next = (y_next_surf - y1_above) / (nb_next - (nb_above + np.sign(diff_nb) * 1))
+                        # if not (min_dh < new_dh_above < max_dh):
+                        #     break
                     self.y_blocks[x1_c][ind_y1 - 1] += np.sign(diff_nb) * -1
                     diff_nb = nb1 - nb0
                 approx_grid_slope = (dh_dzone - diff_nb * self.dy_target) / (x1 - x0)
@@ -476,6 +493,13 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                             new_dh_above = (y1_above - y1_c) / (nb_above + nb_sgn * 1)
                             if not (min_dh < new_dh_above < max_dh):
                                 break
+                        elif y_next_surf is not None:
+                            if abs(nb_next - (nb1 + nb_sgn * -1)) < 2:
+                                pass
+                            else:
+                                new_dh_on_next_surf = (y_next_surf - y1_c) / (nb_next - (nb1 + nb_sgn * -1))
+                                if not (min_dh < new_dh_on_next_surf < max_dh):
+                                    break
                         # if no issues then adjust blocks
                         if use_2_below:
                             self.y_blocks[x1_c][ind_y1 - 2] += nb_sgn * -1
@@ -500,7 +524,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
         # inds = np.where(np.interp(xcs, self.x_surf, self.y_surf) == h_max)[0]
         i_max = np.argmax(nbs_at_surf)  # maximum number of blocks at top
-        n_max = n_blocks[i_max]
+        n_max = nbs_at_surf[i_max]
         # create null nodes
         for i in range(len(xcs)):
             x0 = xcs[i]

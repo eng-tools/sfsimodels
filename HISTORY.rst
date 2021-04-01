@@ -9,7 +9,7 @@ ___________
 * Allow soil liquid mass to be changed.
 * When loading an ecp file the loader does not fail when trying to set a non-settable attribute, instead it just does not set the attribute
 * Fixed issue with meshing when adjusting for a smooth slope, when slope was going down to the right the top slope could be slightly wrong
-
+* Improved meshing 2d vary xy - when multiple adjacent sloping surfaces on surface
 
 0.9.31 (2021-01-28)
 -------------------
