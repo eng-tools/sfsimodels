@@ -35,9 +35,9 @@ def get_all_sensor_codes(si, wild_sensor_code):
     all_sensor_codes = []
     for mtype in mtypes:
         for m_number in si[mtype]:
-            if x in ["*", si[mtype][m_number]['X-CODE']] and \
-                    y in ["*", si[mtype][m_number]['Y-CODE']] and \
-                    z in ["*", si[mtype][m_number]['Z-CODE']]:
+            if x in ["*", str(si[mtype][m_number]['X-CODE'])] and \
+                    y in ["*", str(si[mtype][m_number]['Y-CODE'])] and \
+                    z in ["*", str(si[mtype][m_number]['Z-CODE'])]:
                 cc = get_sensor_code_by_number(si, mtype, m_number)
                 all_sensor_codes.append(cc)
 

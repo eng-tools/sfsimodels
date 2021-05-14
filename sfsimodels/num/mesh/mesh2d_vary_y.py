@@ -45,6 +45,17 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     if sgn == -1:
         xm = xm[::-1]
         ym = ym[::-1]
+    nh = len(ym[0]) - 1
+    # dy = min([(ym[0][-1] - ym[0][0]) / nh, (ym[-1][-1] - ym[-1][0]) / nh, 0.2])
+    dy1 = min([(ym[-1][-1] - ym[-1][0]) / nh])
+    dy0 = 0.2
+
+    y0s = ym[0][0] + np.arange(nh+1) * dy0
+    y1s = ym[-1][-1] - np.arange(nh + 1) * dy1
+    y1s = y1s[::-1]
+    for i in range(nh + 1):
+        ym[:, i] = np.interp(xm[:, i], [xm[0][0], xm[-1][-1]], [y0s[i], y1s[i]])
+        xm[:, i] = xm[:, 0]
     y_centres_at_xns = (ym[1:] + ym[:-1]) / 2
     y_centres = (y_centres_at_xns[:, 1:] + y_centres_at_xns[:, :-1]) / 2
     # get x-coordinates of centres of relevant elements
@@ -63,6 +74,8 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     included_ele.append(len(y_surf_at_x_cens))
     new_xm = xm
     new_ym = ym
+    for j in range(1, nh + 1):
+        new_ym[included_ele[0], j] += dy1
     for i in range(1, dy_inds + 1):
         x_ind_adj = included_ele[i-1]
         x_ind_adj_next = included_ele[i]
@@ -70,6 +83,8 @@ def adj_slope_by_layers(xm, ym, sgn=1):
         dx = (xm[x_ind_adj + 1, i] - xm[x_ind_adj, i]) * 0.5
         dxs = np.interp(xm[x_ind_adj:x_ind_adj_next, i], [xm[x_ind_adj, i], xm[x_ind_adj_next, i]], [dx, 0])
         new_xm[x_ind_adj:x_ind_adj_next, i] = xm[x_ind_adj:x_ind_adj_next, i] + dxs
+        for j in range(i+1, nh + 1):
+            new_ym[x_ind_adj_next, j] += dy1
     if sgn == -1:
         new_xm = new_xm[::-1]
         new_ym = new_ym[::-1]
@@ -189,6 +204,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             else:
                 self.set_soil_ids_to_vary_y_grid()
             self.create_mesh()
+            if smooth_surf:
+                self.femesh.tidy_unused_mesh()
             if not fd_eles:
                 self.exclude_fd_eles()
 
@@ -912,10 +929,13 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     if y1_ind < y0_ind:  # up slope to the right
                         new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, y_ns)
                         self.x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
+                        self.y_nodes[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_y_ns[:, ::-1]
 
                     else:  # down slope to the right
                         new_x_ns, new_y_ns = adj_slope_by_layers(x_ns, -y_ns, -1)
+                        new_y_ns *= -1
                         self.x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_x_ns[:, ::-1]
+                        self.y_nodes[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1] = new_y_ns[:, ::-1]
                 else:  # Smooth the whole slope as one
                     dx = x1 - x0
 
@@ -958,6 +978,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             x0 = x1
             y0 = y1
         pass
+
 
     @property
     def soils(self):
@@ -1225,6 +1246,19 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
     def soils(self):
         return self._soils
 
+    def tidy_unused_mesh(self):
+        anodes = self.get_active_nodes()
+        inds = np.where(anodes == 0)
+        xns = self.x_nodes
+        yns = self.y_nodes
+        for i in range(len(xns)):
+            inds = np.where(anodes[i] == 0)
+            if len(inds[0]):
+                x_surf = self.x_nodes[i][inds[0][-1] + 1]
+                y_surf = self.y_nodes[i][inds[0][-1] + 1]
+                xns[i][inds] = x_surf
+                yns[i][inds] = y_surf + np.arange(1, len(inds[0]) + 1)[::-1]
+
     # def get_ele_indexes_at_depths(self, depths, x, low=None):
     #     x_ind = self.get_ele_indexes_at_xs([x])[0]
     #     return interp_left(-np.array(depths), -self._y_nodes[x_ind], low=low)
@@ -1365,6 +1399,29 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         inds = np.array([0] + list(inds) + [len(coords[0]) -1], dtype=int)
         ccoords = coords.T[inds].T
         return ccoords
+    
+    def get_surface_node_indices(self, tol=0):
+        prev_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
+        inds = [[0, prev_ind + 1]]
+        for i in range(self.nnx - 1):
+            active_ind = np.where(self.soil_grid[i] != self.inactive_value)[0][0]
+            if active_ind < prev_ind:
+                inds.append([i + 1, prev_ind + 1])
+                inds.append([i + 1, prev_ind])
+                if prev_ind != active_ind + 1:
+                    inds.append([i + 1, active_ind + 1])
+            elif active_ind > prev_ind:
+                # coords[0] = coords[0][:-1]  # remove last added
+                # coords[1] = coords[1][:-1]
+                inds.append([i-1, active_ind])
+                if prev_ind != active_ind + 1:
+                    inds.append([i-1, active_ind + 1])
+                inds.append([i, active_ind + 1])
+            else:
+                inds.append([i + 1, active_ind + 1])
+            prev_ind = active_ind
+        inds = np.array(inds)
+        return inds
 
     def get_node_indices_for_all_eles(self):
         xx = np.arange(len(self.soil_grid))
