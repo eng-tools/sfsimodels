@@ -304,6 +304,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         for i in range(len(xcs) - 1):
             xs = np.array([xcs[i], xcs[i + 1]])
             slope = [list(xs), list(np.interp(xs, self.x_surf, self.y_surf))]
+            if abs(slope[1][1] - slope[1][0]) / (slope[0][1] - slope[0][0]) > 0.8:
+                continue
             if slope not in sds:
                 sds.append(slope)
         y_surf_max = max(self.y_surf)
@@ -755,19 +757,21 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             for j in range(len(y_nodes[i - 1])):
                 if j not in req_y_nodes[i]:
                     # if it exceeds surface of left column then interpolate the rest
-                    if y_nodes[i-1][j] >= self.y_surf_at_xcs[xcs[i-1]]:
-                        node_nums = [x for x in req_y_nodes[i]]
-                        y_poses = [x for x in y_coords_at_xcs[i]]
-                        for nn in range(len(new_y_vals)):
-                            if nn not in node_nums:
-                                node_nums.append(nn)
-                                y_poses.append(new_y_vals[nn])
-
-                        node_nums.sort()
-                        y_poses.sort()
-                        yys = np.interp(np.arange(j, req_y_nodes[i][-1] + 1), node_nums, y_poses)
-                        new_y_vals += list(yys)
-                        break
+                    if 1 == 0:
+                        pass
+                        # if y_nodes[i-1][j] >= self.y_surf_at_xcs[xcs[i-1]]:
+                        #     node_nums = [x for x in req_y_nodes[i]]
+                        #     y_poses = [x for x in y_coords_at_xcs[i]]
+                        #     for nn in range(len(new_y_vals)):
+                        #         if nn not in node_nums:
+                        #             node_nums.append(nn)
+                        #             y_poses.append(new_y_vals[nn])
+                        #
+                        #     node_nums.sort()
+                        #     y_poses.sort()
+                        #     yys = np.interp(np.arange(j, req_y_nodes[i][-1] + 1), node_nums, y_poses)
+                        #     new_y_vals += list(yys)
+                        #     break
                     else:
                         # get next and previous req points and check the slope of each of the those back to left col
                         ind_below = interp_left(j, req_y_nodes[i])
@@ -790,7 +794,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 if len(diffs):
                     min_h = min(diffs)
                     max_h = max(diffs)
-                    h_block = ys[0] - ys[-1]
+                    # h_block = ys[0] - ys[-1]
                     nbs = req_y_nodes[i][j+1] - req_y_nodes[i][j]
                     uni_ys = np.interp(np.arange(req_y_nodes[i][j], req_y_nodes[i][j+1] + 1), req_y_nodes[i], y_coords_at_xcs[i])
                     uni_h = min(np.diff(uni_ys))
@@ -823,7 +827,14 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 ind_yc2 = max(ind_yc2, ind_yc + 1)
                 next_ys = y_nodes[i+1][ind_yc2: ind_nc + 1]
                 # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]
-                y_nodes[i][ind_yc2: ind_nc + 1] = next_ys
+                av_dh = next_slope / diff_nb
+                update_unused = 0
+                for kk in range(len(next_ys)):
+                    print(next_ys[kk], y_nodes[i][ind_yc2 + kk])
+                    if (y_nodes[i][ind_yc2 + kk] - next_ys[kk]) / av_dh > 0.2:
+                        update_unused = 1
+                if update_unused:
+                    y_nodes[i][ind_yc2: ind_nc + 1] = next_ys
             # elif next_slope < 0 and diff_nb < 0:
             #     next_ys = y_nodes[i+1][ind_yc+1: ind_nc + 1]
             #     # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]
@@ -968,6 +979,12 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         x_rhs = self.x_nodes[xrhs_ind]
                         x_vals_upper = np.linspace(x1, x_rhs, xrhs_ind - x0_ind + 1)
                         x_vals_lower = self.x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind]
+
+                        n_eles = len(self.y_nodes[x0_ind][y1_ind: y0_ind + 1])
+                        for xx in range(x0_ind, x1_ind):
+                            dy = y1 - self.y_nodes[xx][y1_ind: y0_ind + 1][0]
+                            dinc = dy / max(n_eles - 1, 1) * np.arange(n_eles)[::-1]
+                            self.y_nodes[xx][y1_ind: y0_ind + 1] += dinc
                         y_hs = self.y_nodes[x0_ind][y1_ind: y0_ind + 1][::-1]
                         xvs = interp2d(y_hs, [y0, y1], [x_vals_lower, x_vals_upper])[::-1]
                         self.x_nodes2d[x0_ind:xrhs_ind + 1, y1_ind: y0_ind + 1] = xvs.T
