@@ -219,14 +219,14 @@ class TwoDSystem(object):
         models_dict[self.base_type][self.unique_hash] = profile_dict
 
     def add_sp(self, sp, x):
-        self._x_sps.append(x)
+        self._x_sps.append(float(x))
         self._sps.append(sp)
         inds = np.argsort(self._x_sps)
         self._x_sps = list(np.array(self._x_sps)[inds])
         self._sps = list(np.array(self._sps)[inds])
 
     def remove_sp(self, x):
-        ind = self.x_sps.index(x)
+        ind = self.x_sps.index(float(x))
         self._x_sps.pop(ind)
         self._sps.pop(ind)
 

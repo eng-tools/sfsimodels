@@ -5,7 +5,6 @@ import numpy as np
 
 def test_save_and_load_2d_system():
 
-    ref_press = 100.e3
     vs = 250.0
 
     sl = sm.Soil()
@@ -14,6 +13,7 @@ def test_save_and_load_2d_system():
     sl.poissons_ratio = 0.0
     # sl.cohesion = sl.g_mod / 1000
     sl.cohesion = 30.0e3
+    sl.id = 1
     sl.phi = 0.0
     sl.unit_dry_weight = unit_mass * 9.8
     sl.specific_gravity = 2.65
@@ -21,8 +21,9 @@ def test_save_and_load_2d_system():
     sl.sra_type = 'hyperbolic'
     sl.inputs += ['sra_type', 'xi']
     sp = sm.SoilProfile()
-    sp.add_layer(0.0, sl)
-    sp.height = 1e3
+    sp.add_layer(0, sl)
+    sp.height = 1.0e3
+    sp.id = 1
     sp.x_angles = [0.0, 0.0]
     fd = sm.RaftFoundation()
     fd.width = 2
@@ -40,6 +41,7 @@ def test_save_and_load_2d_system():
     tds.id = 1
     ecp_out = sm.Output()
     ecp_out.add_to_dict(tds)
+    # ecp_out.add_to_dict(sp)
     p_str = json.dumps(ecp_out.to_dict(), skipkeys=["__repr__"], indent=4)
     objs = sm.loads_json(p_str)
     building = objs["building"][1]

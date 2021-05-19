@@ -168,7 +168,7 @@ def test_mesh_vary_y():
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
     fc = mesh2d_vary_y.FiniteElementVary2DMeshConstructor(tds, 0.3, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
-    femesh = fc.femesh
+
     show = 0
     femesh = fc.femesh
     if show:
@@ -190,8 +190,8 @@ def test_mesh_vary_y():
         for i in range(len(xcs)):
             win.addItem(pg.InfiniteLine(xcs[i], angle=90, pen=(0, 255, 0, 100)))
 
-        # o3plot.plot_two_d_system(win, tds)
-        # #
+        o3plot.plot_two_d_system(tds, win)
+
         for i, sd in enumerate(fc.sds):
 
             x0 = sd[0][0]

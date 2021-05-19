@@ -746,6 +746,31 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         xcs = self.xcs_sorted
         req_y_nodes = self.req_y_nodes
         y_coords_at_xcs = self.req_y_coords_at_xcs
+        # max_nbs = np.max(req_y_nodes)
+        nbs_at_surf = []
+        for i, xc0 in enumerate(xcs):
+            nbs_at_surf.append(req_y_nodes[i][np.where(y_coords_at_xcs[i] >= self.y_surf_at_xcs[xc0])][0])
+
+        # lower the y coordinates of unused to be inline with the right hand used blocks
+        for i, xc0 in enumerate(xcs[::-1]):
+            print(i, xc0, nbs_at_surf[-i], nbs_at_surf[-1-i])
+            if i == 0:
+                continue
+            if nbs_at_surf[-1-i] < nbs_at_surf[-i]:  # if there are more blocks in one to right
+                diff_nbs = nbs_at_surf[-i] - nbs_at_surf[-1 - i]
+                min_h = self.y_surf_at_xcs[xc0] + diff_nbs * self.dy_target * 0.5
+                if nbs_at_surf[-i] in req_y_nodes[-1-i]:
+                    ind = np.argmin(abs(nbs_at_surf[-i] - req_y_nodes[-1-i]))
+                    y_coords_at_xcs[-1-i][ind] = max([self.y_surf_at_xcs[xcs[-i]], min_h])
+                else:
+                    ind = np.where(req_y_nodes[-1 - i] > nbs_at_surf[-i])[0][0]
+                    req_y_nodes[-1 - i] = np.insert(req_y_nodes[-1 - i], ind, nbs_at_surf[-i])
+                    y_coords_at_xcs[-1-i] = np.insert(y_coords_at_xcs[-1-i], ind, self.y_surf_at_xcs[xcs[-i]])
+            ind = np.where(req_y_nodes[-1 - i] >= nbs_at_surf[-1-i])[0][0]
+            if req_y_nodes[-1 - i][ind] != req_y_nodes[-1 - i][-1]:  # if there are blocks above the surface
+                y_coords_at_xcs[-1 - i][ind+1:] = np.interp(req_y_nodes[-1 - i][ind+1:], req_y_nodes[-i], y_coords_at_xcs[-i])
+
+
         # Step 4: position additional nodes to be consistent with previous column - otherwise equally spaced
         y_nodes = []
         for i, xc0 in enumerate(xcs):
@@ -758,6 +783,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 if j not in req_y_nodes[i]:
                     # if it exceeds surface of left column then interpolate the rest
                     if 1 == 0:
+                        # if y_nodes[i - 1][j] >= self.y_surf_at_xcs[xcs[i - 1]]:
                         pass
                         # if y_nodes[i-1][j] >= self.y_surf_at_xcs[xcs[i-1]]:
                         #     node_nums = [x for x in req_y_nodes[i]]
@@ -825,16 +851,21 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             if next_slope > 0 and diff_nb > 0:
                 ind_yc2 = np.where(y_nodes[i+1] > surf_at_xc)[0][0]
                 ind_yc2 = max(ind_yc2, ind_yc + 1)
-                next_ys = y_nodes[i+1][ind_yc2: ind_nc + 1]
+                curr_col_ys = list(y_nodes[i][ind_yc2-1: ind_nc + 1])
+                next_ys = list(y_nodes[i+1][ind_yc2-1: ind_nc + 1])
                 # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]
                 av_dh = next_slope / diff_nb
                 update_unused = 0
-                for kk in range(len(next_ys)):
-                    print(next_ys[kk], y_nodes[i][ind_yc2 + kk])
-                    if (y_nodes[i][ind_yc2 + kk] - next_ys[kk]) / av_dh > 0.2:
+                for kk in range(1, len(next_ys)):
+                    a = curr_col_ys[kk] - next_ys[kk]
+                    new_dh = next_ys[kk] - curr_col_ys[kk-1]
+                    if new_dh < self.dy_target * 0.5:
+                        next_ys[kk] = curr_col_ys[kk-1] + self.dy_target * 0.5
+
+                    if (curr_col_ys[kk] - next_ys[kk]) / av_dh > 0.2:
                         update_unused = 1
                 if update_unused:
-                    y_nodes[i][ind_yc2: ind_nc + 1] = next_ys
+                    y_nodes[i][ind_yc2: ind_nc + 1] = next_ys[1:]
             # elif next_slope < 0 and diff_nb < 0:
             #     next_ys = y_nodes[i+1][ind_yc+1: ind_nc + 1]
             #     # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]
