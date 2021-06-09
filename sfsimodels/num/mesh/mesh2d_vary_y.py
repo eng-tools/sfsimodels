@@ -2,7 +2,7 @@ import numpy as np
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left, interp2d, interp3d
-from .fns import remove_close_items
+from .fns import remove_close_items, build_ele2_node_array
 import hashlib
 
 
@@ -106,6 +106,42 @@ def calc_centroid(xs, ys):
     yc /= (6.0*area)
 
     return xc, yc
+
+
+def calc_mesh_centroids(fem):
+    x_inds = []
+    y_inds = []
+    if hasattr(fem.y_nodes[0], '__len__'):  # can either have varying y-coordinates or single set
+        n_y = len(fem.y_nodes[0])
+    else:
+        n_y = 0
+    import numpy as np
+
+    for xx in range(len(fem.soil_grid)):
+        x_ele = [xx, xx + 1, xx + 1, xx]
+        x_inds += [x_ele for i in range(n_y - 1)]
+        for yy in range(len(fem.soil_grid[xx])):
+            y_ele = [yy, yy, yy + 1, yy + 1]
+            y_inds.append(y_ele)
+    n_eles = len(np.array(x_inds))
+    x_inds = np.array(x_inds).flatten()
+    y_inds = np.array(y_inds).flatten()
+    x0 = np.array(fem.x_nodes[x_inds, y_inds])
+    y0 = np.array(fem.y_nodes[x_inds, y_inds])
+    x0 = x0.reshape((n_eles, 4))
+    y0 = y0.reshape((n_eles, 4))
+
+    x1 = np.roll(x0, 1, axis=-1)
+    y1 = np.roll(y0, 1, axis=-1)
+    a = x0 * y1 - x1 * y0
+    xc = np.sum((x0 + x1) * a, axis=-1)
+    yc = np.sum((y0 + y1) * a, axis=-1)
+
+    area = 0.5 * np.sum(a, axis=-1)
+    xc /= (6.0*area)
+    yc /= (6.0*area)
+
+    return xc.reshape(len(fem.soil_grid), len(fem.soil_grid[0])), yc.reshape(len(fem.soil_grid), len(fem.soil_grid[0]))
 
 
 class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine2DMesh
@@ -936,11 +972,13 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     def adjust_for_smooth_surface(self):
         """Make the surface have less than 90 degree changes"""
         self.x_nodes2d = self.x_nodes[:, np.newaxis] * np.ones_like(self.y_nodes)
-        x0 = self.x_surf[0]
-        y0 = self.y_surf[0]
+        x_points = self.xcs_sorted
+        x0 = x_points[0]
+        y0 = np.interp(x0, self.x_surf, self.y_surf)
+
         for ss in range(1, len(self.x_surf)):
-            x1 = self.x_surf[ss]
-            y1 = self.y_surf[ss]
+            x1 = x_points[ss]
+            y1 = np.interp(x1, self.x_surf, self.y_surf)
             slope = (y1 - y0) / (x1 - x0)
 
             x0_ind, y0_ind = self.get_closest_idx_on_varyxy(x0, y0)

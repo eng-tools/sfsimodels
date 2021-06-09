@@ -1554,6 +1554,20 @@ def discretize_soil_profile(sp, incs=None, target=1.0):
     return dd
 
 
+def get_new_soil_profile_at_x_offset(sp_ref, x, dy_surf_at_x=0):
+    # make last 30m free-field
+    xangs = list(sp_ref.x_angles)
+    xangs[0] = 0
+    xangs = np.array(xangs)
+    lays = np.array(list(sp_ref.layers)) - xangs * x + dy_surf_at_x
+    sp_ff = SoilProfile()
+    for ll in range(len(lays)):
+        if ll == 0:
+            sp_ff.add_layer(0.0, sp_ref.layer(1))
+        else:
+            sp_ff.add_layer(lays[ll], sp_ref.layer(ll + 1))
+    sp_ff.height = sp_ref.height + dy_surf_at_x
+    return sp_ff
 # TODO: extend to have LiquefiableSoil
 
 

@@ -82,6 +82,20 @@ class Foundation(PhysicalObject):
         elif ip_axis == 'width':
             return 'length'
         return None
+    
+    @property
+    def lip(self):
+        ax = self.ip_axis
+        if ax is None:
+            return None
+        return getattr(self, ax)
+
+    @property
+    def loop(self):
+        ax = self.oop_axis
+        if ax is None:
+            return None
+        return getattr(self, ax)
 
     @property
     def area(self):
