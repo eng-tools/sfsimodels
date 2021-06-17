@@ -10,7 +10,7 @@ class Section(PhysicalObject):
     _material = None
     loading_pre_reqs = ('material',)
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.inputs = [
             "base_type",
             "type",
@@ -19,6 +19,10 @@ class Section(PhysicalObject):
             "material"
                        ]
         self.skip_list = list(self.skip_list) + ['material']
+
+        for param in kwargs:
+            if param in self.inputs:
+                setattr(self, param, kwargs[param])
 
     @property
     def depth(self):
@@ -138,8 +142,36 @@ class RCBeamSection(Section):
         return self.rc_mat.e_mod_conc
 
 
-# class DetailedRCBeamSection(RCBeamSection):
-#     pass  # define locate and type of all reinforcing
+class RCDetailedSection(RCBeamSection):
+    id = None
+    type = "rc_beam_detailed_section"
+    base_type = "section"
+
+    def __init__(self, **kwargs):
+        """
+        A detailed section contains the position and size of the reinforcing elements
+        Parameters
+        ----------
+        kwargs
+        """
+        super(RCDetailedSection, self).__init__(**kwargs)
+        self._extra_class_inputs = ["layer_depths", "bar_diams", "bar_centres"]
+        self.inputs = self.inputs + self._extra_class_inputs
+        self.layer_depths = None
+        self.bar_diams = None
+        self.bar_centres = None
+
+    @property
+    def cover_h(self):
+        if self.layer_depths is not None:
+            return min([self.layer_depths[0], self.depth - self.layer_depths[-1]])
+
+    @property
+    def cover_w(self):
+        if self.bar_centres is not None:
+            x_left = min([min(layer) for layer in self.bar_centres])
+            x_right = min([min(layer) for layer in self.bar_centres])
+            return min([x_left, self.width - x_right])
 
 # class SimpleRCBeamSection(RCBeamSection):
 #     _area_tension_steel = None

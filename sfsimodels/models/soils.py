@@ -991,6 +991,9 @@ class StressDependentSoil(Soil):
         m = self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a
         self.g0_mod = (g_mod - self.g_mod_p0) / m
 
+    def set_curr_m_eff_stress_from_g_mod(self, g_mod):
+        self._curr_m_eff_stress = (g_mod - self.g_mod_p0) / self.g0_mod
+
     def get_g_mod_at_m_eff_stress(self, m_eff_stress):
         return self.g0_mod * self.p_atm * (m_eff_stress / self.p_atm) ** self.a + self.g_mod_p0
 
@@ -1489,21 +1492,25 @@ class SoilProfile(PhysicalObject):
                     saturated = False
                 # some properties require vertical effective stress or saturation
                 for item in props:
-                    value = None
-                    fn0 = "get_{0}_at_v_eff_stress".format(item)  # first check for stress dependence
-                    fn1 = "get_{0}".format(item)  # first check for stress dependence
-                    if hasattr(sl, fn0):
-                        try:
-                            v_eff = self.get_v_eff_stress_at_depth(centre_depth)
-                        except TypeError:
-                            raise ValueError("Cannot compute vertical effective stress at depth: {0}".format(centre_depth))
-                        value = sf.get_value_of_a_get_method(sl, fn0, extras={"saturated": saturated,
-                                                                              'v_eff_stress': v_eff})
-                    elif hasattr(sl, fn1):
-                        value = sf.get_value_of_a_get_method(sl, fn1, extras={"saturated": saturated})
-                    elif hasattr(sl, item):
-                        value = getattr(sl, item)
-
+                    if item == 'v_eff':
+                        value = self.get_v_eff_stress_at_depth(centre_depth)
+                    elif item == 'v_total':
+                        value = self.get_v_total_stress_at_depth(centre_depth)
+                    else:
+                        value = None
+                        fn0 = "get_{0}_at_v_eff_stress".format(item)  # first check for stress dependence
+                        fn1 = "get_{0}".format(item)  # first check for stress dependence
+                        if hasattr(sl, fn0):
+                            try:
+                                v_eff = self.get_v_eff_stress_at_depth(centre_depth)
+                            except TypeError:
+                                raise ValueError("Cannot compute vertical effective stress at depth: {0}".format(centre_depth))
+                            value = sf.get_value_of_a_get_method(sl, fn0, extras={"saturated": saturated,
+                                                                                  'v_eff_stress': v_eff})
+                        elif hasattr(sl, fn1):
+                            value = sf.get_value_of_a_get_method(sl, fn1, extras={"saturated": saturated})
+                        elif hasattr(sl, item):
+                            value = getattr(sl, item)
                     dd[item].append(value)
 
         for item in dd:
