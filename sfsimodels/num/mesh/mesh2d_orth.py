@@ -71,6 +71,9 @@ class FiniteElementOrth2DMesh(object):
     def get_indexes_at_xs(self, xs, low=None):
         return interp_left(xs, self.x_nodes, low=low)
 
+    def get_nearest_node_index_at_x(self, x):
+        return np.argmin(abs(self.x_nodes - x))
+
     @property
     def nny(self):
         return len(self.y_nodes)

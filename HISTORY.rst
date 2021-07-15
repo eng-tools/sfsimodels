@@ -5,7 +5,7 @@ History
 Pre-release
 ___________
 
-0.9.36 (2021-07-15)
+0.9.37 (2021-07-15)
 -------------------
 * Added new `get_nearest_node_index_at_x` to ortho mesh.
 
