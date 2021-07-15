@@ -4,6 +4,13 @@ History
 
 Pre-release
 ___________
+
+0.9.36 (2021-07-15)
+-------------------
+* Added new `get_nearest_node_index_at_x` to ortho mesh.
+
+0.9.35 (2021-07-15)
+-------------------
 * Soil now defines water mass density `wmd` and `liq_sg` instead of `liq_mass_density` to allow for not water liquids.
 * Can retrieve the `unique_hash` from the ecp file for each object under the `loaded_unique_hash` parameter.
 * Allow soil liquid mass to be changed.
