@@ -704,6 +704,14 @@ class Soil(PhysicalObject):
         return self.gravity * self.wmd
 
     @property
+    def uww(self):
+        """
+        Unit water of reference water used to calculate specific gravity values
+        :return:
+        """
+        return self.gravity * self.wmd
+
+    @property
     def liq_sg(self):
         return self._liq_sg
 

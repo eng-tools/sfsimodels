@@ -94,7 +94,7 @@ class FiniteElementOrth2DMeshConstructor(object):
     x_index_to_sp_index = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, fd_eles=0):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, fd_eles=0, x_sym=0):
         """
         A finite element mesh of a two-dimension system
 
@@ -110,6 +110,10 @@ class FiniteElementOrth2DMeshConstructor(object):
             scale factors for element widths
         dp: int
             Number of decimal places
+        fd_eles: int
+            If true then set foundation elements to inactive
+        x_sym: int
+            If true then mesh should be symmetric around the centre along x-axis
         """
         assert isinstance(tds, TwoDSystem)
         self.tds = tds
@@ -122,6 +126,7 @@ class FiniteElementOrth2DMeshConstructor(object):
         self.x_scale_vals = np.array(x_scale_vals)
         self.dp = dp
         self.xs = list(self.tds.x_sps)
+        self.x_sym = x_sym
 
         self.xs.append(tds.width)
         self.xs = np.array(self.xs)
@@ -242,14 +247,31 @@ class FiniteElementOrth2DMeshConstructor(object):
     def set_x_nodes(self):
         """Determine optimal position of node x-coordinates"""
         dxs = [0]
-        for xx in range(1, len(self.x_act)):
-            x_shift = self.x_act[xx] - self.x_act[xx - 1]
-            x_incs = np.linspace(self.x_act[xx - 1], self.x_act[xx], 20)
+        symmetric = self.x_sym
+        if not symmetric:
+            x_targets = self.x_act
+        else:
+            x_targets = np.array(list(self.x_act))
+            x_ref = self.tds.width / 2
+            ind = np.argmin(abs(x_targets - x_ref))
+            if (x_targets[ind] - x_ref) / self.dy_target < 0.5:
+                x_targets[ind] = x_ref
+                x_targets = x_targets[:ind+1]
+            else:
+                if x_targets[ind] > x_ref:
+                    x_targets[ind] = x_ref
+                    x_targets = x_targets[:ind+1]
+                else:
+                    x_targets[ind + 1] = x_ref
+                    x_targets = x_targets[:ind+2]
+        for xx in range(1, len(x_targets)):
+            x_shift = x_targets[xx] - x_targets[xx - 1]
+            x_incs = np.linspace(x_targets[xx - 1], x_targets[xx], 20)
             scale = interp_left(x_incs, self.x_scale_pos, self.x_scale_vals)
             av_scale = np.mean(scale)
             av_size = av_scale * self.dy_target
             n_x_eles = int(x_shift / av_size + 0.99)
-            x_start = self.x_act[xx - 1]
+            x_start = x_targets[xx - 1]
             x_incs = []
             for n in range(n_x_eles):
                 prox_x_inc = interp_left([x_start], self.x_scale_pos, self.x_scale_vals)[0] * self.dy_target
@@ -260,8 +282,37 @@ class FiniteElementOrth2DMeshConstructor(object):
                 x_start += x_inc
             x_incs = np.array(x_incs) * x_shift / sum(x_incs)
             dxs += list(x_incs)
+        if symmetric:
+            dxs = dxs + dxs[1:][::-1]
+        x_nodes = np.cumsum(dxs)
 
-        self.x_nodes = np.cumsum(dxs)
+        # if not symmetric:
+        self.x_nodes = x_nodes
+        # else:
+        #     x_ref = self.tds.width / 2
+        #     ind = np.argmin(abs(x_nodes - x_ref))
+        #     if x_nodes[ind] >= x_ref:
+        #         ind -= 1
+        #     rat = (x_ref - x_nodes[ind]) / (x_nodes[ind + 1] - x_nodes[ind])
+        #     node_at_centre = True
+        #     if rat > 0.8:  # use ind + 1 as reflection
+        #         x_lhs = x_nodes[:ind + 1]
+        #         x_rhs = x_nodes[ind + 2:]
+        #     elif rat < 0.2: # use ind as reflection
+        #         x_lhs = x_nodes[:ind]
+        #         x_rhs = x_nodes[ind + 1:]
+        #     else:  # consider no node at centre point
+        #         x_lhs = x_nodes[:ind]
+        #         x_rhs = x_nodes[ind:]
+        #         node_at_centre = False
+        #     x_rhs_eq = (self.tds.width - x_rhs)[::-1]
+        #     # if len(x_rhs_eq) > len(x_lhs)
+        #     x_side = (x_lhs + x_rhs_eq) / 2
+        #     if node_at_centre:
+        #         x_nodes = np.array(list(x_side) + [x_ref] + list((self.tds.width - x_side)[::-1]))
+        #     else:
+        #         x_nodes = np.array(list(x_side) + list((self.tds.width - x_side)[::-1]))
+        #     self.x_nodes = x_nodes
 
     def set_to_decimal_places(self):
         """Adjusts the node coordinates to a certain number of decimal places"""
@@ -364,8 +415,8 @@ class FiniteElementOrth2DMeshConstructor(object):
                     self.femesh.soil_grid[xx][yy] = self.femesh.inactive_value
 
 
-def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None):
-    fc = FiniteElementOrth2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals)
+def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_sym=0):
+    fc = FiniteElementOrth2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals, x_sym=x_sym)
     femesh = fc.femesh
     assert isinstance(femesh, FiniteElementOrth2DMesh)
     return femesh

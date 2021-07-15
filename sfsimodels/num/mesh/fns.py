@@ -63,3 +63,8 @@ def load_femesh(ffp, ecp_models, x_nodes2d, suffix=''):
         return mesh.FiniteElementVaryXY2DMesh(x_nodes, y_nodes, soil_grid, soils)
     else:
         return mesh.FiniteElementVaryY2DMesh(x_nodes, y_nodes, soil_grid, soils)
+
+
+def get_nearest_xy_ind(xs, ys, x_point, y_point):
+    distance = (ys - y_point) ** 2 + (xs - x_point) ** 2
+    return np.where(distance == distance.min())[0]
