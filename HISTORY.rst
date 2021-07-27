@@ -5,6 +5,11 @@ History
 Pre-release
 ___________
 
+0.9.38 (2021-07-28)
+-------------------
+* Fixed surface meshing issue
+* Added `loop` to TwoDSystem for length out-of-plane.
+
 0.9.37 (2021-07-15)
 -------------------
 * Added new `get_nearest_node_index_at_x` to ortho mesh.

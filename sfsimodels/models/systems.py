@@ -142,7 +142,21 @@ class TwoDSystem(object):
     type = 'two_d_system'
     name = None
 
-    def __init__(self, width, height, x_surf=None, y_surf=None):
+    def __init__(self, width, height, x_surf=None, y_surf=None, loop=None):
+        """
+        A two dimensional Soil-structure system
+
+        :param width: float
+            Extent of model in x-direction
+        :param height:
+            Maximum depth of model from datum (y=0)
+        :param x_surf: array_like
+            x-positions where the surface height is defined in `y_surf`
+        :param y_surf: array_like
+            y-positions which define the height of the ground surface at each point in the `x_surf` array
+        :param loop: float
+            Length out-of-plane
+        """
         self.width = width
         self.height = height
         if x_surf is None:
@@ -157,8 +171,9 @@ class TwoDSystem(object):
 
         self._bds = []
         self._x_bds = []
-        self.inputs = ["base_type", "type", "id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf", "gwl"]
+        self.inputs = ["base_type", "type", "id", "name", "width", "height", "sps", "x_sps", "bds", "x_bds", "x_surf", "y_surf", "gwl", 'loop']
         self.gwl = 1e6  # can be coordinates
+        self.loop = loop
 
     def to_dict(self, skip_list=None, **kwargs):
         outputs = OrderedDict()

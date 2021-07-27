@@ -79,6 +79,8 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     for i in range(1, dy_inds + 1):
         x_ind_adj = included_ele[i-1]
         x_ind_adj_next = included_ele[i]
+        if x_ind_adj == x_ind_adj_next:
+            continue
         # shift by half of the ele
         dx = (xm[x_ind_adj + 1, i] - xm[x_ind_adj, i]) * 0.5
         dxs = np.interp(xm[x_ind_adj:x_ind_adj_next, i], [xm[x_ind_adj, i], xm[x_ind_adj_next, i]], [dx, 0])
@@ -576,7 +578,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             nbs = np.insert(nbs, 0, 0)
             surf_inds.append(np.where(self.yd[x0] >= y_surfs[i] - 0.01)[0][0])
             nbs_at_surf.append(nbs[np.where(self.yd[x0] >= y_surfs[i] - 0.01)][0])
-
+            if surf_inds[-1] == len(self.y_blocks[x0]):
+                self.y_blocks[x0].append(0)
+                self.yd[x0] = np.insert(self.yd[x0], len(self.yd[x0]), self.yd[x0][-1])
         # inds = np.where(np.interp(xcs, self.x_surf, self.y_surf) == h_max)[0]
         i_max = np.argmax(nbs_at_surf)  # maximum number of blocks at top
         n_max = nbs_at_surf[i_max]
@@ -658,7 +662,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 break
         # Then try to add blocks
         opts_tried = []
-        for nn in range(10):
+        for nn in range(20):
             y_coords_at_xcs = [list(self.yd[xc]) for xc in xcs]
             y_node_nums_at_xcs = [list(np.cumsum(self.y_blocks[xcs])) for xcs in self.y_blocks]
             for i in range(len(y_node_nums_at_xcs)):
@@ -719,6 +723,16 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         if smallest != 0:
             for xcs in self.y_blocks:
                 self.y_blocks[xcs][-1] += abs(smallest)
+
+        min_h = 1e6
+        max_h = 0
+        for xcs in self.y_blocks:
+            if max(self.y_blocks[xcs]) > max_h:
+                max_h = max(self.y_blocks[xcs])
+            if min(self.y_blocks[xcs]) < min_h:
+                min_h = min(self.y_blocks[xcs])
+        print('min_h: ', min_h)
+        print('max_h: ', max_h)
 
     def build_req_y_node_positions(self):
         """
