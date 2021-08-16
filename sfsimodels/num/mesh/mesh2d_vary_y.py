@@ -50,7 +50,7 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     dy1 = min([(ym[-1][-1] - ym[-1][0]) / nh])
     dy0 = 0.2
 
-    y0s = ym[0][0] + np.arange(nh+1) * dy0
+    y0s = ym[0][0] + np.arange(nh + 1) * dy0
     y1s = ym[-1][-1] - np.arange(nh + 1) * dy1
     y1s = y1s[::-1]
     for i in range(nh + 1):
@@ -77,7 +77,7 @@ def adj_slope_by_layers(xm, ym, sgn=1):
     for j in range(1, nh + 1):
         new_ym[included_ele[0], j] += dy1
     for i in range(1, dy_inds + 1):
-        x_ind_adj = included_ele[i-1]
+        x_ind_adj = included_ele[i - 1]
         x_ind_adj_next = included_ele[i]
         if x_ind_adj == x_ind_adj_next:
             continue
@@ -85,7 +85,7 @@ def adj_slope_by_layers(xm, ym, sgn=1):
         dx = (xm[x_ind_adj + 1, i] - xm[x_ind_adj, i]) * 0.5
         dxs = np.interp(xm[x_ind_adj:x_ind_adj_next, i], [xm[x_ind_adj, i], xm[x_ind_adj_next, i]], [dx, 0])
         new_xm[x_ind_adj:x_ind_adj_next, i] = xm[x_ind_adj:x_ind_adj_next, i] + dxs
-        for j in range(i+1, nh + 1):
+        for j in range(i + 1, nh + 1):
             new_ym[x_ind_adj_next, j] += dy1
     if sgn == -1:
         new_xm = new_xm[::-1]
@@ -104,8 +104,8 @@ def calc_centroid(xs, ys):
     yc = np.sum((y0 + y1) * a, axis=-1)
 
     area = 0.5 * np.sum(a, axis=-1)
-    xc /= (6.0*area)
-    yc /= (6.0*area)
+    xc /= (6.0 * area)
+    yc /= (6.0 * area)
 
     return xc, yc
 
@@ -140,8 +140,8 @@ def calc_mesh_centroids(fem):
     yc = np.sum((y0 + y1) * a, axis=-1)
 
     area = 0.5 * np.sum(a, axis=-1)
-    xc /= (6.0*area)
-    yc /= (6.0*area)
+    xc /= (6.0 * area)
+    yc /= (6.0 * area)
 
     return xc.reshape(len(fem.soil_grid), len(fem.soil_grid[0])), yc.reshape(len(fem.soil_grid), len(fem.soil_grid[0]))
 
@@ -303,22 +303,22 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 y = -self.tds.sps[i].layer_depth(yy) + y_curr_surf
                 if -y < self.tds.height:
                     int_yy.append(y)
-                    angles.append(self.tds.sps[i].x_angles[yy-1])
+                    angles.append(self.tds.sps[i].x_angles[yy - 1])
             angles = np.array(angles)
 
             if xs[0] not in yd:
                 yd[xs[0]] = []
             for j in range(len(xs) - 1):
                 x0 = xs[j]
-                x_next = xs[j+1]
+                x_next = xs[j + 1]
                 if x_next not in yd:
                     yd[x_next] = []
                 x0_diff = x0 - x_curr
                 xn_diff = x_next - x_curr
                 if y_surf_at_xs[j] not in yd[x0]:
                     yd[x0].append(y_surf_at_xs[j])
-                if y_surf_at_xs[j+1] not in yd[x_next]:
-                    yd[x_next].append(y_surf_at_xs[j+1])
+                if y_surf_at_xs[j + 1] not in yd[x_next]:
+                    yd[x_next].append(y_surf_at_xs[j + 1])
                 for k in range(len(int_yy)):
                     if angles[k] is None or np.isnan(angles[k]):
                         continue
@@ -326,9 +326,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     if y_curr < y_surf_at_xs[j] and y_curr not in yd[x0]:
                         yd[x0].append(y_curr)
                     y_next = int_yy[k] + angles[k] * xn_diff
-                    if y_next < y_surf_at_xs[j+1] and y_next not in yd[x_next]:
+                    if y_next < y_surf_at_xs[j + 1] and y_next not in yd[x_next]:
                         yd[x_next].append(y_next)
-                    if y_curr <= y_surf_at_xs[j] and y_next <= y_surf_at_xs[j+1]:
+                    if y_curr <= y_surf_at_xs[j] and y_next <= y_surf_at_xs[j + 1]:
                         sds.append([[x0, x_next], [y_curr, y_next]])
 
         for x in yd:
@@ -457,6 +457,14 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 slope = dh_dzone / (x1 - x0)
                 if abs(slope) < self.allowable_slope and nb0 == nb1:
                     continue
+                if abs(slope) > self.allowable_slope and self.smooth_surf:  # TODO: and on surface and n1 - n0 sign is same
+                    y_surf0 = np.interp(x0, self.x_surf, self.y_surf)
+                    y_surf1 = np.interp(x1, self.x_surf, self.y_surf)
+                    if np.isclose(y_surf0, y0, atol=self.dy_target*0.1) and np.isclose(y_surf1, y1, atol=self.dy_target*0.1):
+                        if nb1 >= nb1 and slope > 0:
+                            continue
+                        if nb1 <= nb1 and slope < 0:
+                            continue
                 diff_nb = nb1 - nb0
                 y1_below = yd_list[ind_x1][ind_y1 - 1]
                 if y1_c == self.y_surf_at_xcs[x1_c]:  # surface
@@ -469,7 +477,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     except IndexError:
                         x_next = None
                         y_next_surf = None
-                        ind_y_next = None  
+                        ind_y_next = None
                 else:
                     y1_above = yd_list[ind_x1][ind_y1 + 1]
                     x_next = None
@@ -578,9 +586,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             nbs = np.insert(nbs, 0, 0)
             surf_inds.append(np.where(self.yd[x0] >= y_surfs[i] - 0.01)[0][0])
             nbs_at_surf.append(nbs[np.where(self.yd[x0] >= y_surfs[i] - 0.01)][0])
-            if surf_inds[-1] == len(self.y_blocks[x0]):
-                self.y_blocks[x0].append(0)
-                self.yd[x0] = np.insert(self.yd[x0], len(self.yd[x0]), self.yd[x0][-1])
+
         # inds = np.where(np.interp(xcs, self.x_surf, self.y_surf) == h_max)[0]
         i_max = np.argmax(nbs_at_surf)  # maximum number of blocks at top
         n_max = nbs_at_surf[i_max]
@@ -589,6 +595,10 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             x0 = xcs[i]
             if n_blocks[i] != n_max:
                 n_extra = n_max - n_blocks[i]  # TODO: could improve this by minus eles more evenly from zones
+                if n_extra:
+                    if surf_inds[i] == len(self.y_blocks[x0]):
+                        self.y_blocks[x0].append(0)
+                        self.yd[x0] = np.insert(self.yd[x0], len(self.yd[x0]), self.yd[x0][-1])
                 self.y_blocks[x0][-1] += n_extra
                 assert min(self.y_blocks[x0][:surf_inds[i]]) > 0, (x0, self.yd[x0], self.y_blocks[x0][-1])
 
@@ -614,7 +624,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             for i in range(len(y_node_nums_at_xcs)):
                 av_dhs.append([])
                 for j in range(len(y_node_nums_at_xcs[i]) - 1):
-                    if (i, j) in opts_tried or y_coords_at_xcs[i][j+1] > y_surfs_at_xcs[i]:
+                    if (i, j) in opts_tried or y_coords_at_xcs[i][j + 1] > y_surfs_at_xcs[i]:
                         av_dhs[i].append(1000)
                         continue
                     nb = y_node_nums_at_xcs[i][j + 1] - y_node_nums_at_xcs[i][j]
@@ -675,7 +685,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             for i in range(len(y_node_nums_at_xcs)):
                 av_dhs.append([])
                 for j in range(len(y_node_nums_at_xcs[i]) - 1):
-                    if (i, j) in opts_tried or y_coords_at_xcs[i][j+1] > y_surfs_at_xcs[i]:
+                    if (i, j) in opts_tried or y_coords_at_xcs[i][j + 1] > y_surfs_at_xcs[i]:
                         av_dhs[i].append(-1)
                         continue
                     nb = y_node_nums_at_xcs[i][j + 1] - y_node_nums_at_xcs[i][j]
@@ -752,34 +762,34 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 req_y_coords_at_xcs[i] = req_y_coords_at_xcs[i][:-1]
                 y_node_nums_at_xcs[i] = y_node_nums_at_xcs[i][:-1]
         # Step 2: For each slope that has a step, add additional requirement that slope does not decrease during step
-        sds = self.sds
-        for sd in sds:
-            x0 = sd[0][0]
-            x1 = sd[0][1]
-            y0 = sd[1][0]
-            y1 = sd[1][1]
-            ind_x0 = int(np.argmin(abs(xcs - x0)))
-            ind_x1 = int(np.argmin(abs(xcs - x1)))
-            ind_y0 = int(np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x0]) - y0)))
-            ind_y1 = int(np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x1]) - y1)))
-            y0_c = req_y_coords_at_xcs[ind_x0][ind_y0]
-            nb0 = y_node_nums_at_xcs[ind_x0][ind_y0]
-            nb1 = y_node_nums_at_xcs[ind_x1][ind_y1]
-            if nb0 != nb1:
-                diff_nb = nb1 - nb0
-                new_nb = y_node_nums_at_xcs[ind_x1][ind_y1] - diff_nb
-                if new_nb not in y_node_nums_at_xcs[ind_x1]:
-                    dh_upper = (req_y_coords_at_xcs[ind_x1][ind_y1] - y0_c) / diff_nb
-                    if ind_y1 - 2 < 0:
-                        nb_lower = nb1 - diff_nb
-                    else:
-                        nb_lower = nb1 - y_node_nums_at_xcs[ind_x1][ind_y1 - 1] - diff_nb
-                    dh_lower = (y0_c - req_y_coords_at_xcs[ind_x1][ind_y1 - 1]) / nb_lower
-                    if min_dh < dh_upper < max_dh and min_dh < dh_lower < max_dh:
-                        y_node_nums_at_xcs[ind_x1].append(new_nb)
-                        y_node_nums_at_xcs[ind_x1].sort()
-                        req_y_coords_at_xcs[ind_x1].append(y0_c)
-                        req_y_coords_at_xcs[ind_x1].sort()
+        # sds = self.sds
+        # for sd in sds:
+        #     x0 = sd[0][0]
+        #     x1 = sd[0][1]
+        #     y0 = sd[1][0]
+        #     y1 = sd[1][1]
+        #     ind_x0 = int(np.argmin(abs(xcs - x0)))
+        #     ind_x1 = int(np.argmin(abs(xcs - x1)))
+        #     ind_y0 = int(np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x0]) - y0)))
+        #     ind_y1 = int(np.argmin(abs(np.array(req_y_coords_at_xcs[ind_x1]) - y1)))
+        #     y0_c = req_y_coords_at_xcs[ind_x0][ind_y0]
+        #     nb0 = y_node_nums_at_xcs[ind_x0][ind_y0]
+        #     nb1 = y_node_nums_at_xcs[ind_x1][ind_y1]
+        #     if nb0 != nb1:
+        #         diff_nb = nb1 - nb0
+        #         new_nb = y_node_nums_at_xcs[ind_x1][ind_y1] - diff_nb
+        #         if new_nb not in y_node_nums_at_xcs[ind_x1]:
+        #             dh_upper = (req_y_coords_at_xcs[ind_x1][ind_y1] - y0_c) / diff_nb
+        #             if ind_y1 - 2 < 0:
+        #                 nb_lower = nb1 - diff_nb
+        #             else:
+        #                 nb_lower = nb1 - y_node_nums_at_xcs[ind_x1][ind_y1 - 1] - diff_nb
+        #             dh_lower = (y0_c - req_y_coords_at_xcs[ind_x1][ind_y1 - 1]) / nb_lower
+        #             if min_dh < dh_upper < max_dh and min_dh < dh_lower < max_dh:
+        #                 y_node_nums_at_xcs[ind_x1].append(new_nb)
+        #                 y_node_nums_at_xcs[ind_x1].sort()
+        #                 req_y_coords_at_xcs[ind_x1].append(y0_c)
+        #                 req_y_coords_at_xcs[ind_x1].sort()
 
         # Step 3: Build node number lists
         req_y_nodes = []
@@ -788,6 +798,14 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             req_y_nodes[i][0] = 0
             req_y_nodes[i] = np.array(req_y_nodes[i])
             req_y_coords_at_xcs[i] = np.array(req_y_coords_at_xcs[i])
+            for j in range(len(req_y_coords_at_xcs[i]) - 1):
+                if req_y_coords_at_xcs[i][-1 - j] == req_y_coords_at_xcs[i][-2 - j]:
+                    # print(req_y_nodes[i])
+                    n_eles = req_y_nodes[i][-1 - j] - req_y_nodes[i][-2 - j]
+                    dh = self.dy_target * n_eles
+                    req_y_coords_at_xcs[i][-1 - j] += n_eles
+                    # print(req_y_coords_at_xcs[i])
+                    # raise ValueError
         self.req_y_nodes = req_y_nodes
         self.req_y_coords_at_xcs = req_y_coords_at_xcs
 
@@ -803,23 +821,23 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
         # lower the y coordinates of unused to be inline with the right hand used blocks
         for i, xc0 in enumerate(xcs[::-1]):
-            print(i, xc0, nbs_at_surf[-i], nbs_at_surf[-1-i])
+            print(i, xc0, nbs_at_surf[-i], nbs_at_surf[-1 - i])
             if i == 0:
                 continue
-            if nbs_at_surf[-1-i] < nbs_at_surf[-i]:  # if there are more blocks in one to right
+            if nbs_at_surf[-1 - i] < nbs_at_surf[-i]:  # if there are more blocks in one to right
                 diff_nbs = nbs_at_surf[-i] - nbs_at_surf[-1 - i]
                 min_h = self.y_surf_at_xcs[xc0] + diff_nbs * self.dy_target * 0.5
-                if nbs_at_surf[-i] in req_y_nodes[-1-i]:
-                    ind = np.argmin(abs(nbs_at_surf[-i] - req_y_nodes[-1-i]))
-                    y_coords_at_xcs[-1-i][ind] = max([self.y_surf_at_xcs[xcs[-i]], min_h])
+                if nbs_at_surf[-i] in req_y_nodes[-1 - i]:
+                    ind = np.argmin(abs(nbs_at_surf[-i] - req_y_nodes[-1 - i]))
+                    y_coords_at_xcs[-1 - i][ind] = max([self.y_surf_at_xcs[xcs[-i]], min_h])
                 else:
                     ind = np.where(req_y_nodes[-1 - i] > nbs_at_surf[-i])[0][0]
                     req_y_nodes[-1 - i] = np.insert(req_y_nodes[-1 - i], ind, nbs_at_surf[-i])
-                    y_coords_at_xcs[-1-i] = np.insert(y_coords_at_xcs[-1-i], ind, self.y_surf_at_xcs[xcs[-i]])
-            ind = np.where(req_y_nodes[-1 - i] >= nbs_at_surf[-1-i])[0][0]
+                    y_coords_at_xcs[-1 - i] = np.insert(y_coords_at_xcs[-1 - i], ind, self.y_surf_at_xcs[xcs[-i]])
+            ind = np.where(req_y_nodes[-1 - i] >= nbs_at_surf[-1 - i])[0][0]
             if req_y_nodes[-1 - i][ind] != req_y_nodes[-1 - i][-1]:  # if there are blocks above the surface
-                y_coords_at_xcs[-1 - i][ind+1:] = np.interp(req_y_nodes[-1 - i][ind+1:], req_y_nodes[-i], y_coords_at_xcs[-i])
-
+                y_coords_at_xcs[-1 - i][ind + 1:] = np.interp(req_y_nodes[-1 - i][ind + 1:], req_y_nodes[-i],
+                                                              y_coords_at_xcs[-i])
 
         # Step 4: position additional nodes to be consistent with previous column - otherwise equally spaced
         y_nodes = []
@@ -854,10 +872,11 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         req_n_below = req_y_nodes[i][ind_below]
                         req_n_above = req_y_nodes[i][ind_below + 1]
                         # sf is slope below plus slope above times j / (ind_above - ind_below)
-                        dh_dzone_below = y_coords_at_xcs[i][ind_below] - y_nodes[i-1][req_n_below]
+                        dh_dzone_below = y_coords_at_xcs[i][ind_below] - y_nodes[i - 1][req_n_below]
                         dh_dzone_above = y_coords_at_xcs[i][ind_below + 1] - y_nodes[i - 1][req_n_above]
-                        dh = dh_dzone_below + (dh_dzone_above - dh_dzone_below) / (req_n_above - req_n_below) * (j - req_n_below)
-                        new_y_vals.append(y_nodes[i-1][j] + dh)
+                        dh = dh_dzone_below + (dh_dzone_above - dh_dzone_below) / (req_n_above - req_n_below) * (
+                                    j - req_n_below)
+                        new_y_vals.append(y_nodes[i - 1][j] + dh)
                 else:
                     ind = np.where(req_y_nodes[i] == j)[0][0]
                     new_y_vals.append(y_coords_at_xcs[i][ind])
@@ -865,19 +884,24 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
             # adjust positions to ensure element thickness is appropriate
             for j in range(len(req_y_nodes[i]) - 1):
-                ys = new_y_vals[req_y_nodes[i][j]:req_y_nodes[i][j+1]+1]
+                ys = new_y_vals[req_y_nodes[i][j]:req_y_nodes[i][j + 1] + 1]
                 diffs = np.diff(ys)
                 if len(diffs):
                     min_h = min(diffs)
                     max_h = max(diffs)
                     # h_block = ys[0] - ys[-1]
-                    nbs = req_y_nodes[i][j+1] - req_y_nodes[i][j]
-                    uni_ys = np.interp(np.arange(req_y_nodes[i][j], req_y_nodes[i][j+1] + 1), req_y_nodes[i], y_coords_at_xcs[i])
+                    nbs = req_y_nodes[i][j + 1] - req_y_nodes[i][j]
+                    uni_ys = np.interp(np.arange(req_y_nodes[i][j], req_y_nodes[i][j + 1] + 1), req_y_nodes[i],
+                                       y_coords_at_xcs[i])
                     uni_h = min(np.diff(uni_ys))
                     if min_h / max_h < 0.7:
                         x = 0.7 - min_h / max_h
                         new_ys = (1 - x) * ys + x * uni_ys
-                        new_y_vals[req_y_nodes[i][j]:req_y_nodes[i][j + 1]+1] = new_ys
+                        new_y_vals[req_y_nodes[i][j]:req_y_nodes[i][j + 1] + 1] = new_ys
+                    if nbs_at_surf[i] == req_y_nodes[i][j] and min_h < self.dy_target:
+                        h0 = new_y_vals[req_y_nodes[i][j]]
+                        hs = h0 + np.arange(0, nbs + 1) * self.dy_target
+                        new_y_vals[req_y_nodes[i][j]:req_y_nodes[i][j + 1] + 1] = hs
 
             y_nodes.append(new_y_vals)
 
@@ -899,18 +923,18 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             next_slope = surf_at_next_xc - surf_at_xc
             # trim either half the block or min_dh
             if next_slope > 0 and diff_nb > 0:
-                ind_yc2 = np.where(y_nodes[i+1] > surf_at_xc)[0][0]
+                ind_yc2 = np.where(y_nodes[i + 1] > surf_at_xc)[0][0]
                 ind_yc2 = max(ind_yc2, ind_yc + 1)
-                curr_col_ys = list(y_nodes[i][ind_yc2-1: ind_nc + 1])
-                next_ys = list(y_nodes[i+1][ind_yc2-1: ind_nc + 1])
+                curr_col_ys = list(y_nodes[i][ind_yc2 - 1: ind_nc + 1])
+                next_ys = list(y_nodes[i + 1][ind_yc2 - 1: ind_nc + 1])
                 # y_nodes[i][ind_yc: ind_nc] = (next_ys - next_ys[0]) * 0.5 + next_ys[0]
                 av_dh = next_slope / diff_nb
                 update_unused = 0
                 for kk in range(1, len(next_ys)):
                     a = curr_col_ys[kk] - next_ys[kk]
-                    new_dh = next_ys[kk] - curr_col_ys[kk-1]
+                    new_dh = next_ys[kk] - curr_col_ys[kk - 1]
                     if new_dh < self.dy_target * 0.5:
-                        next_ys[kk] = curr_col_ys[kk-1] + self.dy_target * 0.5
+                        next_ys[kk] = curr_col_ys[kk - 1] + self.dy_target * 0.5
 
                     if (curr_col_ys[kk] - next_ys[kk]) / av_dh > 0.2:
                         update_unused = 1
@@ -938,7 +962,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         y_node_nums = np.arange(0, self.req_y_nodes[0][-1] + 1)
         ys = []
         for i in range(len(self.x_nodes)):
-            ys.append(interp3d(self.x_nodes[i], y_node_nums, self.xcs_sorted, self.req_y_nodes, self.req_y_coords_at_xcs))
+            ys.append(
+                interp3d(self.x_nodes[i], y_node_nums, self.xcs_sorted, self.req_y_nodes, self.req_y_coords_at_xcs))
         self.y_nodes = np.array(ys)
 
     def set_x_nodes(self):
@@ -948,7 +973,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         x_scale_curr = self.x_scale_vals[0]
         for xx in range(1, len(self.xcs_sorted)):
             x_shift = self.xcs_sorted[xx] - self.xcs_sorted[xx - 1]
-            extra_inds = np.where((self.xcs_sorted[xx] > self.x_scale_pos) & (self.x_scale_pos > self.xcs_sorted[xx - 1]))
+            extra_inds = np.where(
+                (self.xcs_sorted[xx] > self.x_scale_pos) & (self.x_scale_pos > self.xcs_sorted[xx - 1]))
             x_cps = [self.xcs_sorted[xx - 1]]
             x_scales = [x_scale_curr]
             for i in extra_inds[0]:
@@ -981,7 +1007,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         dir_diffs = np.sqrt(x_diffs ** 2 + y_diffs ** 2)
         k = dir_diffs.argmin()
         ncol = dir_diffs.shape[1]
-        return int(k/ncol), k%ncol
+        return int(k / ncol), k % ncol
 
     def adjust_for_smooth_surface(self):
         """Make the surface have less than 90 degree changes"""
@@ -1005,7 +1031,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             # if x_nodes2d[x0_ind][y0_ind] != self.x_nodes[x0_ind]:
             #     # mesh already adjusted, need to get actual node coord
             #     pass
-                # raise ValueError('x already moved cannot perform double adjustment')
+            # raise ValueError('x already moved cannot perform double adjustment')
             if y1_ind != y0_ind:  # non smooth surface
                 y_ind_top = min([y0_ind, y1_ind])
                 y_ind_bot = max([y0_ind, y1_ind])
@@ -1015,8 +1041,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 if (x1_ind - x0_ind) > self.smooth_ratio * abs(y1_ind - y0_ind):
                     # Need to smooth by adjusting each step
                     # get all relevant node y-coordinates
-                    y_ns = self.y_nodes[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds+1]
-                    x_ns = self.x_nodes2d[x0_ind: x1_ind+1, y_ind_top: y_ind_top + dy_inds+1]
+                    y_ns = self.y_nodes[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1]
+                    x_ns = self.x_nodes2d[x0_ind: x1_ind + 1, y_ind_top: y_ind_top + dy_inds + 1]
                     y_ns = y_ns[:, ::-1]  # flip
                     x_ns = x_ns[:, ::-1]
 
@@ -1049,9 +1075,9 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         dxs = np.linspace(0, dx, x_rhs_ind - x_lhs_ind + 1)
                         x_vals_upper = self.x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top] - dxs
                         x_vals_lower = self.x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_bot]
-                        y_hs = self.y_nodes[x1_ind][y_ind_top: y_ind_bot+1][::-1]
+                        y_hs = self.y_nodes[x1_ind][y_ind_top: y_ind_bot + 1][::-1]
                         xvs = interp2d(y_hs, [y_bot, y_top], [x_vals_lower, x_vals_upper])[::-1]
-                        self.x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top: y_ind_bot+1] = xvs.T
+                        self.x_nodes2d[x_lhs_ind:x_rhs_ind + 1, y_ind_top: y_ind_bot + 1] = xvs.T
                     else:  # slope moves down as you go to the left
                         i_curr = np.where(self.xcs_sorted == x1)[0][0]
                         if i_curr == len(self.xcs_sorted) - 1:
@@ -1078,7 +1104,6 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             x0 = x1
             y0 = y1
         pass
-
 
     @property
     def soils(self):
@@ -1112,7 +1137,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                     yc = y_centres[xx][yy]
                     if x_angles[ll - 1] is None:
                         pass
-                    elif -yc > (sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
+                    elif -yc > (
+                            sp.layer_depth(ll) - x_angles[ll - 1] * (x_centres[xx] - sp_x) - self.y_surf_at_sps[pid]):
                         pass
                     else:
                         if ll == 1:  # above the original soil profile due to ground slope
@@ -1186,7 +1212,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     def femesh(self):
         return self._femesh
 
-    def exclude_fd_eles(self):  # TODO: implement a near field option, where grid gets remeshed with angles to have more detail near footing
+    def exclude_fd_eles(
+            self):  # TODO: implement a near field option, where grid gets remeshed with angles to have more detail near footing
         for i, bd in enumerate(self.tds.bds):
             fd = bd.fd
             fcx = self.tds.x_bds[i] + bd.x_fd
@@ -1315,6 +1342,7 @@ class FiniteElementVaryY2DMesh(PhysicalObject):
         xis, yis = self.get_node_indices_for_all_eles()
         x_coords = self.x_nodes[xis]
         y_coords = self.y_nodes[xis, yis]
+
 
 class FiniteElementVaryXY2DMesh(PhysicalObject):
     base_type = 'femesh'
@@ -1481,11 +1509,11 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
             elif active_ind > prev_ind:
                 coords[0] = coords[0][:-1]  # remove last added
                 coords[1] = coords[1][:-1]
-                coords[0].append(self.x_nodes[i-1][active_ind])
-                coords[1].append(self.y_nodes[i-1][active_ind])
+                coords[0].append(self.x_nodes[i - 1][active_ind])
+                coords[1].append(self.y_nodes[i - 1][active_ind])
                 if prev_ind != active_ind + 1:
-                    coords[0].append(self.x_nodes[i-1][active_ind + 1])
-                    coords[1].append(self.y_nodes[i-1][active_ind + 1])
+                    coords[0].append(self.x_nodes[i - 1][active_ind + 1])
+                    coords[1].append(self.y_nodes[i - 1][active_ind + 1])
                 coords[0].append(self.x_nodes[i][active_ind + 1])
                 coords[1].append(self.y_nodes[i][active_ind + 1])
             else:
@@ -1496,10 +1524,10 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         slopes = np.diff(coords[1]) / np.diff(coords[0])
         diff_slopes = np.diff(slopes)
         inds = np.where(abs(diff_slopes) > tol)[0] + 1
-        inds = np.array([0] + list(inds) + [len(coords[0]) -1], dtype=int)
+        inds = np.array([0] + list(inds) + [len(coords[0]) - 1], dtype=int)
         ccoords = coords.T[inds].T
         return ccoords
-    
+
     def get_surface_node_indices(self, tol=0):
         prev_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
         inds = [[0, prev_ind + 1]]
@@ -1513,9 +1541,9 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
             elif active_ind > prev_ind:
                 # coords[0] = coords[0][:-1]  # remove last added
                 # coords[1] = coords[1][:-1]
-                inds.append([i-1, active_ind])
+                inds.append([i - 1, active_ind])
                 if prev_ind != active_ind + 1:
-                    inds.append([i-1, active_ind + 1])
+                    inds.append([i - 1, active_ind + 1])
                 inds.append([i, active_ind + 1])
             else:
                 inds.append([i + 1, active_ind + 1])
@@ -1628,7 +1656,8 @@ def _example_simple_run():
 
     x_scale_pos = np.array([0, 5, 15, 30])
     x_scale_vals = np.array([2., 1.0, 2.0, 3.0])
-    fc = FiniteElementVary2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals, auto_run=False)
+    fc = FiniteElementVary2DMeshConstructor(tds, 0.5, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
+                                            auto_run=False)
     fc.get_special_coords_and_slopes()  # Step 1
     fc.set_init_y_blocks()
     fc.adjust_blocks_to_be_consistent_with_slopes()
@@ -1669,14 +1698,14 @@ def _example_simple_run():
     for i in range(len(xns)):
         xc = xns[i]
         xn = xc * np.ones_like(fc.y_nodes[i])
-        win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen=(200, 200, 200), symbolBrush=(200, 200, 200), symbolSize=3)
+        win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen=(200, 200, 200), symbolBrush=(200, 200, 200),
+                 symbolSize=3)
     for i in range(len(fc.x_nodes2d)):
         xn = fc.x_nodes2d[i]
         win.plot(xn, fc.y_nodes[i], pen=None, symbol='o', symbolPen='r', symbolBrush='r', symbolSize=3)
     for i in range(len(fc.xcs_sorted)):
         win.addItem(pg.InfiniteLine(fc.xcs_sorted[i], angle=90, pen=(0, 255, 0, 100)))
     o3plot.show()
-
 
 
 if __name__ == '__main__':
