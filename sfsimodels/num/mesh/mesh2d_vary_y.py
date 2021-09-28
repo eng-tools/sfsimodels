@@ -1529,24 +1529,23 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         return ccoords
 
     def get_surface_node_indices(self, tol=0):
+        # switched = 1
+        # if switched:
+
         prev_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
-        inds = [[0, prev_ind + 1]]
+        inds = [[0, prev_ind]]
         for i in range(self.nnx - 1):
             active_ind = np.where(self.soil_grid[i] != self.inactive_value)[0][0]
             if active_ind < prev_ind:
-                inds.append([i + 1, prev_ind + 1])
-                inds.append([i + 1, prev_ind])
-                if prev_ind != active_ind + 1:
-                    inds.append([i + 1, active_ind + 1])
+                inds.append([i+1, active_ind])
+                for j in range(active_ind, prev_ind):
+                    inds.append([i, j])
             elif active_ind > prev_ind:
-                # coords[0] = coords[0][:-1]  # remove last added
-                # coords[1] = coords[1][:-1]
-                inds.append([i - 1, active_ind])
-                if prev_ind != active_ind + 1:
-                    inds.append([i - 1, active_ind + 1])
-                inds.append([i, active_ind + 1])
+                for j in range(prev_ind+1, active_ind+1):
+                    inds.append([i, j])
+                inds.append([i + 1, active_ind])
             else:
-                inds.append([i + 1, active_ind + 1])
+                inds.append([i + 1, active_ind])
             prev_ind = active_ind
         inds = np.array(inds)
         return inds

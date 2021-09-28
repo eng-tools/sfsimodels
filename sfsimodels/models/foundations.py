@@ -52,7 +52,7 @@ class Foundation(PhysicalObject):
     def __format__(self, format_spec):
         return "Foundation"
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(Foundation, self).__init__()
         self.inputs = [
         "id",
@@ -70,6 +70,9 @@ class Foundation(PhysicalObject):
         'ip_axis'
         ]
         self.stack = []
+        for item in  kwargs:
+            self.__setattr__(item, kwargs[item])
+            self.stack.append(item)
 
     @property
     def ancestor_types(self):
@@ -377,8 +380,8 @@ class RaftFoundation(Foundation):
     def __str__(self):
         return "FoundationRaft id: {0}, name: {1}".format(self.id, self.name)
 
-    def __init__(self):
-        super(RaftFoundation, self).__init__()
+    def __init__(self, **kwargs):
+        super(RaftFoundation, self).__init__(**kwargs)
         self.inputs = self.inputs + self._extra_class_inputs
 
     @property

@@ -1,3 +1,4 @@
+import numpy as np
 from sfsimodels.models.abstract_models import PhysicalObject
 
 
@@ -55,6 +56,10 @@ class Section(PhysicalObject):
     @mat.setter
     def mat(self, value):
         self._material = value
+
+    @property
+    def area(self):
+        return self._width * self._depth
 
     @property
     def i_rot_ww(self):
@@ -160,6 +165,13 @@ class RCDetailedSection(RCBeamSection):
         self.layer_depths = None
         self.bar_diams = None
         self.bar_centres = None
+        self.db_trans = None
+        self.spacing_trans = None  # centreline spacing
+        self.fy_trans = None
+        self.fy_long = None
+        self.fu_long = None
+        self.nb_trans_x = None
+        self.nb_trans_y = None
 
     @property
     def cover_h(self):
@@ -172,6 +184,33 @@ class RCDetailedSection(RCBeamSection):
             x_left = min([min(layer) for layer in self.bar_centres])
             x_right = min([min(layer) for layer in self.bar_centres])
             return min([x_left, self.width - x_right])
+
+    @property
+    def depth_c(self):
+        """Depth of core section enclosed by the centre lines of transverse reinforcing"""
+        if self.bar_diams is not None and self.db_trans is not None:
+            db_av = (self.bar_diams[0][0] + self.bar_diams[-1][0]) / 2
+            bar_tran_centre_d = self.cover_h - db_av / 2 + self.db_trans / 2
+            return self.depth - 2 * bar_tran_centre_d
+
+    @property
+    def width_c(self):
+        """Width of core section enclosed by the centre lines of transverse reinforcing"""
+        if self.bar_diams is not None and self.db_trans is not None:
+            db_av = (self.bar_diams[0][0] + self.bar_diams[-1][0]) / 2
+            bar_tran_centre_w = self.cover_w - db_av / 2 + self.db_trans / 2
+            return self.width - 2 * bar_tran_centre_w
+        
+    @property
+    def area_c(self):
+        """Area  of core section enclosed by the centre lines of transverse reinforcing"""
+        if self.bar_diams is not None and self.db_trans is not None:
+            return self.depth_c * self.width_c
+        
+    @property
+    def area_steel(self):
+        if self.bar_diams is not None:
+            return np.sum(np.concatenate(self.bar_diams) ** 2 * np.pi / 4)
 
 # class SimpleRCBeamSection(RCBeamSection):
 #     _area_tension_steel = None

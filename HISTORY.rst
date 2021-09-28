@@ -5,6 +5,13 @@ History
 Pre-release
 ___________
 
+0.9.39 (2021-09-28)
+-------------------
+* In function `get_surface_node_indices` ordered surface node indices left to right
+* Foundation object now accepts kwargs and adds them to object if already in `inputs`
+* Added additional properties to RC section
+
+
 0.9.38 (2021-07-28)
 -------------------
 * Fixed surface meshing issue

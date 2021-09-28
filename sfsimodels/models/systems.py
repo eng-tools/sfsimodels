@@ -245,6 +245,10 @@ class TwoDSystem(object):
         self._x_sps.pop(ind)
         self._sps.pop(ind)
 
+    def remove_sp_by_index(self, ind):
+        self._x_sps.pop(ind)
+        self._sps.pop(ind)
+
     @property
     def sps(self):
         return self._sps
