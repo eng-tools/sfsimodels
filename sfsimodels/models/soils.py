@@ -346,6 +346,12 @@ class Soil(PhysicalObject):
     def calc_shear_vel(self, saturated):
         deprecation("Use get_shear_vel")
         return self.get_shear_vel(saturated)
+    
+    def set_g_mod_from_shear_vel(self, shear_val, saturated):
+        if saturated:
+            self.g_mod = shear_val ** 2 * self.unit_sat_mass
+        else:
+            self.g_mod = shear_val ** 2 * self.unit_dry_mass
 
     def get_unit_mass(self, saturated):
         if saturated:
@@ -991,16 +997,20 @@ class StressDependentSoil(Soil):
             k0 = self.poissons_ratio / (1 - self.poissons_ratio)
         return self.g0_mod * self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a + self.g_mod_p0
 
-    def set_g0_mod_at_v_eff_stress(self, v_eff_stress, g_mod, g_mod_p0=None, k0=None):
+    def set_g0_mod_at_v_eff_stress(self, v_eff_stress, g_mod, g_mod_p0=None, k0=None, plane_strain=False):
         if g_mod_p0 is not None:
             self.g_mod_p0 = g_mod_p0
         if k0 is None:
             k0 = self.poissons_ratio / (1 - self.poissons_ratio)
-        m = self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a
+        if plane_strain:
+            m = self.p_atm * (v_eff_stress * (1 + k0) / 2 / self.p_atm) ** self.a
+        else:
+            m = self.p_atm * (v_eff_stress * (1 + 2 * k0) / 3 / self.p_atm) ** self.a
         self.g0_mod = (g_mod - self.g_mod_p0) / m
 
     def set_curr_m_eff_stress_from_g_mod(self, g_mod):
-        self._curr_m_eff_stress = (g_mod - self.g_mod_p0) / self.g0_mod
+        self._curr_m_eff_stress = ((g_mod - self.g_mod_p0) / (self.g0_mod * self.p_atm)) ** (1. / self.a) * self.p_atm
+        # self._curr_m_eff_stress = (g_mod - self.g_mod_p0) / self.g0_mod
 
     def get_g_mod_at_m_eff_stress(self, m_eff_stress):
         return self.g0_mod * self.p_atm * (m_eff_stress / self.p_atm) ** self.a + self.g_mod_p0

@@ -13,9 +13,12 @@ class SeismicHazard(PhysicalObject):
     corner_period = -1.0
     corner_acc_factor = 0.0
     site_class = None
+    base_type = 'hazard'
     type = "seismic_hazard"
 
     inputs = [
+        "base_type",
+        "type",
         "z_factor",
         "r_factor",
         "n_factor",

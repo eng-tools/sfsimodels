@@ -1,6 +1,6 @@
 import json
 
-from sfsimodels.models import soils, buildings, foundations, systems, abstract_models, loads, materials, sections
+from sfsimodels.models import soils, buildings, foundations, systems, abstract_models, loads, materials, sections, hazards
 from collections import OrderedDict
 from sfsimodels.functions import add_to_obj
 from sfsimodels.exceptions import deprecation, ModelError
@@ -123,6 +123,7 @@ def get_std_obj_map():
         "soil-soil_stress_dependent": soils.StressDependentSoil,
         "soil_profile-soil_profile": soils.SoilProfile,
         "beam_column_element-beam_column_element": buildings.BeamColumnElement,
+        "beam_column_element-wall_element": buildings.WallElement,
         "section-section": sections.Section,
         "section-rc_beam_section": sections.RCBeamSection,
         "building-building": buildings.Building,
@@ -132,6 +133,7 @@ def get_std_obj_map():
         "building-building_frame2D": buildings.FrameBuilding2D,  # deprecated type
         "building-wall_building": buildings.WallBuilding,
         "building-building_wall": buildings.WallBuilding,  # deprecated type
+        "building-single_wall": buildings.SingleWall,
         "building-structure": buildings.SDOFBuilding,  # Deprecated type, remove in v1
         "building-sdof": buildings.SDOFBuilding,
         "foundation-foundation": foundations.Foundation,
@@ -148,7 +150,8 @@ def get_std_obj_map():
         "system-two_d_system": systems.TwoDSystem,
         "load-load": loads.Load,
         "load-load_at_coords": loads.LoadAtCoords,
-        "material-rc_material": materials.ReinforcedConcreteMaterial
+        "material-rc_material": materials.ReinforcedConcreteMaterial,
+        'hazard-seismic_hazard': hazards.SeismicHazard,
     }
     return obj_map
 
@@ -221,6 +224,7 @@ def ecp_dict_to_objects(ecp_dict, custom_map=None, default_to_base=False, verbos
                     elif name == 'n_bays':
                         args[m_indy] = len(data_models[mtype][m_id]["bay_lengths"])
             new_instance = obj_class(*args, **kwargs)
+            # add_to_obj(new_instance, data_models[mtype][m_id], objs=objs, verbose=verbose)
             try:
                 add_to_obj(new_instance, data_models[mtype][m_id], objs=objs, verbose=verbose)
             except KeyError as e:

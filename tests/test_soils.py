@@ -377,6 +377,27 @@ def test_stress_dependent_soil_set_get_g_mod():
     assert not np.isclose(g_mod, sl.g_mod)
 
 
+def test_stress_dependent_soil_set_curr_m_eff():
+
+    sl = models.StressDependentSoil()
+    sl.poissons_ratio = 0.3
+    sl.a = 0.5
+    sl.g0_mod = 534.0
+    g_mod = 68.0e6
+    sl.set_curr_m_eff_stress_from_g_mod(g_mod)
+    assert np.isclose(g_mod, sl.g_mod)
+    g_mod = 168.0e6
+    sl.set_curr_m_eff_stress_from_g_mod(g_mod)
+    assert np.isclose(g_mod, sl.g_mod)
+    g_mod = 268.0e6
+    sl.set_curr_m_eff_stress_from_g_mod(g_mod)
+    assert np.isclose(g_mod, sl.g_mod)
+    sl.g_mod_p0 = 10.0e6
+    g_mod = 268.0e6
+    sl.set_curr_m_eff_stress_from_g_mod(g_mod)
+    assert np.isclose(g_mod, sl.g_mod)
+
+
 if __name__ == '__main__':
     test_e_critical()
     # test_non_normal_g()

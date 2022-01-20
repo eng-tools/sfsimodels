@@ -1,9 +1,9 @@
 from sfsimodels.models.abstract_models import PhysicalObject, CustomObject
 from sfsimodels.models.hazards import SeismicHazard
-from sfsimodels.models.foundations import Foundation, PadFoundation, RaftFoundation
+from sfsimodels.models.foundations import Foundation, PadFoundation, RaftFoundation, PadFooting
 from sfsimodels.models.soils import Soil, CriticalSoil, discretize_soil_profile, SoilProfile, StressDependentSoil
 from sfsimodels.models.buildings import Building, FrameBuilding, WallBuilding, SDOFBuilding, FrameBuilding2D, \
-    NullBuilding, BeamColumnElement
+    NullBuilding, BeamColumnElement, WallElement, SingleWall
 from sfsimodels.models.sections import Section
 from sfsimodels.models import sections
 from sfsimodels.models import materials

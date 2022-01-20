@@ -19,7 +19,7 @@ class Foundation(PhysicalObject):
     _depth = None  # [m], The depth of the foundation from the surface
     _height = None  # [m], The height of the foundation from base of foundation to ground floor
     _ip_axis = None
-    _density = None  # [kg/m3], Density of foundation
+    _mass_density = None  # [kg/m3], Density of foundation
     _mass = None  # kg
     base_type = "foundation"
     type = "foundation"
@@ -39,7 +39,7 @@ class Foundation(PhysicalObject):
         "length",
         "depth",
         "height",
-        "density",
+        "mass_density",
         "mass",
         'x_bd',
         'z_bd',
@@ -63,7 +63,7 @@ class Foundation(PhysicalObject):
         "length",
         "depth",
         "height",
-        "density",
+        "mass_density",
         "mass",
         'x_bd',
         'z_bd',
@@ -136,7 +136,12 @@ class Foundation(PhysicalObject):
     @property
     def density(self):
         """The mass density of the foundation [kg/m3]"""
-        return self._density
+        return self._mass_density
+
+    @property
+    def mass_density(self):
+        """The mass density of the foundation [kg/m3]"""
+        return self._mass_density
 
     @property
     def weight(self):
@@ -179,20 +184,24 @@ class Foundation(PhysicalObject):
 
     @density.setter
     def density(self, value):
+        self.mass_density = value
+
+    @mass_density.setter
+    def mass_density(self, value):
         if value is None or value == "":
             return
-        density = self._calc_density()
+        density = self._calc_mass_density()
         if density is not None and not np.isclose(density, value, rtol=self._tolerance):
             raise ModelError("Density inconsistent with set mass")
-        self._density = float(value)
-        self._add_to_stack('density', float(value))
+        self._mass_density = float(value)
+        self._add_to_stack('mass_density', float(value))
         mass = self._calc_mass()
         if mass is not None and not ct.isclose(mass, self.mass):
             self.mass = mass
 
     def override_mass(self, value):
         self._mass = float(value)
-        density = self._calc_density()
+        density = self._calc_mass_density()
         if density is not None and not ct.isclose(density, self.density, rel_tol=self._tolerance):
             self.density = density
 
@@ -205,9 +214,9 @@ class Foundation(PhysicalObject):
             raise ModelError("Mass inconsistent with set density")
         self._mass = float(value)
         self._add_to_stack('mass', self._mass)
-        density = self._calc_density()
+        density = self._calc_mass_density()
         if density is not None and not ct.isclose(density, self.density, rel_tol=self._tolerance):
-            self.density = density
+            self.mass_density = density
 
     def _calc_mass(self):
         try:
@@ -215,7 +224,7 @@ class Foundation(PhysicalObject):
         except TypeError:
             return None
 
-    def _calc_density(self):
+    def _calc_mass_density(self):
         try:
             return self.mass / (self.area * self.height)
         except TypeError:
@@ -407,7 +416,7 @@ class RaftFoundation(Foundation):
 
 class PadFooting(Foundation):
     """
-        An extension to the Foundation Object to describe Raft foundations
+        An extension to the Foundation Object to describe Pad Footings which are members of PadFoundations
         """
     ftype = "pad_footing"
     type = "pad_footing"

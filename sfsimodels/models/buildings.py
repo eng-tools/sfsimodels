@@ -32,6 +32,7 @@ class Building(PhysicalObject):
     _foundation = None
     x_fd = None
     z_fd = None
+    loading_pre_reqs = ('material',)
 
     def __init__(self, n_storeys, verbose=0, **kwargs):
         super(Building, self).__init__()
@@ -275,11 +276,18 @@ class BeamColumnElement(PhysicalObject):
                 "section_unique_hash": str(self.sections[i].unique_hash),
                 # "depth": float(section)
             })
-        models_dict["beam_column_element"][self.unique_hash] = mdict
+        models_dict[self.base_type][self.unique_hash] = mdict
 
 
 class Element(BeamColumnElement):
     pass
+
+class WallElement(BeamColumnElement):
+    type = "wall_element"
+    def __init__(self, n_sects=1, section_class=None):
+        # run parent class initialiser function
+        super(WallElement, self).__init__(n_sects=n_sects, section_class=section_class)
+
 
 
 class Frame(object):
@@ -1057,6 +1065,210 @@ class NullBuilding(PhysicalObject):
         if z is not None:
             self.z_fd = float(z)
         self._foundation = foundation
+
+
+class SingleWall(PhysicalObject):
+
+    _custom_wall_section = None
+    _loaded_wall_section_ids = None  # should not be accessed by end user
+    _loaded_wall_sections = None  # should not be accessed by end user
+    loading_pre_reqs = ('beam_column_element', )
+    base_type = "building"
+    type = "single_wall"
+    g = 9.81  # m/s2  # gravity
+
+    def __init__(self, n_storeys):
+        if not hasattr(self, "inputs"):
+            self.inputs = ["id",
+                           "name",
+                           "base_type",
+                           "type",
+                           'interstorey_heights',
+                           'storey_masses',
+                           'storey_n_loads',
+                           'g']
+        self._extra_class_variables = [
+            "n_storeys",
+            "elements"
+        ]
+        self.inputs += self._extra_class_variables
+        self._n_storeys = n_storeys
+        self.elements = []
+        self._storey_n_loads = np.zeros(n_storeys)
+        self._storey_masses = np.zeros(n_storeys)
+        self._interstorey_heights = np.zeros(n_storeys)
+        self._allocate_elements()
+
+    def add_to_dict(self, models_dict, return_mdict=False, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = OrderedDict()
+        if "beam_column_element" not in models_dict:
+            models_dict["beam_column_element"] = OrderedDict()
+        mdict = self.to_dict(**kwargs)
+        mdict["elements"] = []
+        for i, storey in enumerate(self.elements):
+            self.elements[i].add_to_dict(models_dict, **kwargs)
+            mdict["elements"].append({
+                "beam_column_element_id": str(i),
+                "beam_column_element_unique_hash": str(self.elements[i].unique_hash),
+                # "depth": float(section)
+            })
+        if return_mdict:
+            return mdict
+        models_dict[self.base_type][self.unique_hash] = mdict
+
+    def to_dict(self, extra=(), **kwargs):
+        outputs = OrderedDict()
+        skip_list = ["elements"]
+        full_inputs = self.inputs + list(extra)
+        for item in full_inputs:
+            if item not in skip_list:
+                value = self.__getattribute__(item)
+                outputs[item] = sf.collect_serial_value(value)
+
+        return outputs
+
+    @property
+    def ancestor_types(self):
+        return ["frame"]
+
+    def _allocate_elements(self):
+        self._elements = np.array([WallElement(section_class=self._custom_wall_section) for ss in range(self.n_storeys)])
+
+    @property
+    def elements(self):
+        return self._elements
+
+    @elements.setter
+    def elements(self, elements):
+        for i, ele in enumerate(elements):
+            if isinstance(ele, dict):
+                self._elements[i] = ele['beam_column_element']
+            else:
+                self._elements[i] = elements
+
+    @property
+    def n_storeys(self):
+        return self._n_storeys
+
+    @n_storeys.setter
+    def n_storeys(self, value):
+        assert self._n_storeys == value
+
+    @property
+    def interstorey_heights(self):
+        return self._interstorey_heights
+
+    @interstorey_heights.setter
+    def interstorey_heights(self, heights):
+        if len(heights) != self.n_storeys:
+            raise ModelError("Specified heights must match number of storeys (%i)." % self.n_storeys)
+        self._interstorey_heights = np.array(heights)
+
+    @property
+    def heights(self):
+        return np.cumsum(self._interstorey_heights)
+
+    @property
+    def max_height(self):
+        return np.sum(self._interstorey_heights)
+
+    @property
+    def storey_masses(self):
+        return self._storey_masses
+
+    @storey_masses.setter
+    def storey_masses(self, masses):
+        self._storey_masses = np.array(masses)
+
+    @property
+    def storey_n_loads(self):
+        return self._storey_n_loads
+
+    @storey_n_loads.setter
+    def storey_n_loads(self, n_loads):
+        self._storey_n_loads = np.array(n_loads)
+
+    @property
+    def wall_section_ids(self):
+        return None
+
+    @wall_section_ids.setter
+    def element_section_ids(self, beam_ids):
+        self._loaded_wall_section_ids = beam_ids
+        if self._loaded_wall_sections is not None:
+            self._assign_loaded_walls()
+
+    @property
+    def wall_sections(self):
+        return None
+
+    @wall_sections.setter
+    def wall_sections(self, wall_sections):
+        self._loaded_wall_sections = wall_sections
+        if self._loaded_wall_section_ids is not None:
+            self._assign_loaded_walls()
+
+    def _assign_loaded_walls(self):  # This is now deprecated in favour of element based loading
+        for ss in range(self.n_storeys):
+            sect_is = self._loaded_wall_section_ids[ss]
+            if hasattr(sect_is, "__len__"):
+                n_sections = len(sect_is)
+                self.elements[ss].split_into_multiple([1] * n_sections)  # TODO: should be lengths
+                for sect_i in range(len(sect_is)):
+                    wall_sect_id = str(self._loaded_wall_section_ids[ss][sect_i])
+                    sect_dictionary = self._loaded_wall_sections[wall_sect_id]
+                    sf.add_to_obj(self.elements[ss].sections[sect_i], sect_dictionary)
+            else:  # deprecated loading
+                deprecation("Frame data structure is out-of-date, please load and save the file to update.")
+                wall_sect_id = str(self._loaded_wall_section_ids[ss])
+                sect_dictionary = self._loaded_wall_sections[wall_sect_id]
+                sf.add_to_obj(self.elements[ss].sections[0], sect_dictionary)
+
+    def set_wall_prop(self, prop, values, repeat="up", sections=None):
+        """
+        Specify the properties of the beam
+
+        Parameters
+        ----------
+        prop: str
+            Name of property that values should be assigned to
+        values: value or array_like
+            Value or list of values to be assigned
+        repeat: str
+            If 'up' then duplicate up the structure, if 'all' the duplicate for all columns
+        """
+        si = 0
+        if sections is not None:
+            si = 1
+        values = np.array(values)
+        if repeat == "up":
+            assert len(values.shape) == 0 + si
+            values = [values for ss in range(self.n_storeys)]
+        elif repeat == "all":
+            assert len(values.shape) == 0 + si
+            values = [values for ss in range(self.n_storeys)]
+        else:
+            assert len(values.shape) == 1 + si
+
+        for ss in range(self.n_storeys):
+            self._elements[ss].set_section_prop(prop, values[ss], sections=sections)
+
+    @property
+    def wall_depth(self):
+        return self._elements[0].s[0].depth
+
+    @wall_depth.setter
+    def wall_depth(self, value):
+        self.set_wall_prop('depth', value)
+
+    @property
+    def wall_width(self):
+        return self._elements[0].s[0].width
+
+    @wall_width.setter
+    def wall_width(self, value):
+        self.set_wall_prop('width', value)
 
 #
 # class SoilStructureSystem(PhysicalObject):

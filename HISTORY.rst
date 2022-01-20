@@ -5,7 +5,13 @@ History
 Pre-release
 ___________
 
-0.9.39 (2021-09-28)
+0.9.41 (2021-01-20)
+-------------------
+* Added `SingleWall`
+* Foundation now has `.mass_density` to explicitly define it as the mass density
+* Fixed bug with `StressDependentSoil.set_curr_m_eff_stress_from_g_mod()`
+
+0.9.40 (2021-09-28)
 -------------------
 * In function `get_surface_node_indices` ordered surface node indices left to right
 * Foundation object now accepts kwargs and adds them to object if already in `inputs`
