@@ -101,6 +101,14 @@ class Foundation(PhysicalObject):
         return getattr(self, ax)
 
     @property
+    def lshort(self):
+        return min(self.length, self.width)
+
+    @property
+    def llong(self):
+        return max(self.length, self.width)
+
+    @property
     def area(self):
         """Foundation area in plan"""
         try:

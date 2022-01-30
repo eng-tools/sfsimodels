@@ -1088,6 +1088,9 @@ class SoilProfile(PhysicalObject):
     def __str__(self):
         return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
 
+    def __repr__(self):
+        return "SoilProfile id: {0}, name: {1}".format(self.id, self.name)
+
     def add_to_dict(self, models_dict, **kwargs):
         if self.base_type not in models_dict:
             models_dict[self.base_type] = OrderedDict()

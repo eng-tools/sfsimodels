@@ -4,6 +4,8 @@ History
 
 Pre-release
 ___________
+* Added `lshort` and `llong` parameters to foundations
+* Minor changes to mesh algorithm to avoid divide by zero warnings
 
 0.9.41 (2021-01-20)
 -------------------

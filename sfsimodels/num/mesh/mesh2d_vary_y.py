@@ -544,6 +544,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                             nb_2_below = self.y_blocks[x1_c][ind_y1 - 2]
                             new_nb_2_below = nb_2_below + nb_sgn * -1
                             y1_2_below = yd_list[ind_x1][ind_y1 - 2]
+                            if new_nb_2_below == 0:
+                                break
                             new_dh_2_below = (y1_below - y1_2_below) / new_nb_2_below
                             if min_dh < new_dh_2_below < max_dh:
                                 use_2_below = True
@@ -555,6 +557,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                                 break
                         if y1_above is not None:
                             nb_above = self.y_blocks[x1_c][ind_y1]
+                            if nb_above + nb_sgn * 1 == 0:
+                                break
                             new_dh_above = (y1_above - y1_c) / (nb_above + nb_sgn * 1)
                             if not (min_dh < new_dh_above < max_dh):
                                 break
@@ -628,6 +632,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         av_dhs[i].append(1000)
                         continue
                     nb = y_node_nums_at_xcs[i][j + 1] - y_node_nums_at_xcs[i][j]
+                    if nb == 0:
+                        continue
                     av_dhs[i].append((y_coords_at_xcs[i][j + 1] - y_coords_at_xcs[i][j]) / nb)
 
                 min_dhs.append(min(av_dhs[i]))
@@ -644,6 +650,8 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                 found_opt = 0
                 max_new_dhs = []
                 for opt in range(nb_lowest_p, nb_highest_p):
+                    if nb_highest_p - nb_lowest_p - 1 == 0:
+                        break
                     max_new_dh = hzone_p / (nb_highest_p - nb_lowest_p - 1)
 
                     for w in range(len(y_node_nums_at_xcs)):
@@ -653,19 +661,23 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         nb_low = y_node_nums_at_xcs[w][y_ind]
                         nb_high = y_node_nums_at_xcs[w][y_ind + 1]
                         hzone = y_coords_at_xcs[w][y_ind + 1] - y_coords_at_xcs[w][y_ind]
-                        new_dh = hzone / (nb_high - nb_low - 1)
+                        if (nb_high - nb_low - 1) == 0:
+                            new_dh = 1e10
+                        else:
+                            new_dh = hzone / (nb_high - nb_low - 1)
                         if max_new_dh < new_dh:
                             max_new_dh = new_dh
                     max_new_dhs.append(max_new_dh)
-                max_new_dh = min(max_new_dhs)
-                yind = max_new_dhs.index(max_new_dh) + nb_lowest_p
-                if max_new_dh < opt_high:
-                    for w in range(len(y_node_nums_at_xcs)):
-                        y_ind = interp_left(yind, y_node_nums_at_xcs[w])
-                        if y_ind == len(y_node_nums_at_xcs[w]) - 1:
-                            y_ind -= 1
-                        self.y_blocks[xcs[w]][y_ind] -= 1
-                    found_opt = 1
+                if len(max_new_dhs):
+                    max_new_dh = min(max_new_dhs)
+                    yind = max_new_dhs.index(max_new_dh) + nb_lowest_p
+                    if max_new_dh < opt_high:
+                        for w in range(len(y_node_nums_at_xcs)):
+                            y_ind = interp_left(yind, y_node_nums_at_xcs[w])
+                            if y_ind == len(y_node_nums_at_xcs[w]) - 1:
+                                y_ind -= 1
+                            self.y_blocks[xcs[w]][y_ind] -= 1
+                        found_opt = 1
                 if not found_opt:
                     opts_tried.append((x_ind, y_ind))
             else:
@@ -689,7 +701,10 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
                         av_dhs[i].append(-1)
                         continue
                     nb = y_node_nums_at_xcs[i][j + 1] - y_node_nums_at_xcs[i][j]
-                    av_dhs[i].append((y_coords_at_xcs[i][j + 1] - y_coords_at_xcs[i][j]) / nb)
+                    if nb == 0:
+                        av_dhs[i].append(1e9)
+                    else:
+                        av_dhs[i].append((y_coords_at_xcs[i][j + 1] - y_coords_at_xcs[i][j]) / nb)
 
                 max_dhs.append(max(av_dhs[i]))
             if max(max_dhs) > opt_high:
@@ -821,7 +836,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
 
         # lower the y coordinates of unused to be inline with the right hand used blocks
         for i, xc0 in enumerate(xcs[::-1]):
-            print(i, xc0, nbs_at_surf[-i], nbs_at_surf[-1 - i])
+            # print(i, xc0, nbs_at_surf[-i], nbs_at_surf[-1 - i])
             if i == 0:
                 continue
             if nbs_at_surf[-1 - i] < nbs_at_surf[-i]:  # if there are more blocks in one to right
@@ -1521,7 +1536,8 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
                 coords[1].append(self.y_nodes[i + 1][active_ind + 1])
             prev_ind = active_ind
         coords = np.array(coords)
-        slopes = np.diff(coords[1]) / np.diff(coords[0])
+        dx = np.clip(np.diff(coords[0]), 1.0e-9, None)
+        slopes = np.diff(coords[1]) / dx
         diff_slopes = np.diff(slopes)
         inds = np.where(abs(diff_slopes) > tol)[0] + 1
         inds = np.array([0] + list(inds) + [len(coords[0]) - 1], dtype=int)

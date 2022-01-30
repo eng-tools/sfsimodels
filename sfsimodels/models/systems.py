@@ -322,4 +322,41 @@ class TwoDSystem(object):
         return self.sps[inds[ind]], xs_sorted[ind]
 
 
+def trim_system_to_width(tds, target_width, ff_width=30):
+    # make last <ff_width> free-field
+
+    x_ff = target_width - ff_width
+    y_ff = tds.get_y_surface_at_x(x_ff)
+    sp_ref, x_ref = tds.get_sp_and_x_sps_for_x(x_ff)
+    # if ff_width is very close to soil profile
+    # - then set angles of that sp to zero and move free-field away to avoid meshing issue.
+    if x_ff - x_ref < 1:
+        sp_ref.x_angles = np.zeros(tds.sps[-1].n_layers)
+        sp_ref.x_angles[0] = None
+        x_ff = x_ref + 1
+    y_ref = tds.get_y_surface_at_x(x_ref)
+    lays = np.array(list(sp_ref.layers)[1:]) - np.array(sp_ref.x_angles[1:]) * (x_ff - x_ref) - y_ref + y_ff
+    sp_ff = SoilProfile()
+    for ll in range(len(lays) + 1):
+        if ll == 0:
+            sp_ff.add_layer(0, sp_ref.layer(1))
+        else:
+            sp_ff.add_layer(lays[ll - 1], sp_ref.layer(ll + 1))
+    sp_ff.x_angles = np.zeros(len(lays) + 1)
+    sp_ff.name = 'free-field'
+    sp_ff.height = tds.height + y_ff
+    tds.y_surf = np.where(tds.x_surf > x_ff, y_ff, tds.y_surf)
+    ind = sf.interp_left(x_ff, tds.x_surf)
+    tds.x_surf = np.insert(tds.x_surf, ind + 1, x_ff)
+    tds.y_surf = np.insert(tds.y_surf, ind + 1, y_ff)
+    rem_xs = []
+    for ss in range(len(tds.x_sps)):
+        if tds.x_sps[ss] > x_ff:
+            rem_xs.append(tds.x_sps[ss])
+    rem_xs.sort(reverse=True)
+    for xs in rem_xs:
+        tds.remove_sp(xs)
+    tds.add_sp(sp_ff, x_ff)
+    tds.width = target_width
+
 
