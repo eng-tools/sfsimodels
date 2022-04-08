@@ -12,3 +12,4 @@ venv/
 docs/_build/
 examples/.ipynb_checkpoints/
 rsync-files.sl
+.python-version
