@@ -97,7 +97,7 @@ class FiniteElementOrth2DMeshConstructor(object):
     x_index_to_sp_index = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, fd_eles=0, x_sym=0):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, rm_fd_eles=0, fd_eles=0, x_sym=0):
         """
         A finite element mesh of a two-dimension system
 
@@ -113,8 +113,10 @@ class FiniteElementOrth2DMeshConstructor(object):
             scale factors for element widths
         dp: int
             Number of decimal places
-        fd_eles: int
+        rm_fd_eles: int
             If true then set foundation elements to inactive
+        fd_eles: int
+            If true then set foundation elements to inactive (deprecated)
         x_sym: int
             If true then mesh should be symmetric around the centre along x-axis
         """
@@ -153,7 +155,7 @@ class FiniteElementOrth2DMeshConstructor(object):
             self.set_to_decimal_places()
         self.set_soil_ids_to_grid()
         self.create_mesh()
-        if not fd_eles:
+        if not (fd_eles + rm_fd_eles):
             self.exclude_fd_eles()
         self._active_nodes = None
 
@@ -410,7 +412,9 @@ class FiniteElementOrth2DMeshConstructor(object):
             lip = getattr(bd.fd, bd.fd.ip_axis)
             xs = np.array([fcx - lip / 2, fcx + lip / 2])
             ys = np.array([fcy - fd.depth, fcy - fd.depth + fd.height])
-            xsi, xei = self.get_indexes_at_xs(xs)
+            xsi = self.get_nearest_node_index_at_x(xs[0])
+            xei = self.get_nearest_node_index_at_x(xs[1])
+            # xsi, xei = self.get_indexes_at_xs(xs)
             yei, ysi = self.get_indexes_at_depths(ys, low='min')
             # create foundation nodes a soil mesh nodes
             # along the base
@@ -421,8 +425,9 @@ class FiniteElementOrth2DMeshConstructor(object):
                     self.femesh.soil_grid[xx][yy] = self.femesh.inactive_value
 
 
-def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_sym=0):
-    fc = FiniteElementOrth2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals, x_sym=x_sym)
+def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_sym=0, rm_fd_eles=0):
+    fc = FiniteElementOrth2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
+                                            x_sym=x_sym, rm_fd_eles=rm_fd_eles)
     femesh = fc.femesh
     assert isinstance(femesh, FiniteElementOrth2DMesh)
     return femesh

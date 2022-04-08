@@ -151,7 +151,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     x_index_to_sp_index = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, fd_eles=0, auto_run=True,
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, dp: int = None, rm_fd_eles=0, fd_eles=0, auto_run=True,
                  use_3d_interp=False, smooth_surf=False, force_x2d=False, min_scale=0.5, max_scale=2.0,
                  allowable_slope=0.25, smooth_ratio=1.):
         """
@@ -169,8 +169,10 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             scale factors for element widths
         dp: int
             Number of decimal places
-        fd_eles: int
+        rm_fd_eles: int
             if =0 then elements corresponding to the foundation are removed, else provide element id
+        fd_eles: int
+            if =0 then elements corresponding to the foundation are removed, else provide element id (deprecated)
         smooth_surf: bool
             if true then changes in angle of the slope must be less than 90 degrees, builds VaryXY mesh
         """
@@ -244,7 +246,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
             self.create_mesh()
             if smooth_surf:
                 self.femesh.tidy_unused_mesh()
-            if not fd_eles:
+            if not (fd_eles + rm_fd_eles):
                 self.exclude_fd_eles()
 
     def get_special_coords_and_slopes(self):
@@ -1227,8 +1229,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
     def femesh(self):
         return self._femesh
 
-    def exclude_fd_eles(
-            self):  # TODO: implement a near field option, where grid gets remeshed with angles to have more detail near footing
+    def exclude_fd_eles(self):  # TODO: implement a near field option, where grid gets remeshed with angles to have more detail near footing
         for i, bd in enumerate(self.tds.bds):
             fd = bd.fd
             fcx = self.tds.x_bds[i] + bd.x_fd
@@ -1583,17 +1584,17 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         return calc_centroid(*self.get_node_coords_for_all_eles())
 
 
-def construct_femesh_vary_xy(tds, dy_target, x_scale_pos=None, x_scale_vals=None):
+def construct_femesh_vary_xy(tds, dy_target, x_scale_pos=None, x_scale_vals=None, rm_fd_eles=0):
     fc = FiniteElementVary2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
-                                            smooth_surf=True)
+                                            smooth_surf=True, rm_fd_eles=rm_fd_eles)
     femesh = fc.femesh
     assert isinstance(femesh, FiniteElementVaryXY2DMesh)
     return femesh
 
 
-def construct_femesh_vary_y(tds, dy_target, x_scale_pos=None, x_scale_vals=None):
+def construct_femesh_vary_y(tds, dy_target, x_scale_pos=None, x_scale_vals=None, rm_fd_eles=0):
     fc = FiniteElementVary2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
-                                            smooth_surf=False)
+                                            smooth_surf=False, rm_fd_eles=rm_fd_eles)
     femesh = fc.femesh
     assert isinstance(femesh, FiniteElementVaryY2DMesh)
     return femesh

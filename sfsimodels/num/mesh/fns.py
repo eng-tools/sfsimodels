@@ -44,11 +44,13 @@ def build_ele2_node_array(femesh):
     return ele2nodes
 
 
-def load_femesh(ffp, ecp_models, x_nodes2d, suffix=''):
-    x_nodes = np.loadtxt(ffp + f'x_nodes{suffix}.txt')
-    y_nodes = np.loadtxt(ffp + f'y_nodes{suffix}.txt')
-    soil_grid = np.loadtxt(ffp + f'soil_grid{suffix}.txt', dtype=int)
-    soils_list = np.loadtxt(ffp + f'soils{suffix}.txt', dtype=str)
+def load_femesh(ffp, ecp_models, x_nodes2d, prefix='', suffix=''):
+    x_nodes = np.loadtxt(ffp + f'{prefix}x_nodes{suffix}.txt')
+    y_nodes = np.loadtxt(ffp + f'{prefix}y_nodes{suffix}.txt')
+    soil_grid = np.loadtxt(ffp + f'{prefix}soil_grid{suffix}.txt', dtype=int)
+    soils_list = np.loadtxt(ffp + f'{prefix}soils{suffix}.txt', dtype=str)
+    if soils_list.size == 1:
+        soils_list = [np.asscalar(soils_list)]
     soils = []
     for soil_hash in soils_list:
         sl_obj = None
@@ -63,6 +65,14 @@ def load_femesh(ffp, ecp_models, x_nodes2d, suffix=''):
         return mesh.FiniteElementVaryXY2DMesh(x_nodes, y_nodes, soil_grid, soils)
     else:
         return mesh.FiniteElementVaryY2DMesh(x_nodes, y_nodes, soil_grid, soils)
+
+
+def save_femesh(ffp, femesh, prefix='', suffix=''):
+    np.savetxt(ffp + f'{prefix}x_nodes{suffix}.txt', femesh.x_nodes, fmt='%.4g')
+    np.savetxt(ffp + f'{prefix}y_nodes{suffix}.txt', femesh.y_nodes, fmt='%.4g')
+    np.savetxt(ffp + f'{prefix}soil_grid{suffix}.txt', femesh.soil_grid, fmt='%i')
+    with open(ffp + f'{prefix}soils{suffix}.txt', 'w') as ofile:
+        ofile.write('\n'.join([sl.unique_hash for sl in femesh.soils]))
 
 
 def get_nearest_xy_ind(xs, ys, x_point, y_point):
