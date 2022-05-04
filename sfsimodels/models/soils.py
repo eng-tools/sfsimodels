@@ -922,6 +922,8 @@ class StressDependentSoil(Soil):
                              "with current value (%.3f)" % (value, curr_poissons_ratio))
         old_value = self.poissons_ratio
         self._poissons_ratio = value
+        if value is not None:
+            self._add_to_stack("poissons_ratio", float(value))
 
     @property
     def curr_m_eff_stress(self):
