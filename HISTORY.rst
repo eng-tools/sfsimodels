@@ -4,10 +4,13 @@ History
 
 Pre-release
 ___________
+
+0.9.42 (2022-04-08)
+-------------------
 * Added `lshort` and `llong` parameters to foundations
 * Minor changes to mesh algorithm to avoid divide by zero warnings
 
-0.9.41 (2021-01-20)
+0.9.41 (2022-01-20)
 -------------------
 * Added `SingleWall`
 * Foundation now has `.mass_density` to explicitly define it as the mass density
