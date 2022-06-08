@@ -5,6 +5,11 @@ History
 Pre-release
 ___________
 
+0.9.43 (2022-04-08)
+-------------------
+* Added save_femesh
+* Fixed issue with poissons ratio in soil stack
+
 0.9.42 (2022-04-08)
 -------------------
 * Added `lshort` and `llong` parameters to foundations
