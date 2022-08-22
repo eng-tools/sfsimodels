@@ -252,8 +252,8 @@ class FiniteElementOrth2DMeshConstructor(object):
     def set_x_nodes(self):
         """Determine optimal position of node x-coordinates"""
         dxs = [0]
-        symmetric = self.x_sym
-        if not symmetric:
+
+        if not self.x_sym:
             x_targets = self.x_act
         else:
             x_targets = np.array(list(self.x_act))
@@ -287,9 +287,14 @@ class FiniteElementOrth2DMeshConstructor(object):
                 x_start += x_inc
             x_incs = np.array(x_incs) * x_shift / sum(x_incs)
             dxs += list(x_incs)
-        if symmetric:
+        if self.x_sym:
+            if self.dp:
+                temp_x_nodes = np.cumsum(dxs)
+                temp_x_nodes = np.round(temp_x_nodes, self.dp)
+                dxs = list(np.diff(temp_x_nodes, prepend=temp_x_nodes[0]))
             dxs = dxs + dxs[1:][::-1]
         x_nodes = np.cumsum(dxs)
+
 
         # if not symmetric:
         self.x_nodes = x_nodes
@@ -425,9 +430,9 @@ class FiniteElementOrth2DMeshConstructor(object):
                     self.femesh.soil_grid[xx][yy] = self.femesh.inactive_value
 
 
-def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_sym=0, rm_fd_eles=0):
+def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_sym=0, dp=None, rm_fd_eles=0):
     fc = FiniteElementOrth2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
-                                            x_sym=x_sym, rm_fd_eles=rm_fd_eles)
+                                            x_sym=x_sym, dp=dp, rm_fd_eles=rm_fd_eles)
     femesh = fc.femesh
     assert isinstance(femesh, FiniteElementOrth2DMesh)
     return femesh
