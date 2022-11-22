@@ -5,7 +5,7 @@ History
 Pre-release
 ___________
 
-0.9.44 (2022-11-22)
+0.9.45 (2022-11-22)
 -------------------
 Added irregular section.
 Added in-plane axis for foundations.
