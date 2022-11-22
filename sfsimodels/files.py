@@ -124,7 +124,9 @@ def get_std_obj_map():
         "soil_profile-soil_profile": soils.SoilProfile,
         "beam_column_element-beam_column_element": buildings.BeamColumnElement,
         "beam_column_element-wall_element": buildings.WallElement,
-        "section-section": sections.Section,
+        "section-section": sections.RectangularSection,  # deprecated use
+        "section-rectangular_section": sections.RectangularSection,
+        "section-irregular_section": sections.IrregularSection,
         "section-rc_beam_section": sections.RCBeamSection,
         "building-building": buildings.Building,
         "building-null_building": buildings.NullBuilding,

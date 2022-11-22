@@ -2,9 +2,9 @@ import numpy as np
 from sfsimodels.models.abstract_models import PhysicalObject
 
 
-class Section(PhysicalObject):
+class RectangularSection(PhysicalObject):
     id = None
-    type = "section"
+    type = "rectangular_section"
     base_type = "section"
     _depth = None
     _width = None
@@ -89,7 +89,112 @@ class Section(PhysicalObject):
         models_dict[self.base_type][self.unique_hash] = mdict
 
 
-class RCBeamSection(Section):
+class IrregularSection(PhysicalObject):
+    id = None
+    type = "irregular_section"
+    base_type = "section"
+    _depth = None
+    _width = None
+    _material = None
+    loading_pre_reqs = ('material',)
+    _area = None
+    _i_rot_ww = None
+    _i_rot_dd = None
+
+    def __init__(self, **kwargs):
+        self.inputs = [
+            "base_type",
+            "type",
+            "depth",
+            "width",
+            "area",
+            "i_rot_ww",
+            'i_rot_dd',
+            "material"
+                       ]
+        self.skip_list = list(self.skip_list) + ['material']
+
+        for param in kwargs:
+            if param in self.inputs:
+                setattr(self, param, kwargs[param])
+
+    @property
+    def depth(self):
+        return self._depth
+
+    @depth.setter
+    def depth(self, value):
+        self._depth = value
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, value):
+        self._width = value
+
+    @property
+    def area(self):
+        return self._area
+
+    @area.setter
+    def area(self, value):
+        self._area = value
+
+    @property
+    def i_rot_ww(self):
+        return self._i_rot_ww
+
+    @i_rot_ww.setter
+    def i_rot_ww(self, value):
+        self._i_rot_ww = value
+
+    @property
+    def i_rot_dd(self):
+        return self._i_rot_dd
+
+    @i_rot_dd.setter
+    def i_rot_dd(self, value):
+        self._i_rot_dd = value
+
+    @property
+    def mat(self):
+        return self._material
+
+    @property
+    def material(self):
+        return self._material
+
+    @material.setter
+    def material(self, value):
+        self._material = value
+
+    @mat.setter
+    def mat(self, value):
+        self._material = value
+
+    def add_to_dict(self, models_dict, return_mdict=False, **kwargs):
+        if self.base_type not in models_dict:
+            models_dict[self.base_type] = {}
+        mdict = self.to_dict(**kwargs)
+        if self.mat is not None:
+            if hasattr(self.mat, 'add_to_dict'):
+                self.mat.add_to_dict(models_dict, **kwargs)
+            else:
+                if "material" not in models_dict:
+                    models_dict["material"] = {}
+                models_dict["material"][self.mat.unique_hash] = self.mat.to_dict(**kwargs)
+
+            mdict['material_id'] = self.mat.id
+            mdict['material_unique_hash'] = self.mat.unique_hash
+
+        if return_mdict:
+            return mdict
+        models_dict[self.base_type][self.unique_hash] = mdict
+
+
+class RCBeamSection(RectangularSection):
     id = None
     type = "rc_beam_section"
     base_type = "section"

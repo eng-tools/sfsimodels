@@ -360,3 +360,25 @@ def trim_system_to_width(tds, target_width, ff_width=30):
     tds.width = target_width
 
 
+def gen_sp_at_x(tds, x_ff):
+    y_ff = tds.get_y_surface_at_x(x_ff)
+    sp_ref, x_ref = tds.get_sp_and_x_sps_for_x(x_ff)
+    # if ff_width is very close to soil profile
+    # - then set angles of that sp to zero and move free-field away to avoid meshing issue.
+    if x_ff - x_ref < 1:
+        sp_ref.x_angles = np.zeros(tds.sps[-1].n_layers)
+        sp_ref.x_angles[0] = None
+        x_ff = x_ref + 1
+    y_ref = tds.get_y_surface_at_x(x_ref)
+    lays = np.array(list(sp_ref.layers)[1:]) - np.array(sp_ref.x_angles[1:]) * (x_ff - x_ref) - y_ref + y_ff
+    sp_ff = SoilProfile()
+    for ll in range(len(lays) + 1):
+        if ll == 0:
+            sp_ff.add_layer(0, sp_ref.layer(1))
+        else:
+            sp_ff.add_layer(lays[ll - 1], sp_ref.layer(ll + 1))
+    sp_ff.x_angles = np.zeros(len(lays) + 1)
+    sp_ff.height = tds.height + y_ff
+    sp_ff.gwl = y_ff - tds.gwl
+    return sp_ff
+

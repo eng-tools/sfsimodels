@@ -27,8 +27,7 @@ class Foundation(PhysicalObject):
     _building = None
     x_bd = None
     z_bd = None
-    ip_axis = None
-    oop_axis = None
+    _oop_axis = None
 
     _extra_class_inputs = [
         "id",

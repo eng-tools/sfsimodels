@@ -6,7 +6,7 @@ from sfsimodels.models.abstract_models import PhysicalObject
 # from sfsimodels.models import SeismicHazard, Foundation, Soil
 from sfsimodels.exceptions import ModelError, deprecation
 from sfsimodels import functions as sf
-from sfsimodels.models.sections import Section
+from sfsimodels.models.sections import RectangularSection, IrregularSection
 
 
 class Building(PhysicalObject):
@@ -210,7 +210,7 @@ class BeamColumnElement(PhysicalObject):
     def __init__(self, n_sects=1, section_class=None):
         self.inputs = ['type', 'base_type', 'sections']
         if section_class is None:
-            self._sections = [Section() for i in range(n_sects)]
+            self._sections = [IrregularSection() for i in range(n_sects)]
         else:
             self._sections = [section_class() for i in range(n_sects)]
 
@@ -640,7 +640,7 @@ class Frame(object):
 
 class FrameBuilding(Frame, Building):
     _n_seismic_frames = None
-    _n_gravity_frames = None
+    _n_gravity_frames = 0
     type = "frame_building"
 
     def __init__(self, n_storeys, n_bays):
@@ -703,7 +703,7 @@ class FrameBuilding(Frame, Building):
         trib_lens[1:-1] = (self.bay_lengths[1:] + self.bay_lengths[:-1]) / 2
 
         tw = self.floor_width / (self.n_frames - 1)
-        trib_widths = tw * np.ones(self.n_frames + 1)
+        trib_widths = tw * np.ones(self.n_frames)
         trib_widths[0] = tw / 2
         trib_widths[-1] = tw / 2
         return n_total * (trib_lens[:, np.newaxis] * trib_widths[np.newaxis, :]) / self.floor_area

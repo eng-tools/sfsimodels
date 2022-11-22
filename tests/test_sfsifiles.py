@@ -370,7 +370,7 @@ def test_can_load_then_save_and_load_custom_ecp_w_custom_obj():
 
 def test_load_frame_w_hinges():
     # Define special class for section
-    class CustomBeamSection(sfsimodels.models.sections.Section):
+    class CustomBeamSection(sfsimodels.models.sections.RectangularSection):
         diametertop = None
         fylong = None
         filongtop = None
@@ -413,7 +413,7 @@ def test_load_frame_w_hinges():
 
 def test_load_old_file_w_frame_w_hinges():
     # Define special class for section
-    class CustomBeamSection(sfsimodels.models.sections.Section):
+    class CustomBeamSection(sfsimodels.models.sections.RectangularSection):
         diametertop = None
         fylong = None
         filongtop = None

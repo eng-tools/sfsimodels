@@ -5,6 +5,11 @@ History
 Pre-release
 ___________
 
+0.9.44 (2022-11-22)
+-------------------
+Added irregular section.
+Added in-plane axis for foundations.
+
 0.9.43 (2022-04-08)
 -------------------
 * Added save_femesh

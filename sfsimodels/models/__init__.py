@@ -3,7 +3,7 @@ from sfsimodels.models.foundations import Foundation, FoundationPad, FoundationR
 from sfsimodels.models.soils import Soil, CriticalSoil, StressDependentSoil, SoilCritical, SoilProfile
 from sfsimodels.models.buildings import Building, \
     SDOFBuilding, NullBuilding
-from sfsimodels.models.sections import Section
+from sfsimodels.models.sections import RectangularSection, IrregularSection
 from sfsimodels.models import materials
 from sfsimodels.models.systems import SoilStructureSystem
 

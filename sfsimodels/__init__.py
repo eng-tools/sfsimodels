@@ -4,7 +4,7 @@ from sfsimodels.models.foundations import Foundation, PadFoundation, RaftFoundat
 from sfsimodels.models.soils import Soil, CriticalSoil, discretize_soil_profile, SoilProfile, StressDependentSoil
 from sfsimodels.models.buildings import Building, FrameBuilding, WallBuilding, SDOFBuilding, FrameBuilding2D, \
     NullBuilding, BeamColumnElement, WallElement, SingleWall
-from sfsimodels.models.sections import Section
+from sfsimodels.models.sections import RectangularSection, IrregularSection
 from sfsimodels.models import sections
 from sfsimodels.models import materials
 from sfsimodels import num

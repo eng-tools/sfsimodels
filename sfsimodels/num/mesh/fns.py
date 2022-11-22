@@ -61,7 +61,7 @@ def load_femesh(ffp, ecp_models, x_nodes2d, prefix='', suffix=''):
                 break
         soils.append(sl_obj)
 
-    if x_nodes2d is not None:
+    if x_nodes2d:
         return mesh.FiniteElementVaryXY2DMesh(x_nodes, y_nodes, soil_grid, soils)
     else:
         return mesh.FiniteElementVaryY2DMesh(x_nodes, y_nodes, soil_grid, soils)

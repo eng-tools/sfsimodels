@@ -1248,8 +1248,12 @@ class SoilProfile(PhysicalObject):
     @layers.setter
     def layers(self, layers):
         for layer in layers:
-            layer_depth = layer["depth"]
-            sl = layer["soil"]  # is actually a soil object
+            if hasattr(layer, '__len__') and 'depth' in layer:
+                layer_depth = layer["depth"]
+                sl = layer["soil"]  # is actually a soil object
+            else:
+                layer_depth = layer
+                sl = layers[layer]
             self.add_layer(layer_depth, sl)
 
     def remove_layer_at_depth(self, depth):
@@ -1269,7 +1273,7 @@ class SoilProfile(PhysicalObject):
     def move_layer(self, new_depth, layer_int, overwrite=False):
         key = list(self._layers.keys())[layer_int - 1]
         if new_depth != key and new_depth in self._layers.keys() and not overwrite:
-            raise ValueError('new_depth is already in soil profile. If you want to over write this layer then set overwrite=True')
+            raise ValueError(f'new_depth ({new_depth}) is already in soil profile. If you want to over write this layer then set overwrite=True')
         soil = self._layers[key]
         del self._layers[key]
         self._layers[new_depth] = soil
