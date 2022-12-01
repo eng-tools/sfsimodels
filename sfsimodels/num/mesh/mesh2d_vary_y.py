@@ -1033,7 +1033,7 @@ class FiniteElementVary2DMeshConstructor(object):  # maybe FiniteElementVertLine
         x0 = x_points[0]
         y0 = np.interp(x0, self.x_surf, self.y_surf)
 
-        for ss in range(1, len(self.x_surf)):
+        for ss in range(1, len(x_points)):
             x1 = x_points[ss]
             y1 = np.interp(x1, self.x_surf, self.y_surf)
             slope = (y1 - y0) / (x1 - x0)
