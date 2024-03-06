@@ -7,9 +7,9 @@ from .fns import remove_close_items
 
 class FiniteElementOrth2DMesh(object):
     def __init__(self, x_nodes=None, y_nodes=None, soil_grid=None, soils=None, inactive_value=1e6):
-        self.x_nodes = x_nodes
-        self.y_nodes = y_nodes
-        self.soil_grid = soil_grid
+        self.x_nodes = np.array(x_nodes)
+        self.y_nodes = np.array(y_nodes)
+        self.soil_grid = np.array(soil_grid)
         self._soils = soils
         self.inactive_value = inactive_value
 
@@ -97,9 +97,10 @@ class FiniteElementOrth2DMeshConstructor(object):
     x_index_to_sp_index = None
     _inactive_value = 1000000
 
-    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, rm_fd_eles=0, fd_eles=0, x_sym=0):
+    def __init__(self, tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_nodes=None, dp: int = None, rm_fd_eles=0,
+                 fd_eles=0, x_sym=0, y_splits=None):
         """
-        A finite element mesh of a two-dimension system
+        A constructor of a finite element mesh of a two-dimension system
 
         Parameters
         ----------
@@ -147,6 +148,10 @@ class FiniteElementOrth2DMeshConstructor(object):
                     self._soils.append(sl)
         self.get_actual_lims()
         self.set_y_nodes()
+        if y_splits is not None:
+            for split in y_splits:
+                if 'above' in split and split['above'] is not None:
+                    self.split_rows_above_depth(split['above'])
         if x_nodes is not None:
             self.x_nodes = x_nodes
         else:
@@ -324,6 +329,19 @@ class FiniteElementOrth2DMeshConstructor(object):
         #         x_nodes = np.array(list(x_side) + list((self.tds.width - x_side)[::-1]))
         #     self.x_nodes = x_nodes
 
+    def split_rows_above_depth(self, depth):  # depth as a negative number for down, # n=number of new slices per row
+        ind = self.get_indexes_at_depths(depth)
+
+        new_ys = (self.y_nodes[1:ind + 1] + self.y_nodes[:ind]) / 2
+        all_ys = list(self.y_nodes) + list(new_ys)
+        all_ys.sort(reverse=True)
+        self.y_nodes = np.array(all_ys)
+        # if self.dp is not None:
+        #     self.set_to_decimal_places()
+        # self.set_soil_ids_to_grid()
+        # fem.soil_grid = np.concatenate(
+        #     [fem.soil_grid[:, 0][:, np.newaxis] * np.ones((len(fem.soil_grid), len(new_ys))), fem.soil_grid], axis=1)
+
     def set_to_decimal_places(self):
         """Adjusts the node coordinates to a certain number of decimal places"""
         self.y_nodes = np.round(self.y_nodes, self.dp)
@@ -430,9 +448,10 @@ class FiniteElementOrth2DMeshConstructor(object):
                     self.femesh.soil_grid[xx][yy] = self.femesh.inactive_value
 
 
-def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_sym=0, dp=None, rm_fd_eles=0):
+def construct_femesh_orth(tds, dy_target, x_scale_pos=None, x_scale_vals=None, x_sym=0, dp=None, rm_fd_eles=0,
+                          y_splits=None):
     fc = FiniteElementOrth2DMeshConstructor(tds, dy_target, x_scale_pos=x_scale_pos, x_scale_vals=x_scale_vals,
-                                            x_sym=x_sym, dp=dp, rm_fd_eles=rm_fd_eles)
+                                            x_sym=x_sym, dp=dp, rm_fd_eles=rm_fd_eles, y_splits=y_splits)
     femesh = fc.femesh
     assert isinstance(femesh, FiniteElementOrth2DMesh)
     return femesh
