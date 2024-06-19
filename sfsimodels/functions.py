@@ -33,6 +33,8 @@ def collect_serial_value(value, export_none=False):
         return value
     elif isinstance(value, int):
         return value
+    elif isinstance(value, np.int32):
+        return int(value)
     elif isinstance(value, np.int64):
         return int(value)
     elif hasattr(value, "to_dict"):

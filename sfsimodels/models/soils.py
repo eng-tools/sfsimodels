@@ -1354,6 +1354,14 @@ class SoilProfile(PhysicalObject):
     # def set_soil_saturation_based_on_gwl(self):
     #     for depth in self._layers:
     #         if depth
+    
+    def get_v_total_stress_from_soil_at_depth(self, z):
+        s_tot = self.get_v_total_stress_at_depth(z)
+        if self.gwl < 0:
+            water_stress = -self.gwl * self.unit_water_weight
+        else:
+            water_stress = 0.0
+        return s_tot - water_stress
 
     def vertical_total_stress(self, y_c):
         deprecation("Use get_v_total_stress_at_depth")

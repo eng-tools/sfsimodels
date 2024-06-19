@@ -1360,6 +1360,16 @@ class FiniteElementVaryY2DMesh(PhysicalObject):
         y_coords = self.y_nodes[xis, yis]
 
 
+    def build_ele_coords_mesh(self):
+        xns = self.x_nodes[:, np.newaxis] * np.ones_like(self.y_nodes)
+        x_centres = (xns[:-1, :] + xns[1:, :]) / 2
+        x_centres = (x_centres[:, :-1] + x_centres[:, 1:]) / 2
+        y_centres = (self.y_nodes[:, :-1] + self.y_nodes[:, 1:]) / 2
+        y_centres = (y_centres[:-1] + y_centres[1:]) / 2
+        self.ele_coords_mesh = np.array([x_centres, y_centres]).transpose(1, 2, 0)
+
+
+
 class FiniteElementVaryXY2DMesh(PhysicalObject):
     base_type = 'femesh'
     type = 'vary_xy2d'

@@ -5,10 +5,15 @@ History
 Pre-release
 ___________
 
+0.9.46 (2024-06-20)
+-------------------
+* better handling on integers in loading system
+* allow splitting of mesh at particular depths
+
 0.9.45 (2022-11-22)
 -------------------
-Added irregular section.
-Added in-plane axis for foundations.
+* Added irregular section.
+* Added in-plane axis for foundations.
 
 0.9.43 (2022-04-08)
 -------------------
