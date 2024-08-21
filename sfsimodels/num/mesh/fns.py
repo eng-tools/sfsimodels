@@ -78,3 +78,20 @@ def save_femesh(ffp, femesh, prefix='', suffix=''):
 def get_nearest_xy_ind(xs, ys, x_point, y_point):
     distance = (ys - y_point) ** 2 + (xs - x_point) ** 2
     return np.where(distance == distance.min())[0]
+
+
+def calc_quad_centroids(xs, ys, axis=-1):  # use axis=-2 for time domain data, since -1 is time
+    import numpy as np
+    x0 = np.array(xs)
+    y0 = np.array(ys)
+    x1 = np.roll(xs, 1, axis=axis)
+    y1 = np.roll(ys, 1, axis=axis)
+    a = x0 * y1 - x1 * y0
+    xc = np.sum((x0 + x1) * a, axis=axis)
+    yc = np.sum((y0 + y1) * a, axis=axis)
+
+    area = 0.5 * np.sum(a, axis=axis)
+    xc /= (6.0 * area)
+    yc /= (6.0 * area)
+
+    return xc, yc
