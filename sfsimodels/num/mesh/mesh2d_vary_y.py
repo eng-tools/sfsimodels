@@ -1556,19 +1556,27 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
         return ccoords
 
     def get_surface_node_indices(self, tol=0):
-        # switched = 1
-        # if switched:
+        """
+        Determines the indices of surface nodes in the soil grid based on the inactive value.
 
+        This method identifies the coordinates of surface nodes in a 2D soil grid,
+        considering the inactive_value to define regions of interest.
+
+        Returns:
+            numpy.ndarray
+                A 2D array containing the indices of surface nodes in the format [x, y].
+
+        """
         prev_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
         inds = [[0, prev_ind]]
         for i in range(self.nnx - 1):
             active_ind = np.where(self.soil_grid[i] != self.inactive_value)[0][0]
             if active_ind < prev_ind:
-                inds.append([i+1, active_ind])
-                for j in range(active_ind, prev_ind):
-                    inds.append([i, j])
+                for j in range(prev_ind, active_ind, -1):
+                    inds.append([i + 1, j])
+                inds.append([i + 1, active_ind])
             elif active_ind > prev_ind:
-                for j in range(prev_ind+1, active_ind+1):
+                for j in range(prev_ind + 1, active_ind + 1):
                     inds.append([i, j])
                 inds.append([i + 1, active_ind])
             else:
