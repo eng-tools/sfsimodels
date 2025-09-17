@@ -2,7 +2,7 @@ import numpy as np
 from sfsimodels.models.abstract_models import PhysicalObject
 from sfsimodels.models.systems import TwoDSystem
 from sfsimodels.functions import interp_left, interp2d, interp3d
-from .fns import remove_close_items, build_ele2_node_array
+from sfsimodels.num.mesh.fns import remove_close_items, build_ele2_node_array
 import hashlib
 
 
@@ -1567,21 +1567,18 @@ class FiniteElementVaryXY2DMesh(PhysicalObject):
                 A 2D array containing the indices of surface nodes in the format [x, y].
 
         """
-        prev_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
-        inds = [[0, prev_ind]]
+        prev_y_ind = np.where(self.soil_grid[0] != self.inactive_value)[0][0]
+        inds = [[0, prev_y_ind]]  # store top left most node
         for i in range(self.nnx - 1):
-            active_ind = np.where(self.soil_grid[i] != self.inactive_value)[0][0]
-            if active_ind < prev_ind:
-                for j in range(prev_ind, active_ind, -1):
-                    inds.append([i + 1, j])
-                inds.append([i + 1, active_ind])
-            elif active_ind > prev_ind:
-                for j in range(prev_ind + 1, active_ind + 1):
+            active_ind = np.where(self.soil_grid[i] != self.inactive_value)[0][0]  # get first no active cell
+            if active_ind < prev_y_ind:  # up slope
+                for j in range(prev_y_ind -1, active_ind -1, -1):  # add nodes prior to cell
                     inds.append([i, j])
-                inds.append([i + 1, active_ind])
-            else:
-                inds.append([i + 1, active_ind])
-            prev_ind = active_ind
+            elif active_ind > prev_y_ind:  # down slope
+                for j in range(prev_y_ind + 1, active_ind + 1):  # add nodes prior to cell
+                    inds.append([i, j])
+            inds.append([i + 1, active_ind])
+            prev_y_ind = active_ind
         inds = np.array(inds)
         return inds
 

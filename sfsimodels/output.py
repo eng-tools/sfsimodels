@@ -123,7 +123,7 @@ def add_table_ends(para, oformat='latex', caption="caption-text", label="table",
         fpara += para
         fpara += "\\bottomrule\n"
         fpara += "\\end{tabular}\n"
-        fpara += "\\caption{%s \label{tab:%s}}\n" % (caption, label)
+        fpara += "\\caption{%s \\label{tab:%s}}\n" % (caption, label)
         fpara += "\\end{table}\n\n"
     return fpara
 
