@@ -1,7 +1,9 @@
 language: python
 python:
-  - "3.6"
-  - "3.7"
+  - "3.10"
+  - "3.11"
+  - "3.12"
+  - "3.13"
 # command to install dependencies
 install:
   - pip install -r requirements.txt
