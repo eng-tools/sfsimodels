@@ -7,17 +7,18 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: v1-dependency-cache-{{ checksum "setup.py" }}-{{ checksum "sfsimodels/__about__.py" }}
+          key: v2-dependency-cache-{{ checksum "pyproject.toml" }}-{{ checksum "requirements.txt" }}-{{ checksum "deploy-requirements.txt" }}-{{ checksum "sfsimodels/__about__.py" }}
 
       - run:
           name: install python dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
+            python -m pip install --upgrade pip
             pip install -r requirements.txt
-            pip install -r deploy-requirements.txt
+            pip install -e .[test]
       - save_cache:
-          key: v1-dependency-cache-{{ checksum "setup.py" }}-{{ checksum "sfsimodels/__about__.py" }}
+          key: v2-dependency-cache-{{ checksum "pyproject.toml" }}-{{ checksum "requirements.txt" }}-{{ checksum "deploy-requirements.txt" }}-{{ checksum "sfsimodels/__about__.py" }}
           paths:
             - "venv"
 
@@ -25,7 +26,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            py.test tests
+            py.test tests -W error
             codecov
       - store_artifacts:
           path: htmlcov/
@@ -36,17 +37,18 @@ jobs:
       - checkout
 
       - restore_cache:
-          key: v1-dependency-cache-{{ checksum "setup.py" }}-{{ checksum "sfsimodels/__about__.py" }}
+          key: v2-dependency-cache-{{ checksum "pyproject.toml" }}-{{ checksum "requirements.txt" }}-{{ checksum "deploy-requirements.txt" }}-{{ checksum "sfsimodels/__about__.py" }}
 
       - run:
           name: install python dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
+            python -m pip install --upgrade pip
             pip install -r requirements.txt
             pip install -r deploy-requirements.txt
       - save_cache:
-          key: v1-dependency-cache-{{ checksum "setup.py" }}-{{ checksum "sfsimodels/__about__.py" }}
+          key: v2-dependency-cache-{{ checksum "pyproject.toml" }}-{{ checksum "requirements.txt" }}-{{ checksum "deploy-requirements.txt" }}-{{ checksum "sfsimodels/__about__.py" }}
           paths:
             - "venv"
 
@@ -59,7 +61,8 @@ jobs:
       - run:
           name: create packages
           command: |
-            python setup.py bdist_wheel
+            . venv/bin/activate
+            python -m build
       - run:
           name: upload to pypi
           command: |

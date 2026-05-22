@@ -9,7 +9,8 @@ def read_json_sensor_file(ffp):
     :return:
     """
     sensor_path = ffp
-    si = json.load(open(sensor_path))
+    with open(sensor_path) as sensor_file:
+        si = json.load(sensor_file)
     for m_type in si:
         # Convert keys from strings to integers
         si[m_type] = {int(k): v for k, v in si[m_type].items()}

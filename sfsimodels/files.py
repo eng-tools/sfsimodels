@@ -28,12 +28,14 @@ def load_json(ffp, custom=None, default_to_base=False, verbose=0):
     :param verbose: int, console output
     :return: dict
     """
-    data = json.load(open(ffp))
+    with open(ffp) as json_file:
+        data = json.load(json_file)
     return ecp_dict_to_objects(data, custom, default_to_base=default_to_base, verbose=verbose)
 
 
 def load_json_and_meta(ffp, custom=None, verbose=0):
-    data = json.load(open(ffp))
+    with open(ffp) as json_file:
+        data = json.load(json_file)
     md = {}
     for item in data:
         if item != "models":
@@ -442,7 +444,8 @@ class Output(object):
             self.units = units
         if comments is not None:
             self.comments = comments
-        json.dump(self.to_dict(), open(ffp, "w"), indent=indent, default=_json_default)
+        with open(ffp, "w") as out_file:
+            json.dump(self.to_dict(), out_file, indent=indent, default=_json_default)
 
     def to_str(self, indent=4, name=None, units=None, comments=None):
         """Return as a json string"""
@@ -466,9 +469,8 @@ def migrate_ecp(in_ffp, out_ffp):
     ecp_output.units = meta_data["units"]
     ecp_output.comments = meta_data["comments"]
     p_str = json.dumps(ecp_output.to_dict(), skipkeys=["__repr__"], indent=4)
-    a = open(out_ffp, "w")
-    a.write(p_str)
-    a.close()
+    with open(out_ffp, "w") as out_file:
+        out_file.write(p_str)
 
 
 def unhash_dict(pdict):  # TODO: make method

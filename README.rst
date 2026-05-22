@@ -1,6 +1,10 @@
-.. image:: https://travis-ci.org/eng-tools/sfsimodels.svg?branch=master
-   :target: https://travis-ci.org/eng-tools/sfsimodels
-   :alt: Testing Status
+.. image:: https://github.com/eng-tools/sfsimodels/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/eng-tools/sfsimodels/actions/workflows/ci.yml
+   :alt: GitHub Actions CI status
+
+.. image:: https://circleci.com/gh/eng-tools/sfsimodels.svg?style=svg
+   :target: https://circleci.com/gh/eng-tools/sfsimodels
+   :alt: CircleCI status
 
 .. image:: https://img.shields.io/pypi/v/sfsimodels.svg
    :target: https://pypi.python.org/pypi/sfsimodels
@@ -64,6 +68,12 @@ Installation
 
     pip install sfsimodels
 
+Supported Python versions
+=========================
+
+The project support policy is: latest stable Python plus the previous three minor versions.
+The current supported range is Python ``3.10`` to ``3.13``.
+
 Citing
 ======
 
@@ -101,16 +111,18 @@ Check out a full set of examples [on github](https://github.com/eng-tools/sfsimo
 How do I get set up?
 ====================
 
-1. Run ``pip install -r requirements.txt``
+1. Create and activate a Python ``3.10`` to ``3.13`` virtual environment.
+2. Run ``pip install -r requirements.txt``
+3. Run ``pip install -e .[test]``
 
 Testing
 =======
 
 Tests are run with pytest
 
-* Locally run: ``pytest`` on the command line.
+* Locally run: ``pytest -W error`` on the command line.
 
-* Tests are run on every push using travis, see the ``.travis.yml`` file
+* Tests run on every push and pull request using GitHub Actions, see ``.github/workflows/ci.yml``.
 
 
 Deployment
@@ -126,6 +138,15 @@ To deploy the package to pypi.com you need to:
 
     git tag 0.5.2 -m "version 0.5.2"
     git push --tags origin pypi
+
+Release checklist
+=================
+
+1. Confirm CI passes for all supported Python versions (currently 3.10-3.13).
+2. Ensure ``python_requires``, classifiers, and CI matrix all match.
+3. Update ``sfsimodels/__about__.py`` with the new version.
+4. Build artifacts with ``python -m build``.
+5. Upload artifacts with ``twine upload dist/*``.
 
 Contributing
 ============
@@ -146,4 +167,3 @@ At http://sfsimodels.readthedocs.io/en/latest/
 
 Known bugs
 ==========
-

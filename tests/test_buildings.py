@@ -63,7 +63,8 @@ def test_load_frame_building_sample_data():
     fb.set_column_prop("depth", [0.5, 0.5, 0.5, 0.5], repeat="up")
     fb.n_seismic_frames = 3
     fb.n_gravity_frames = 0
-    return fb
+    assert fb.n_storeys == number_of_storeys
+    assert fb.n_bays == n_bays
 
 
 if __name__ == '__main__':
