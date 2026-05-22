@@ -1,5 +1,5 @@
 import subprocess
-import py
+import pytest
 
 about = {}
 with open("sfsimodels/__about__.py") as fp:
@@ -7,7 +7,13 @@ with open("sfsimodels/__about__.py") as fp:
 
 version = about['__version__']
 
-failures = py.test.cmdline.main()
-if failures == 0:
-    subprocess.check_call(["git", "tag", version, "-m", "version %s" % version])
-    subprocess.check_call(["git", "push", "--tags", "origin", "master"])
+
+def main():
+    failures = pytest.main()
+    if failures == 0:
+        subprocess.check_call(["git", "tag", version, "-m", "version %s" % version])
+        subprocess.check_call(["git", "push", "--tags", "origin", "master"])
+
+
+if __name__ == "__main__":
+    main()
